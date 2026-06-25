@@ -1,0 +1,239 @@
+{
+  "extName": {
+    "message": "TokenLens untuk Claude – Pelacak Penggunaan & Batas"
+  },
+  "extShortName": {
+    "message": "TokenLens"
+  },
+  "extDescription": {
+    "message": "Penggunaan token real-time, jendela konteks, batas & kuota 5j/7h — langsung di dalam chat Anda."
+  },
+  "actionTitle": {
+    "message": "TokenLens – Pelacak Claude"
+  },
+  "popupH1": {
+    "message": "CLAUDE TRACKER"
+  },
+  "popupSubtitle": {
+    "message": "Advanced Pro · v3.1"
+  },
+  "popupWishText": {
+    "message": "Semoga kamu <strong>tidak pernah</strong> mencapai batas 5j<br/>(kamu akan). Semoga jendela konteksmu<br/>tetap luas (tidak akan). Dan semoga setiap<br/>respons adalah <strong>tepat</strong> apa yang kamu minta.<br/><span style=\"opacity:0.5;font-size:9px\">(semoga berhasil untuk yang terakhir)</span>"
+  },
+  "popupFooter": {
+    "message": "CLAUDE ADVANCED PRO TRACKER — claude.ai"
+  },
+  "badgeTip": {
+    "message": "Token yang dihemat sesi ini oleh kompressor.\nDiukur dari pengurangan karakter aktual (÷4).\nDiperbarui setelah setiap respons selesai.\nInput: kontraksi, pengisi, markdown riwayat."
+  },
+  "tokSuffix": {
+    "message": " tok"
+  },
+  "quota5hLabel": {
+    "message": "Batas 5 Jam"
+  },
+  "quota5hTip": {
+    "message": "Kuota penggunaan 5 jam bergulir.\n\nDireset 5 jam setelah pesan pertama Anda.\nDibagi di semua percakapan akun ini.\n\nBerbobot token: pesan panjang menggunakan\nlebih banyak kuota. Kompresi Sihir membantu."
+  },
+  "quotaResetsIn": {
+    "message": "direset dalam"
+  },
+  "wmTip": {
+    "message": "Tanpa Sihir: estimasi kuota 5j tanpa kompresi.\n\n  ██ Oranye = penggunaan aktual\n  ██ Ungu   = tanpa Sihir\n\nYang dikompres:\n· Input: kontraksi, pengisi\n· Riwayat: markdown dari giliran asisten\n· Output: ~15–20% lebih sedikit token"
+  },
+  "wmHeaderText": {
+    "message": "tanpa sihir"
+  },
+  "wmActualLabel": {
+    "message": "aktual"
+  },
+  "wmWithoutLabel": {
+    "message": "tanpa sihir"
+  },
+  "quota7dLabel": {
+    "message": "Batas 7 Hari"
+  },
+  "quota7dTip": {
+    "message": "Kuota penggunaan 7 hari bergulir.\n\nDireset 7 hari setelah pesan pertama.\n\nTerisi lebih lambat dari kuota 5j —\nbatas penggunaan jangka panjang."
+  },
+  "ctxPillLabel": {
+    "message": "konteks"
+  },
+  "ctxPillTip": {
+    "message": "Estimasi penggunaan jendela konteks.\n\nPerhitungan token (heuristik):\n· Blok kode: karakter ÷ 3\n· URL & angka: ÷ 2\n· Teks biasa: kata × 1.3\n\nMendekati 100%, Claude mungkin mulai\nmelupakan pesan-pesan sebelumnya."
+  },
+  "spdPillTip": {
+    "message": "Kecepatan output respons terakhir (t/s).\n\nRentang tipikal: 30–80 t/s.\nLebih rendah saat jam sibuk."
+  },
+  "turnsPillTip": {
+    "message": "Jumlah respons asisten lengkap dalam sesi ini."
+  },
+  "costPillTip": {
+    "message": "Perkiraan biaya token sesuai tarif API Claude.\n\nLangganan Claude.ai bersifat tarif tetap —\nini hanya angka referensi."
+  },
+  "latPillTip": {
+    "message": "Rata-rata waktu ke token pertama (TTFT)\ndi semua respons sesi ini.\n\nLebih tinggi saat jam sibuk."
+  },
+  "ghostTurns": {
+    "message": "giliran"
+  },
+  "ghostCost": {
+    "message": "perkiraan biaya"
+  },
+  "ghostLatency": {
+    "message": "latensi rata-rata"
+  },
+  "peakTip": {
+    "message": "Jam sibuk: Sen–Jum 5AM–11AM PT.\nBeban server lebih tinggi saat jam sibuk."
+  },
+  "offPeakText": {
+    "message": "di luar jam sibuk"
+  },
+  "onPeakText": {
+    "message": "jam sibuk"
+  },
+  "toolbar5hTip": {
+    "message": "Penggunaan kuota 5j.\nDireset 5j setelah pesan pertama.\nKompresi Sihir membantu menjaganya tetap rendah."
+  },
+  "toolbar7dTip": {
+    "message": "Penggunaan kuota 7h.\nDireset 7 hari setelah pesan pertama.\nBatas penggunaan jangka panjang akun Anda."
+  },
+  "chipOut": {
+    "message": "kel."
+  },
+  "chipCached": {
+    "message": "cache"
+  },
+  "chipLimitHit": {
+    "message": "batas tercapai"
+  },
+  "magicPanelTitle": {
+    "message": "Kompresi Ajaib"
+  },
+  "magicBtnLabel": {
+    "message": "Sihir"
+  },
+  "magicBtnTip": {
+    "message": "Kompresi Ajaib\n\nOtomatis mengompres pesan sebelum dikirim —\nmenghapus pengisi, menyusutkan riwayat,\nmemaksakan teks biasa — agar kuota 5j\nAnda habis lebih lambat.\n\nKlik untuk melihat pengaturan aktif."
+  },
+  "magicPillTip": {
+    "message": "Token bersih yang dihemat sesi ini oleh Sihir.\n\n· Input: kontraksi, pengisi\n· Riwayat: markdown dihapus\n· Kode: komentar & JSON dihapus\n\nToken lebih sedikit = kuota lebih lambat habis."
+  },
+  "magicTokensSaved": {
+    "message": "↓ $COUNT$ token dihemat sesi ini",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "magicMeasuredSub": {
+    "message": "Diukur dari kompresi input & riwayat (karakter÷4)"
+  },
+  "magicEstSavings": {
+    "message": "~$PCT$% perkiraan penghematan",
+    "placeholders": {
+      "pct": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "magicEstSub": {
+    "message": "Kirim pesan untuk mulai mengukur penghematan nyata"
+  },
+  "magicDesc": {
+    "message": "Sihir mengompres pesan Anda sebelum dikirim — menghapus pengisi, menyusutkan riwayat, dan menginstruksikan Claude untuk melewati format dekoratif — agar kuota 5 jam Anda terkuras lebih lambat."
+  },
+  "magicSelectAll": {
+    "message": "Pilih semua"
+  },
+  "magicDeselectAll": {
+    "message": "Hapus pilihan"
+  },
+  "magicSectionInput": {
+    "message": "Kompresi input (penghematan diukur di badge)"
+  },
+  "magicSectionOutput": {
+    "message": "Direktif output (mengurangi panjang respons Claude)"
+  },
+  "magicEstLabel": {
+    "message": "perkiraan penghematan input"
+  },
+  "magicReset": {
+    "message": "Reset"
+  },
+  "magicSave": {
+    "message": "Simpan"
+  },
+  "impactSilent": {
+    "message": "senyap"
+  },
+  "impactNotice": {
+    "message": "terlihat"
+  },
+  "impactTradeoff": {
+    "message": "tradeoff"
+  },
+  "techWhitespaceLabel": {
+    "message": "Pembersihan spasi & unicode"
+  },
+  "techWhitespaceTip": {
+    "message": "Tanda kutip curly → lurus, em-dash → --, baris kosong diciutkan. Hemat 0–3 token per pesan."
+  },
+  "techContractionsLabel": {
+    "message": "Penerapan kontraksi"
+  },
+  "techContractionsTip": {
+    "message": "\"will not\" → \"won't\" (2 token → 1). Tokenizer BPE memperlakukan kontraksi sebagai token tunggal. Hemat ~0.5–1 token per kemunculan."
+  },
+  "techFillersLabel": {
+    "message": "Penghapusan kata pengisi"
+  },
+  "techFillersTip": {
+    "message": "\"in order to\" → \"to\" (−3 token), frasa panjang dihapus (−6). Penghematan input terbesar untuk gaya bertele-tele."
+  },
+  "techNumbersLabel": {
+    "message": "Normalisasi angka"
+  },
+  "techNumbersTip": {
+    "message": "\"1,000,000\" → \"1M\". Hemat ~1–2 token per angka. Blok kode tidak tersentuh."
+  },
+  "techCodeCommentsLabel": {
+    "message": "Penghapusan komentar kode"
+  },
+  "techCodeCommentsTip": {
+    "message": "Menghapus komentar // baris, /* */ blok, dan # dari pagar kode. Nyata, terukur. Cek badge %."
+  },
+  "techJsonMinifyLabel": {
+    "message": "Minifikasi JSON / config"
+  },
+  "techJsonMinifyTip": {
+    "message": "Minifikasi blok ```json — hapus semua spasi. Hanya JSON valid. Hemat 20–40% biaya token JSON."
+  },
+  "techNoMarkdownOutputLabel": {
+    "message": "Respons teks biasa"
+  },
+  "techNoMarkdownOutputTip": {
+    "message": "Menyuntikkan ~8 token direktif. Claude melewati markdown (##, **, -) — hemat output 5–15%. Tidak dilacak di badge."
+  },
+  "techNoPreambleLabel": {
+    "message": "Tanpa pembuka dan penutup"
+  },
+  "techNoPreambleTip": {
+    "message": "Menambahkan ~6 token direktif. Menghapus pembuka \"Great question!\" dan penutup. Hemat ~10–40 token per respons."
+  },
+  "techExpertModeLabel": {
+    "message": "Mode ahli (lewati dasar)"
+  },
+  "techExpertModeTip": {
+    "message": "Menambahkan ~7 token direktif. Claude melewati konteks pengantar dan definisi. Penghematan bervariasi 0–30%."
+  },
+  "techStripHistoryMarkdownLabel": {
+    "message": "Hapus markdown dari riwayat"
+  },
+  "techStripHistoryMarkdownTip": {
+    "message": "Menghapus ##, **, - dari pesan asisten lama sebelum masuk kembali sebagai token input. Terukur — tercermin di badge %. Output masih terformat."
+  }
+}

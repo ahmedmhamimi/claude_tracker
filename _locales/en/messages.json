@@ -1,0 +1,314 @@
+{
+  "extName": {
+    "message": "TokenLens for Claude – Usage & Limit Tracker",
+    "description": "Extension name in browser toolbar and Chrome Web Store"
+  },
+  "extShortName": {
+    "message": "TokenLens",
+    "description": "Short extension name"
+  },
+  "extDescription": {
+    "message": "Real-time token usage, context window, rate limits & 5 hour/7 day quotas — directly inside your chat.",
+    "description": "Extension description in Chrome Web Store"
+  },
+  "actionTitle": {
+    "message": "TokenLens – Claude Usage Tracker",
+    "description": "Tooltip on the extension icon"
+  },
+  "popupH1": {
+    "message": "CLAUDE TRACKER",
+    "description": "Main heading in popup"
+  },
+  "popupSubtitle": {
+    "message": "Advanced Pro · v3.1",
+    "description": "Popup subtitle / version"
+  },
+  "popupWishText": {
+    "message": "May you <strong>never</strong> hit the 5h limit<br/>(you will). May your context window<br/>stay vast (it won’t). And may every<br/>response be <strong>exactly</strong> what you asked.<br/><span style=\"opacity:0.5;font-size:9px\">(good luck with that last one)</span>",
+    "description": "Humorous wish text in popup — preserve bold tags"
+  },
+  "popupFooter": {
+    "message": "CLAUDE ADVANCED PRO TRACKER — claude.ai",
+    "description": "Footer text in popup"
+  },
+  "badgeTip": {
+    "message": "Tokens saved this session by TokenLens compressor.\nMeasured from actual char reduction (chars÷4 heuristic).\nUpdated only after each response completes.\nInput: contractions, fillers, markdown history stripping.",
+    "description": "Tooltip on the savings badge in Claude header"
+  },
+  "tokSuffix": {
+    "message": " tok",
+    "description": "Token abbreviation suffix e.g. ↓42 tok"
+  },
+  "quota5hLabel": {
+    "message": "5-Hour Limit",
+    "description": "Label for the 5-hour quota bar"
+  },
+  "quota5hTip": {
+    "message": "Your rolling 5-hour usage quota.\n\nResets 5 hours after your first message\nin the current window. Shared across all\nconversations on this account.\n\nToken-weighted: long messages and detailed\nresponses consume more quota than short ones.\nMagic compression reduces how fast this fills.",
+    "description": "Tooltip on the 5-hour quota header"
+  },
+  "quotaResetsIn": {
+    "message": "resets in",
+    "description": "Label before countdown timer"
+  },
+  "wmTip": {
+    "message": "Without Magic: estimated 5h quota you’d have used without compression.\n\n  ██ Orange = actual usage now\n  ██ Purple = where you’d be without Magic\n\nWhat gets compressed:\n· Input: contractions, fillers, whitespace\n· History: markdown from past assistant turns\n· Output: ~15–20% fewer tokens\n\nConservative estimate — real savings often higher.",
+    "description": "Tooltip on the without-magic comparison bar"
+  },
+  "wmHeaderText": {
+    "message": "without magic",
+    "description": "Label in the without-magic section header"
+  },
+  "wmActualLabel": {
+    "message": "actual",
+    "description": "Legend label for actual usage"
+  },
+  "wmWithoutLabel": {
+    "message": "w/o magic",
+    "description": "Legend label for without-magic bar"
+  },
+  "quota7dLabel": {
+    "message": "7-Day Limit",
+    "description": "Label for the 7-day quota bar"
+  },
+  "quota7dTip": {
+    "message": "Your rolling 7-day usage quota.\n\nResets 7 days after your first message\nin the current window. Shared across all\nconversations on this account.\n\nFills more slowly than the 5h quota — this\nis the longer-term ceiling on your usage.",
+    "description": "Tooltip on the 7-day quota header"
+  },
+  "ctxPillLabel": {
+    "message": "context",
+    "description": "Label on the context window pill"
+  },
+  "ctxPillTip": {
+    "message": "Estimated context window usage.\n\nToken counting (heuristic):\n· Code blocks: chars ÷ 3\n· URLs & numbers: chars ÷ 2\n· Regular text: words × 1.3\n\nAs this approaches 100%, Claude may start\nlosing memory of earlier messages.\nModel limit shown as denominator.",
+    "description": "Tooltip on the context window pill"
+  },
+  "spdPillTip": {
+    "message": "Output speed of the last response.\nMeasured in tokens per second (t/s).\n\nTypical range: 30–80 t/s.\nLower during peak hours or on longer outputs.",
+    "description": "Tooltip on the speed pill"
+  },
+  "turnsPillTip": {
+    "message": "Number of complete assistant responses\nsent in this conversation session.",
+    "description": "Tooltip on the turn count pill"
+  },
+  "costPillTip": {
+    "message": "Estimated token cost at Claude API rates.\nInput + output tokens combined.\n\nClaude.ai subscriptions are flat-rate —\nthis is a reference figure, not what\nyou’re actually charged.",
+    "description": "Tooltip on the estimated cost pill"
+  },
+  "latPillTip": {
+    "message": "Average time-to-first-token (TTFT)\nacross all responses this session.\n\nMeasures how long the server takes to start\nresponding — not total generation time.\nHigher during peak hours.",
+    "description": "Tooltip on the average latency pill"
+  },
+  "ghostTurns": {
+    "message": "turns",
+    "description": "Label in floating ghost overlay"
+  },
+  "ghostCost": {
+    "message": "est. cost",
+    "description": "Estimated cost label in ghost overlay"
+  },
+  "ghostLatency": {
+    "message": "avg latency",
+    "description": "Average latency label in ghost overlay"
+  },
+  "peakTip": {
+    "message": "Peak hours: Mon–Fri 5AM–11AM PT.\nHigher server load during peak.",
+    "description": "Tooltip on the peak/off-peak indicator"
+  },
+  "offPeakText": {
+    "message": "off-peak",
+    "description": "Text during off-peak hours"
+  },
+  "onPeakText": {
+    "message": "peak",
+    "description": "Text during peak hours"
+  },
+  "toolbar5hTip": {
+    "message": "5-hour quota usage.\nResets 5h after your first message in the window.\nToken-weighted — longer exchanges fill it faster.\nMagic compression helps keep this lower.",
+    "description": "Tooltip on the 5h bar in the toolbar"
+  },
+  "toolbar7dTip": {
+    "message": "7-day quota usage.\nResets 7 days after your first message in the window.\nThe longer-term ceiling on your account usage.",
+    "description": "Tooltip on the 7d bar in the toolbar"
+  },
+  "chipOut": {
+    "message": "out",
+    "description": "Short label after output token count e.g. 342 out"
+  },
+  "chipCached": {
+    "message": "cached",
+    "description": "Label on cached response chip"
+  },
+  "chipLimitHit": {
+    "message": "limit hit",
+    "description": "Label when max_tokens was hit"
+  },
+  "magicPanelTitle": {
+    "message": "Magic Compression",
+    "description": "Title of the Magic panel modal"
+  },
+  "magicBtnLabel": {
+    "message": "Magic",
+    "description": "Label on the Magic button"
+  },
+  "magicBtnTip": {
+    "message": "Magic Compression\n\nAutomatically compresses your messages before\nsending — removing filler words, shrinking\nhistory, enforcing plain text output — so your\n5h quota refills less quickly.\n\nClick to see what’s active and how much\nyou’ve saved this session.",
+    "description": "Tooltip on the Magic button"
+  },
+  "magicPillTip": {
+    "message": "Net tokens saved this session by Magic.\n\nCounted after each response:\n· Input: contractions, fillers, whitespace\n· History: markdown stripped from past turns\n· Code: comments & JSON whitespace removed\n\nFewer tokens = slower quota drain.",
+    "description": "Tooltip on the savings pill"
+  },
+  "magicTokensSaved": {
+    "message": "↓ $COUNT$ tokens saved this session",
+    "description": "Header in Magic panel with count. $COUNT$ is the number.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "magicMeasuredSub": {
+    "message": "Measured from input & history compression (chars÷4)",
+    "description": "Subtitle under tokens saved count"
+  },
+  "magicEstSavings": {
+    "message": "~$PCT$% estimated savings",
+    "description": "Estimated savings before real data. $PCT$ is the percent.",
+    "placeholders": {
+      "pct": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "magicEstSub": {
+    "message": "Send a message to start measuring actual savings",
+    "description": "Subtitle before any real data"
+  },
+  "magicDesc": {
+    "message": "Magic compresses your messages before sending — removes filler words, shrinks conversation history, and instructs Claude to skip decorative formatting — so your 5-hour quota drains more slowly.",
+    "description": "Description text in Magic panel"
+  },
+  "magicSelectAll": {
+    "message": "Select all",
+    "description": "Button to enable all techniques"
+  },
+  "magicDeselectAll": {
+    "message": "Deselect all",
+    "description": "Button to disable all techniques"
+  },
+  "magicSectionInput": {
+    "message": "Input compression (savings measured in badge)",
+    "description": "Section header for input techniques"
+  },
+  "magicSectionOutput": {
+    "message": "Output directives (reduces Claude’s response length)",
+    "description": "Section header for output techniques"
+  },
+  "magicEstLabel": {
+    "message": "estimated input savings",
+    "description": "Label next to estimated savings %"
+  },
+  "magicReset": {
+    "message": "Reset",
+    "description": "Reset button"
+  },
+  "magicSave": {
+    "message": "Save",
+    "description": "Save button"
+  },
+  "impactSilent": {
+    "message": "silent",
+    "description": "Impact badge — no visible change"
+  },
+  "impactNotice": {
+    "message": "notice",
+    "description": "Impact badge — noticeable change"
+  },
+  "impactTradeoff": {
+    "message": "tradeoff",
+    "description": "Impact badge — quality tradeoff"
+  },
+  "techWhitespaceLabel": {
+    "message": "Whitespace & unicode cleanup",
+    "description": "Whitespace cleanup technique label"
+  },
+  "techWhitespaceTip": {
+    "message": "Curly quotes → straight, em-dashes → --, extra blank lines collapsed, trailing spaces stripped. Saves 0–3 tokens per typical message.",
+    "description": "Tip for whitespace cleanup"
+  },
+  "techContractionsLabel": {
+    "message": "Contraction enforcement",
+    "description": "Contraction enforcement label"
+  },
+  "techContractionsTip": {
+    "message": "\"will not\" → \"won't\" (2 tokens → 1), \"do not\" → \"don't\", etc. BPE tokenizers treat contractions as single tokens. Saves ~0.5–1 token per occurrence.",
+    "description": "Tip for contraction enforcement"
+  },
+  "techFillersLabel": {
+    "message": "Filler & hedge removal",
+    "description": "Filler word removal label"
+  },
+  "techFillersTip": {
+    "message": "\"in order to\" → \"to\" (−3 tokens), \"it is important to note that\" → deleted (−6 tokens). Largest single input saving for verbose writing styles.",
+    "description": "Tip for filler word removal"
+  },
+  "techNumbersLabel": {
+    "message": "Number normalization",
+    "description": "Number normalization label"
+  },
+  "techNumbersTip": {
+    "message": "\"1,000,000\" → \"1M\". Saves ~1–2 tokens per number. Code blocks untouched. Low impact unless you write lots of large numbers.",
+    "description": "Tip for number normalization"
+  },
+  "techCodeCommentsLabel": {
+    "message": "Code comment stripping",
+    "description": "Code comment stripping label"
+  },
+  "techCodeCommentsTip": {
+    "message": "Strips // line, /* */ block, and # comments from pasted code fences before sending. Real, measurable. Check the badge % — it reflects actual chars removed.",
+    "description": "Tip for code comment stripping"
+  },
+  "techJsonMinifyLabel": {
+    "message": "JSON / config minification",
+    "description": "JSON minification label"
+  },
+  "techJsonMinifyTip": {
+    "message": "Minifies ```json blocks — removes all whitespace. Only applies to valid JSON. Typically saves 20–40% of the JSON token cost.",
+    "description": "Tip for JSON minification"
+  },
+  "techNoMarkdownOutputLabel": {
+    "message": "Plain text responses",
+    "description": "Plain text output directive label"
+  },
+  "techNoMarkdownOutputTip": {
+    "message": "Injects ~8 tokens of directive (\"Plain text only…\"). In exchange, Claude skips markdown decorators (##, **, -, etc.) — net output savings of 5–15% on typical prose. Not tracked in badge (output side only).",
+    "description": "Tip for plain text output directive"
+  },
+  "techNoPreambleLabel": {
+    "message": "No preamble / closing remarks",
+    "description": "No preamble label"
+  },
+  "techNoPreambleTip": {
+    "message": "Adds ~6 tokens of directive. Removes openers like \"Great question!\" and closers like \"Let me know if you need anything else.\" Net save: ~10–40 tokens per response.",
+    "description": "Tip for no preamble directive"
+  },
+  "techExpertModeLabel": {
+    "message": "Expert mode (skip basics)",
+    "description": "Expert mode label"
+  },
+  "techExpertModeTip": {
+    "message": "Adds ~7 tokens of directive. Claude skips introductory context, definitions, and warnings for technical topics. Net save varies widely (0–30%) depending on query type.",
+    "description": "Tip for expert mode directive"
+  },
+  "techStripHistoryMarkdownLabel": {
+    "message": "Strip markdown from history",
+    "description": "Strip markdown from history label"
+  },
+  "techStripHistoryMarkdownTip": {
+    "message": "Removes ##, **, - etc. from past assistant messages before they re-enter context as input tokens. Fully measurable — reflected in the badge %. You still see formatted output.",
+    "description": "Tip for markdown stripping from history"
+  }
+}

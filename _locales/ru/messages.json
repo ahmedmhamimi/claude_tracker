@@ -1,0 +1,239 @@
+{
+  "extName": {
+    "message": "TokenLens для Claude – Трекер использования"
+  },
+  "extShortName": {
+    "message": "TokenLens"
+  },
+  "extDescription": {
+    "message": "Использование токенов в реальном времени, окно контекста, квоты 5ч/7д — прямо в чате."
+  },
+  "actionTitle": {
+    "message": "TokenLens – Трекер Claude"
+  },
+  "popupH1": {
+    "message": "CLAUDE TRACKER"
+  },
+  "popupSubtitle": {
+    "message": "Advanced Pro · v3.1"
+  },
+  "popupWishText": {
+    "message": "Пусть ты <strong>никогда</strong> не достигнешь лимита 5ч<br/>(достигнешь). Пусть окно контекста<br/>останется огромным (не останется). Пусть каждый<br/>ответ будет <strong>именно</strong> тем, что ты просил.<br/><span style=\"opacity:0.5;font-size:9px\">(удачи с последним)</span>"
+  },
+  "popupFooter": {
+    "message": "CLAUDE ADVANCED PRO TRACKER — claude.ai"
+  },
+  "badgeTip": {
+    "message": "Токены, сэкономленные за сессию.\nИзмеряется по сокращению символов (÷4).\nОбновляется после каждого ответа.\nВход: сокращения, паразиты, markdown из истории."
+  },
+  "tokSuffix": {
+    "message": " tok"
+  },
+  "quota5hLabel": {
+    "message": "Лимит 5 часов"
+  },
+  "quota5hTip": {
+    "message": "Скользящая 5-часовая квота.\n\nСбрасывается через 5 часов после первого сообщения.\nОбщая для всех диалогов.\n\nВзвешена по токенам. Магия\nзамедляет заполнение."
+  },
+  "quotaResetsIn": {
+    "message": "сброс через"
+  },
+  "wmTip": {
+    "message": "Без Магии: оценка 5-ч квоты без сжатия.\n\n  ██ Оранж = фактическое\n  ██ Фиол = без Магии\n\nЧто сжимается:\n· Вход: сокращения, паразиты\n· История: markdown из прошлых ответов\n· Выход: ~15–20% меньше токенов"
+  },
+  "wmHeaderText": {
+    "message": "без магии"
+  },
+  "wmActualLabel": {
+    "message": "факт"
+  },
+  "wmWithoutLabel": {
+    "message": "без магии"
+  },
+  "quota7dLabel": {
+    "message": "Лимит 7 дней"
+  },
+  "quota7dTip": {
+    "message": "Скользящая 7-дневная квота.\n\nСбрасывается через 7 дней.\n\nНаполняется медленнее, чем 5ч квота —\nдолгосрочный потолок."
+  },
+  "ctxPillLabel": {
+    "message": "контекст"
+  },
+  "ctxPillTip": {
+    "message": "Оценка заполненности окна контекста.\n\nПодсчёт токенов (евристика):\n· Код: символы ÷ 3\n· URL и числа: ÷ 2\n· Текст: слова × 1.3\n\nПри 100% Claude начинает забывать ранние сообщения."
+  },
+  "spdPillTip": {
+    "message": "Скорость вывода: токенов в секунду (t/s).\n\nОбычно: 30–80 t/s.\nНиже в пиковое время."
+  },
+  "turnsPillTip": {
+    "message": "Количество полных ответов ассистента\nв этой сессии."
+  },
+  "costPillTip": {
+    "message": "Оценка стоимости по тарифам API Claude.\n\nПодписки Claude.ai — фиксированная цена.\nЭто справочная цифра."
+  },
+  "latPillTip": {
+    "message": "Среднее время до первого токена (TTFT).\n\nВыше в пиковые часы."
+  },
+  "ghostTurns": {
+    "message": "ходов"
+  },
+  "ghostCost": {
+    "message": "прим. стоим."
+  },
+  "ghostLatency": {
+    "message": "ср. задержка"
+  },
+  "peakTip": {
+    "message": "Пик: Пн–Пт 5:00–11:00 PT.\nВысокая нагрузка в пик."
+  },
+  "offPeakText": {
+    "message": "непик"
+  },
+  "onPeakText": {
+    "message": "пик"
+  },
+  "toolbar5hTip": {
+    "message": "Использование 5-ч квоты.\nСброс через 5ч.\nМагия помогает снизить значение."
+  },
+  "toolbar7dTip": {
+    "message": "Использование 7-д квоты.\nСброс через 7 дней.\nДолгосрочный потолок."
+  },
+  "chipOut": {
+    "message": "исх."
+  },
+  "chipCached": {
+    "message": "кэш"
+  },
+  "chipLimitHit": {
+    "message": "лимит дост."
+  },
+  "magicPanelTitle": {
+    "message": "Магическое сжатие"
+  },
+  "magicBtnLabel": {
+    "message": "Магия"
+  },
+  "magicBtnTip": {
+    "message": "Магическое сжатие\n\nСжимает сообщения перед отправкой — удаляет паразитов,\nсжимает историю — чтобы 5-ч квота расходовалась медленнее.\n\nНажмите для настройки."
+  },
+  "magicPillTip": {
+    "message": "Нетто токенов сэкономлено Магией.\n\n· Вход: сокращения, паразиты\n· История: markdown удалён\n· Код: комментарии удалены\n\nМеньше токенов = квота расходуется медленнее."
+  },
+  "magicTokensSaved": {
+    "message": "↓ $COUNT$ токенов сэкономлено",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "magicMeasuredSub": {
+    "message": "Оценка из сжатия входа и истории (символы÷4)"
+  },
+  "magicEstSavings": {
+    "message": "~$PCT$% ожидаемая экономия",
+    "placeholders": {
+      "pct": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "magicEstSub": {
+    "message": "Отправьте сообщение, чтобы начать измерения"
+  },
+  "magicDesc": {
+    "message": "Магия сжимает сообщения перед отправкой — удаляет паразита, сжимает историю и указывает Claude пропускать декоративное форматирование — чтобы 5-ч квота расходовалась медленнее."
+  },
+  "magicSelectAll": {
+    "message": "Выбрать всё"
+  },
+  "magicDeselectAll": {
+    "message": "Снять всё"
+  },
+  "magicSectionInput": {
+    "message": "Сжатие входа (экономия видна на значке)"
+  },
+  "magicSectionOutput": {
+    "message": "Директивы вывода (сокращают ответы Claude)"
+  },
+  "magicEstLabel": {
+    "message": "ож. экономия"
+  },
+  "magicReset": {
+    "message": "Сброс"
+  },
+  "magicSave": {
+    "message": "Сохранить"
+  },
+  "impactSilent": {
+    "message": "незаметно"
+  },
+  "impactNotice": {
+    "message": "заметно"
+  },
+  "impactTradeoff": {
+    "message": "компромисс"
+  },
+  "techWhitespaceLabel": {
+    "message": "Очистка пробелов и unicode"
+  },
+  "techWhitespaceTip": {
+    "message": "Кавычки → прямые, em-тире → --, пустые строки слиты. 0–3 токена на сообщение."
+  },
+  "techContractionsLabel": {
+    "message": "Применение сокращений"
+  },
+  "techContractionsTip": {
+    "message": "\"will not\" → \"won't\" (2 → 1 ток.). BPE-токенизаторы рассматривают сокращения как единый токен. ~0.5–1 за вхождение."
+  },
+  "techFillersLabel": {
+    "message": "Удаление паразитов"
+  },
+  "techFillersTip": {
+    "message": "\"in order to\" → \"to\" (−3 т.), длинные фразы удалены (−6). Наибольшая единичная экономия."
+  },
+  "techNumbersLabel": {
+    "message": "Нормализация чисел"
+  },
+  "techNumbersTip": {
+    "message": "\"1,000,000\" → \"1M\". ~1–2 токена за число. Код не затрагивается."
+  },
+  "techCodeCommentsLabel": {
+    "message": "Удаление комментариев"
+  },
+  "techCodeCommentsTip": {
+    "message": "Удаляет // строчные, /* */ блочные и # комментарии. Измеримо. См. значок."
+  },
+  "techJsonMinifyLabel": {
+    "message": "Минификация JSON / конфига"
+  },
+  "techJsonMinifyTip": {
+    "message": "Минифицирует ```json блоки. Только валидный JSON. 20–40% экономии."
+  },
+  "techNoMarkdownOutputLabel": {
+    "message": "Ответы без форматирования"
+  },
+  "techNoMarkdownOutputTip": {
+    "message": "Добавляет ~8 токенов директивы. Claude пропускает markdown (#, **, -). 5–15% экономии вывода. Не отслеживается в значке."
+  },
+  "techNoPreambleLabel": {
+    "message": "Без преамбулы и заключений"
+  },
+  "techNoPreambleTip": {
+    "message": "Добавляет ~6 токенов. Удаляет \"Great question!\" и подобные. ~10–40 токенов за ответ."
+  },
+  "techExpertModeLabel": {
+    "message": "Режим эксперта (пропустить основы)"
+  },
+  "techExpertModeTip": {
+    "message": "Добавляет ~7 токенов. Claude пропускает введение и определения. экономия 0–30%."
+  },
+  "techStripHistoryMarkdownLabel": {
+    "message": "Удалить markdown из истории"
+  },
+  "techStripHistoryMarkdownTip": {
+    "message": "Удаляет ##, **, - из прошлых ответов. Измеримо — видно на значке. Форматирование сохраняется."
+  }
+}

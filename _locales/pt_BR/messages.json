@@ -1,0 +1,239 @@
+{
+  "extName": {
+    "message": "TokenLens para Claude – Rastreador de Uso e Limites"
+  },
+  "extShortName": {
+    "message": "TokenLens"
+  },
+  "extDescription": {
+    "message": "Uso de tokens em tempo real, janela de contexto, cotas de 5h/7d — diretamente no seu chat."
+  },
+  "actionTitle": {
+    "message": "TokenLens – Rastreador Claude"
+  },
+  "popupH1": {
+    "message": "CLAUDE TRACKER"
+  },
+  "popupSubtitle": {
+    "message": "Advanced Pro · v3.1"
+  },
+  "popupWishText": {
+    "message": "Que você <strong>jamais</strong> atinja o limite de 5h<br/>(vai atingir). Que sua janela de contexto<br/>permança vasta (não vai). E que cada resposta<br/>seja <strong>exatamente</strong> o que você pediu.<br/><span style=\"opacity:0.5;font-size:9px\">(boa sorte com essa última)</span>"
+  },
+  "popupFooter": {
+    "message": "CLAUDE ADVANCED PRO TRACKER — claude.ai"
+  },
+  "badgeTip": {
+    "message": "Tokens economizados nesta sessão pelo compressor.\nMedido pela redução real de caracteres (÷4).\nAtualizado após cada resposta completa.\nEntrada: contrações, enchimento, markdown do histórico."
+  },
+  "tokSuffix": {
+    "message": " tok"
+  },
+  "quota5hLabel": {
+    "message": "Limite de 5 Horas"
+  },
+  "quota5hTip": {
+    "message": "Sua cota de uso rotativa de 5 horas.\n\nResetada 5 horas após sua primeira mensagem.\nCompartilhada entre todas as conversações.\n\nPonderada por tokens. A compressão Mágica\nreduz a velocidade de preenchimento."
+  },
+  "quotaResetsIn": {
+    "message": "reinicia em"
+  },
+  "wmTip": {
+    "message": "Sem Mágica: cota 5h estimada sem compressão.\n\n  ██ Laranja = uso atual\n  ██ Roxo   = sem Mágica\n\nO que é comprimido:\n· Entrada: contrações, enchimento\n· Histórico: markdown removido\n· Saída: ~15–20% menos tokens"
+  },
+  "wmHeaderText": {
+    "message": "sem magia"
+  },
+  "wmActualLabel": {
+    "message": "real"
+  },
+  "wmWithoutLabel": {
+    "message": "sem magia"
+  },
+  "quota7dLabel": {
+    "message": "Limite de 7 Dias"
+  },
+  "quota7dTip": {
+    "message": "Sua cota de uso rotativa de 7 dias.\n\nResetada 7 dias após sua primeira mensagem.\n\nEnche mais lentamente que a cota 5h —\né o limite de uso de longo prazo."
+  },
+  "ctxPillLabel": {
+    "message": "contexto"
+  },
+  "ctxPillTip": {
+    "message": "Uso estimado da janela de contexto.\n\nContagem de tokens (heurística):\n· Blocos de código: caracteres ÷ 3\n· URLs e números: ÷ 2\n· Texto normal: palavras × 1.3\n\nAproximando 100%, o Claude pode começar\na esquecer mensagens anteriores."
+  },
+  "spdPillTip": {
+    "message": "Velocidade de saída da última resposta (t/s).\n\nFaixa típica: 30–80 t/s.\nMenor nos horários de pico."
+  },
+  "turnsPillTip": {
+    "message": "Número de respostas completas do assistente\nnesta sessão."
+  },
+  "costPillTip": {
+    "message": "Custo estimado de tokens pelas tarifas da API Claude.\n\nAssinaturas Claude.ai são tarifa fixa —\neste é um valor de referência."
+  },
+  "latPillTip": {
+    "message": "Tempo médio até o primeiro token (TTFT).\n\nMaior nos horários de pico."
+  },
+  "ghostTurns": {
+    "message": "turnos"
+  },
+  "ghostCost": {
+    "message": "custo est."
+  },
+  "ghostLatency": {
+    "message": "latência méd."
+  },
+  "peakTip": {
+    "message": "Horários de pico: Seg–Sex 5h–11h PT.\nCarga maior no servidor durante o pico."
+  },
+  "offPeakText": {
+    "message": "fora do pico"
+  },
+  "onPeakText": {
+    "message": "pico"
+  },
+  "toolbar5hTip": {
+    "message": "Uso da cota de 5h.\nResetada 5h após sua primeira mensagem.\nA compressão Mágica ajuda a manter baixo."
+  },
+  "toolbar7dTip": {
+    "message": "Uso da cota de 7d.\nResetada 7 dias após sua primeira mensagem.\nO limite de uso de longo prazo da conta."
+  },
+  "chipOut": {
+    "message": "saída"
+  },
+  "chipCached": {
+    "message": "em cache"
+  },
+  "chipLimitHit": {
+    "message": "limite atingido"
+  },
+  "magicPanelTitle": {
+    "message": "Compressão Mágica"
+  },
+  "magicBtnLabel": {
+    "message": "Magia"
+  },
+  "magicBtnTip": {
+    "message": "Compressão Mágica\n\nComprime automaticamente suas mensagens antes\nde enviar — removendo enchimento, reduzindo\nhistorico, forçando texto simples —\npara que sua cota 5h se esgote mais lentamente.\n\nClique para ver ajustes e economia."
+  },
+  "magicPillTip": {
+    "message": "Tokens líquidos economizados pela Mágica.\n\n· Entrada: contrações, enchimento\n· Histórico: markdown removido\n· Código: comentários & JSON removidos\n\nMenos tokens = cota se esgota mais lentamente."
+  },
+  "magicTokensSaved": {
+    "message": "↓ $COUNT$ tokens economizados nesta sessão",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "magicMeasuredSub": {
+    "message": "Medido pela compressão de entrada e histórico (caracteres÷4)"
+  },
+  "magicEstSavings": {
+    "message": "~$PCT$% de economia estimada",
+    "placeholders": {
+      "pct": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "magicEstSub": {
+    "message": "Envie uma mensagem para começar a medir a economia real"
+  },
+  "magicDesc": {
+    "message": "A Mágica comprime suas mensagens antes de enviar — remove enchimento, reduz o histórico e instrui o Claude a pular formatação decorativa — para que sua cota de 5 horas se esgote mais lentamente."
+  },
+  "magicSelectAll": {
+    "message": "Selecionar tudo"
+  },
+  "magicDeselectAll": {
+    "message": "Desmarcar tudo"
+  },
+  "magicSectionInput": {
+    "message": "Compressão de entrada (economias medidas no badge)"
+  },
+  "magicSectionOutput": {
+    "message": "Diretivas de saída (reduz o comprimento das respostas do Claude)"
+  },
+  "magicEstLabel": {
+    "message": "economia de entrada estimada"
+  },
+  "magicReset": {
+    "message": "Redefinir"
+  },
+  "magicSave": {
+    "message": "Salvar"
+  },
+  "impactSilent": {
+    "message": "silencioso"
+  },
+  "impactNotice": {
+    "message": "perceptível"
+  },
+  "impactTradeoff": {
+    "message": "troca"
+  },
+  "techWhitespaceLabel": {
+    "message": "Limpeza de espaços e unicode"
+  },
+  "techWhitespaceTip": {
+    "message": "Aspas tipográficas → retas, travessões → --. Economiza 0–3 tokens por mensagem."
+  },
+  "techContractionsLabel": {
+    "message": "Aplicação de contrações"
+  },
+  "techContractionsTip": {
+    "message": "\"will not\" → \"won't\" (2 tokens → 1). Tokenizadores BPE tratam contrações como tokens únicos. ~0,5–1 token/ocorrência."
+  },
+  "techFillersLabel": {
+    "message": "Remoção de enchimento"
+  },
+  "techFillersTip": {
+    "message": "\"in order to\" → \"to\" (−3 tokens), frases longas removidas. Maior economia para estilos verbosos."
+  },
+  "techNumbersLabel": {
+    "message": "Normalização de números"
+  },
+  "techNumbersTip": {
+    "message": "\"1,000,000\" → \"1M\". Economiza ~1–2 tokens por número. Blocos de código não são alterados."
+  },
+  "techCodeCommentsLabel": {
+    "message": "Remoção de comentários de código"
+  },
+  "techCodeCommentsTip": {
+    "message": "Remove comentários // de linha, /* */ de bloco e # dos blocos de código. Real, mensurável."
+  },
+  "techJsonMinifyLabel": {
+    "message": "Minificação de JSON / config"
+  },
+  "techJsonMinifyTip": {
+    "message": "Minifica blocos ```json — remove espaços. Apenas JSON válido. ~20–40% de economia token."
+  },
+  "techNoMarkdownOutputLabel": {
+    "message": "Respostas em texto simples"
+  },
+  "techNoMarkdownOutputTip": {
+    "message": "Injeta ~8 tokens de diretiva. Claude pula markdown (##, **, -) — 5–15% de economia na saída. Não rastreado no badge."
+  },
+  "techNoPreambleLabel": {
+    "message": "Sem preâmbulo nem observações finais"
+  },
+  "techNoPreambleTip": {
+    "message": "Adiciona ~6 tokens de diretiva. Remove aberturas e fechamentos. ~10–40 tokens economizados por resposta."
+  },
+  "techExpertModeLabel": {
+    "message": "Modo especialista (pular básicos)"
+  },
+  "techExpertModeTip": {
+    "message": "Adiciona ~7 tokens de diretiva. Claude pula contexto introdutório. Economia varia (0–30%)."
+  },
+  "techStripHistoryMarkdownLabel": {
+    "message": "Remover markdown do histórico"
+  },
+  "techStripHistoryMarkdownTip": {
+    "message": "Remove ##, **, - de mensagens anteriores antes de re-entrar como tokens. Mensurável — refletido no badge %. Saída continua formatada."
+  }
+}

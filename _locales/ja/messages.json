@@ -1,0 +1,239 @@
+{
+  "extName": {
+    "message": "TokenLens for Claude – 使用量・制限トラッカー"
+  },
+  "extShortName": {
+    "message": "TokenLens"
+  },
+  "extDescription": {
+    "message": "トークン使用量・コンテキストウィンドウ・5時間/7日クォータをリアルタイム表示 — チャットの中で直接機能します。"
+  },
+  "actionTitle": {
+    "message": "TokenLens – Claude使用トラッカー"
+  },
+  "popupH1": {
+    "message": "CLAUDE TRACKER"
+  },
+  "popupSubtitle": {
+    "message": "Advanced Pro · v3.1"
+  },
+  "popupWishText": {
+    "message": "5時間制限に<strong>絶対</strong>当たりませんように<br/>(当たります)。コンテキストが広いままでいますように<br/>(そうはなりません)。そして毎回の返答が<br/><strong>ちょうど</strong>望み通りでありますように。<br/><span style=\"opacity:0.5;font-size:9px\">(最後はご感妖様)</span>"
+  },
+  "popupFooter": {
+    "message": "CLAUDE ADVANCED PRO TRACKER — claude.ai"
+  },
+  "badgeTip": {
+    "message": "このセッションで節約したトークン数。\n実際の文字削減から計測 (÷4)。\n各応答完了後に更新。\n入力: 短縮形、フィラー、履歴markdown。"
+  },
+  "tokSuffix": {
+    "message": " tok"
+  },
+  "quota5hLabel": {
+    "message": "5時間制限"
+  },
+  "quota5hTip": {
+    "message": "ローリン5時間使用クォータ。\n\n最初のメッセージから5時間後にリセット。\nアカウントの全会話で共有。\n\nトークン加重: 長いメッセージは多くのクォータを消費。\nマジック圧縮で減りを遅くできます。"
+  },
+  "quotaResetsIn": {
+    "message": "リセットまで"
+  },
+  "wmTip": {
+    "message": "マジックなし: 圧縮なしの場合の推定5時間クォータ。\n\n  ██ オレンジ = 現在の実際使用量\n  ██ 紫   = マジックなし\n\n圧縮対象:\n· 入力: 短縮形、フィラー\n· 履歴: 過去のmarkdown削除\n· 出力: ~15–20%削減"
+  },
+  "wmHeaderText": {
+    "message": "マジックなし"
+  },
+  "wmActualLabel": {
+    "message": "実際"
+  },
+  "wmWithoutLabel": {
+    "message": "魔法なし"
+  },
+  "quota7dLabel": {
+    "message": "7日間制限"
+  },
+  "quota7dTip": {
+    "message": "ローリン7日間使用クォータ。\n\n最初のメッセージから7日後にリセット。\n\n5時間クォータよりンクイに埋まる —\n長期的な使用上限です。"
+  },
+  "ctxPillLabel": {
+    "message": "コンテキスト"
+  },
+  "ctxPillTip": {
+    "message": "コンテキストウィンドウの推定使用量。\n\nトークンカウント (ヒューリスティック):\n· コードブロック: 文字数÷3\n· URL・数字: ÷2\n· 通常テキスト: 単語数×1.3\n\n100%に近づくと、Claudeは早いメッセージを忘れ始めます。"
+  },
+  "spdPillTip": {
+    "message": "小応答の出力速度 (t/s)。\n\n典型的な範囲: 30–80 t/s。\nピーク時は遅くなります。"
+  },
+  "turnsPillTip": {
+    "message": "このセッションで完了したアシスタント応答の数。"
+  },
+  "costPillTip": {
+    "message": "Claude APIレートでの推定コスト。\n\nClaude.aiは月額定額 —\nこれは参考値です。"
+  },
+  "latPillTip": {
+    "message": "平均TTFT。\n\nサーバーが応答を始めるまでの時間。\nピーク時は高くなります。"
+  },
+  "ghostTurns": {
+    "message": "ターン"
+  },
+  "ghostCost": {
+    "message": "推定コスト"
+  },
+  "ghostLatency": {
+    "message": "平均遅延"
+  },
+  "peakTip": {
+    "message": "ピーク時間: 月–金 5AM–11AM PT。\nピーク時はサーバー負荷が高い。"
+  },
+  "offPeakText": {
+    "message": "オフピーク"
+  },
+  "onPeakText": {
+    "message": "ピーク"
+  },
+  "toolbar5hTip": {
+    "message": "5時間クォータ使用量。\n最初のメッセージから5時間後にリセット。\nマジック圧縮で低く保てます。"
+  },
+  "toolbar7dTip": {
+    "message": "7日間クォータ使用量。\n最初のメッセージから7日後にリセット。\n長期的な使用上限。"
+  },
+  "chipOut": {
+    "message": "出力"
+  },
+  "chipCached": {
+    "message": "キャッシュ"
+  },
+  "chipLimitHit": {
+    "message": "制限到達"
+  },
+  "magicPanelTitle": {
+    "message": "マジック圧縮"
+  },
+  "magicBtnLabel": {
+    "message": "マジック"
+  },
+  "magicBtnTip": {
+    "message": "マジック圧縮\n\nメッセージを送信前に自動圧縮 — フィラー削除、\n履歴短縮、プレーンテキスト化 —\n5時間クォータの減りを遅くします。\n\nクリックで設定と節約量を確認。"
+  },
+  "magicPillTip": {
+    "message": "マジックによる節約tok数。\n\n· 入力: 短縮形、フィラー\n· 履歴: markdown剥取\n· コード: コメント・JSON削除\n\nトークンま・クォータ減り遅く。"
+  },
+  "magicTokensSaved": {
+    "message": "↓ このセッションで$COUNT$トークン節約",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "magicMeasuredSub": {
+    "message": "入力・履歴圧縮から計測 (文字数÷4)"
+  },
+  "magicEstSavings": {
+    "message": "~$PCT$%の推定節約",
+    "placeholders": {
+      "pct": {
+        "content": "$1",
+        "example": "23"
+      }
+    }
+  },
+  "magicEstSub": {
+    "message": "メッセージを送信すると実際の節約が計測されます"
+  },
+  "magicDesc": {
+    "message": "マジックは送信前にメッセージを圧縮 — フィラー削除、履歴緩劃、車飾型フォーマットを指示 — これにより5時間クォータの減りを遅くします。"
+  },
+  "magicSelectAll": {
+    "message": "すべて選択"
+  },
+  "magicDeselectAll": {
+    "message": "すべて解除"
+  },
+  "magicSectionInput": {
+    "message": "入力圧縮 (節約量はバッジで確認)"
+  },
+  "magicSectionOutput": {
+    "message": "出力指示 (レスポンスを短くする)"
+  },
+  "magicEstLabel": {
+    "message": "入力推定節約"
+  },
+  "magicReset": {
+    "message": "リセット"
+  },
+  "magicSave": {
+    "message": "保存"
+  },
+  "impactSilent": {
+    "message": "非表示"
+  },
+  "impactNotice": {
+    "message": "変化あり"
+  },
+  "impactTradeoff": {
+    "message": "トレードオフ"
+  },
+  "techWhitespaceLabel": {
+    "message": "空白・Unicode整理"
+  },
+  "techWhitespaceTip": {
+    "message": "「」→\"\"、ダッシュ→--、余分な空白行削除。典型的なメッセージで0–3トークン節約。"
+  },
+  "techContractionsLabel": {
+    "message": "短縮形の適用"
+  },
+  "techContractionsTip": {
+    "message": "\"will not\"→\"won't\" (2tok→1)。BPEトークナイザは短縮形を単一トークンと扱います。~0.5–1トークン/回。"
+  },
+  "techFillersLabel": {
+    "message": "フィラー・ヘッジの削除"
+  },
+  "techFillersTip": {
+    "message": "\"in order to\"→\"to\" (−3tok)、長いフレーズ削除 (−6tok)。長い文体で最大の入力節約。"
+  },
+  "techNumbersLabel": {
+    "message": "数値の正規化"
+  },
+  "techNumbersTip": {
+    "message": "\"1,000,000\"→\"1M\"。数値で1–2トークン節約。コードは変更なし。"
+  },
+  "techCodeCommentsLabel": {
+    "message": "コードコメントの剥取"
+  },
+  "techCodeCommentsTip": {
+    "message": "//行、/* */ブロック、#コメントをコードブロックから削除。実際の文字削減をバッジ%で確認可能。"
+  },
+  "techJsonMinifyLabel": {
+    "message": "JSON/設定の最小化"
+  },
+  "techJsonMinifyTip": {
+    "message": "```jsonブロックを最小化。有効なJSONのみ。通常JSONトークン20–40%節約。"
+  },
+  "techNoMarkdownOutputLabel": {
+    "message": "プレーンテキスト応答"
+  },
+  "techNoMarkdownOutputTip": {
+    "message": "~8トークンの指示を注入。Claudeのmarkdown菅飾(##、**、-)をスキップ。出力5–15%削減。バッジには記録されません。"
+  },
+  "techNoPreambleLabel": {
+    "message": "前置きと締めくくりなし"
+  },
+  "techNoPreambleTip": {
+    "message": "~6トークンの指示を追加。\"Great question!\"などの前置き/締めを削除。~10–40トークン/回節約。"
+  },
+  "techExpertModeLabel": {
+    "message": "エキスパートモード（基礎省略）"
+  },
+  "techExpertModeTip": {
+    "message": "~7トークンの指示。入門説明・定義をスキップ。節約はクエリにより0–30%。"
+  },
+  "techStripHistoryMarkdownLabel": {
+    "message": "履歴からmarkdown剥取"
+  },
+  "techStripHistoryMarkdownTip": {
+    "message": "過去のアシスタントメッセージから##、**、-を削除。バッジ%で計測可能。表示は引き続きフォーマットされます。"
+  }
+}
