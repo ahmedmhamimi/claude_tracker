@@ -330,14 +330,42 @@
     if (!window.CTS.UIInjected) tryInjectUI();
   });
 
-  mutationObserver.observe(document.documentElement, { childList: true, subtree: true });
+    mutationObserver.observe(document.documentElement, { childList: true, subtree: true });
 
-  // ─── Exports ─────────────────────────────────────────────────────────────
+    // ─── Polling Fallback ─────────────────────────────────────────────────────
+    // Brave on Wayland throttles or batches MutationObserver callbacks during
+    // initial page render, causing the observer to fire too late — the composer
+    // is already in the DOM but the injection window has passed. Opening DevTools
+    // forces a synchronous layout flush that drains the queued mutations, which
+    // is why the metrics appear instantly the moment DevTools opens.
+    // A lightweight interval runs in parallel to catch this gap without replacing
+    // the observer (which still handles SPA navigations correctly).
 
-  window.CTS_Content = {
-    tryInjectUI,
-    applyAnalysis,
-    updateInlineStats,
-  };
+    let _stableCount  = 0;
+    const _injectPoller = setInterval(() => {
+      const rowMissing     = !document.getElementById('ct-row');
+      const toolbarMissing = !document.getElementById('ct-toolbar-quota');
+      const composerReady  = !!(
+        document.querySelector('div[contenteditable="true"]') ||
+        document.querySelector('textarea[placeholder]')
+      );
+
+      if ((rowMissing || toolbarMissing) && composerReady) {
+        _stableCount = 0;
+        window.CTS.UIInjected = false;
+        tryInjectUI();
+      } else if (!rowMissing && !toolbarMissing) {
+        // Both elements present — count consecutive stable ticks then stop polling.
+        if (++_stableCount >= 10) clearInterval(_injectPoller);
+      }
+    }, 500);
+
+    // ─── Exports ─────────────────────────────────────────────────────────────
+
+    window.CTS_Content = {
+      tryInjectUI,
+      applyAnalysis,
+      updateInlineStats,
+    };
 
 })();
