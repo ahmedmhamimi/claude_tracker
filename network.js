@@ -15,22 +15,6 @@
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
 
-  // fetch's `headers` option can arrive as a Headers instance, an array of
-  // [key, value] pairs, or a plain object. `{ ...headersInstance }` silently
-  // produces {} for the Headers case (its entries live behind iterator
-  // methods, not own enumerable props), which was making every "authed"
-  // request downstream go out with no auth headers at all — and since every
-  // caller wraps its fetch in try/catch, the resulting non-200 responses
-  // failed silently instead of surfacing as an error.
-  function normalizeHeaders(h) {
-    try {
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Array.isArray(h)) return Object.fromEntries(h);
-      if (typeof h === 'object') return { ...h };
-    } catch (_) {}
-    return {};
-  }
-
   function getConvoId() {
     const m = window.location.pathname.match(/\/chat\/([a-f0-9\-]{36})/i);
     if (m) return m[1];
@@ -173,7 +157,7 @@
       if (res.status === 200) {
         window.CTS_Content.applyAnalysis(
           window.CTS_Shared.analyseConversation(await res.json()),
-                                         cid
+          cid
         );
       }
     } catch (_) {}
@@ -197,7 +181,7 @@
         if (m) {
           if (!window.CTS.orgId) window.CTS.orgId = m[1];
           if (opts.headers && !Object.keys(window.CTS.authHeaders).length) {
-            window.CTS.authHeaders = normalizeHeaders(opts.headers);
+            window.CTS.authHeaders = { ...opts.headers };
           }
           if (!window.CTS.fetchedUpfront && window.CTS.orgId) {
             window.CTS.fetchedUpfront = true;

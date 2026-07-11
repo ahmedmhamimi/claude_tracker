@@ -11,8 +11,6 @@
 (function () {
   'use strict';
 
-  console.log('[CTS] content.js executing at', new Date().toISOString(), 'readyState:', document.readyState);
-
   // ─── Model Detection ──────────────────────────────────────────────────────
 
   function detectModelFromDOM() {
@@ -181,26 +179,11 @@
   // ─── UI Injection ─────────────────────────────────────────────────────────
 
   function tryInjectUI() {
-    try {
-      _tryInjectUIInner();
-    } catch (err) {
-      console.error('[CTS] tryInjectUI threw:', err);
-    }
-  }
-
-  function _tryInjectUIInner() {
     if (window.CTS.UIInjected && document.getElementById('ct-row')) return;
 
     const composer = document.querySelector('div[contenteditable="true"]')
     || document.querySelector('textarea[placeholder]');
-    if (!composer) {
-      console.log('[CTS] tryInjectUI: no composer found yet');
-      return;
-    }
-    if (!window.ClaudeTrackerUI) {
-      console.error('[CTS] tryInjectUI: window.ClaudeTrackerUI is undefined — ui.js failed to run or threw');
-      return;
-    }
+    if (!composer) return;
 
     // Core UI (CSS, theme observers, tooltip engine) must run exactly once,
     // ever. It used to share window.CTS.UIInjected with the sidebar retry
@@ -358,24 +341,14 @@
     // A lightweight interval runs in parallel to catch this gap without replacing
     // the observer (which still handles SPA navigations correctly).
 
-    let _rafTicks = 0, _pollerTicks = 0;
-    window.CTS._debugTicks = () => console.log('[CTS] rAF ticks:', _rafTicks, 'poller ticks:', _pollerTicks, 'UIInjected:', window.CTS.UIInjected, 'ct-row exists:', !!document.getElementById('ct-row'), 'composer exists:', !!(document.querySelector('div[contenteditable="true"]') || document.querySelector('textarea[placeholder]')));
-
-    let _lastComposerState = null;
     let _stableCount  = 0;
     const _injectPoller = setInterval(() => {
-      _pollerTicks++;
       const rowMissing     = !document.getElementById('ct-row');
       const toolbarMissing = !document.getElementById('ct-toolbar-quota');
       const composerReady  = !!(
         document.querySelector('div[contenteditable="true"]') ||
         document.querySelector('textarea[placeholder]')
       );
-
-      if (composerReady !== _lastComposerState) {
-        console.log('[CTS] composer state changed to:', composerReady, 'at tick', _pollerTicks);
-        _lastComposerState = composerReady;
-      }
 
       if ((rowMissing || toolbarMissing) && composerReady) {
         _stableCount = 0;
@@ -386,31 +359,6 @@
         if (++_stableCount >= 10) clearInterval(_injectPoller);
       }
     }, 500);
-
-    // ─── rAF Injection Loop ─────────────────────────────────────────────────
-    // Backgrounded/unfocused tabs get setInterval and MutationObserver callback
-    // flushing heavily throttled or batched by the browser (Brave on Wayland is
-    // the worst offender, but Chrome does this too under load) — that's why
-    // the UI only appears the instant DevTools is opened: DevTools forces a
-    // synchronous style/layout/paint flush that drains everything queued up
-    // at once. requestAnimationFrame callbacks are tied to the paint cycle
-    // itself rather than a wall-clock timer, so they get throttled far less
-    // aggressively and give us a second, differently-gated path to the same
-    // check. Runs alongside (not instead of) the observer and setInterval
-    // poller above — cheap no-op checks, and belt-and-suspenders here is the
-    // point.
-    function _rafInjectLoop() {
-      _rafTicks++;
-      if (!document.getElementById('ct-row') || !document.getElementById('ct-toolbar-quota')) {
-        if (!window.CTS.UIInjected) tryInjectUI();
-        else {
-          window.CTS.UIInjected = false;
-          tryInjectUI();
-        }
-      }
-      requestAnimationFrame(_rafInjectLoop);
-    }
-    requestAnimationFrame(_rafInjectLoop);
 
     // ─── Exports ─────────────────────────────────────────────────────────────
 
