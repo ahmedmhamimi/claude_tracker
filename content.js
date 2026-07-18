@@ -213,31 +213,13 @@
       composer.parentElement.appendChild(window.ClaudeTrackerUI.buildComposerRow());
     }
 
-    // Toolbar quota strip
+    // Quota card — floats independently of the composer (fixed-position,
+    // top-right of the viewport) instead of living inside the message box's
+    // toolbar row, so it never crowds the "+" button or wraps awkwardly.
     if (!document.getElementById('ct-toolbar-quota')) {
-      const plusBtn =
-      document.querySelector('button[aria-label="Add content"]') ||
-      document.querySelector('button[data-testid="attach-button"]') ||
-      document.querySelector('button[aria-label*="attach" i]') ||
-      document.querySelector('button[aria-label*="Add" i]') ||
-      composer.closest('form')?.querySelector('button');
-      if (plusBtn) {
-        const strip = window.ClaudeTrackerUI.buildToolbarQuota();
-        const toolbarRow = plusBtn.parentElement;
-        if (toolbarRow) {
-          plusBtn.after(strip);
-          // On wide/desktop viewports Claude's toolbar container often has
-          // overflow:hidden which clips our injected strip. Unlock it on the
-          // immediate row and its parent only — deep ancestor changes risk
-          // breaking Claude's own scroll containment.
-          [toolbarRow, toolbarRow.parentElement].forEach(el => {
-            if (!el) return;
-            const cs = window.getComputedStyle(el);
-            if (cs.overflowX === 'hidden') el.style.overflowX = 'visible';
-            if (cs.overflow  === 'hidden') el.style.overflow  = 'visible';
-          });
-        }
-      }
+      const strip = window.ClaudeTrackerUI.buildToolbarQuota();
+      document.body.appendChild(strip);
+      requestAnimationFrame(() => strip.classList.add('vis'));
     }
 
     // Sidebar quota panel — retried independently on subsequent passes.

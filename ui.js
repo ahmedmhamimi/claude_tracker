@@ -193,32 +193,63 @@ window.ClaudeTrackerUI = (function () {
   .ct-chip.cached  { color: var(--ct-purple); border-color: var(--ct-purple); }
   .ct-chip.maxed   { color: var(--ct-red); border-color: var(--ct-red); }
 
+  /* Floating quota card — lives on its own, detached from the composer.
+     Anchored fixed to the viewport (top-right on desktop, tucked above the
+     composer on narrow viewports) so it never competes for space with the
+     message box or the toolbar buttons around it. */
   #ct-toolbar-quota {
-  display: inline-flex; align-items: center; gap: 10px;
-  padding: 0 10px; flex: 0 0 auto; overflow: visible;
-  font-family: var(--ct-mono); font-size: 11px; font-weight: 700;
-  color: var(--ct-muted); white-space: nowrap;
+  position: fixed; top: 68px; right: 20px; z-index: 9997;
+  display: flex; flex-direction: column; gap: 9px;
+  min-width: 178px;
+  padding: 11px 14px 12px;
+  border-radius: 14px;
+  background: var(--ct-ghost-bg);
+  border: 1px solid var(--ct-border);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
+  font-family: var(--ct-mono); color: var(--ct-muted); white-space: nowrap;
+  opacity: 0; transform: translateY(-8px) scale(0.98);
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(.2,.8,.3,1);
   pointer-events: auto;
   }
-  .ct-tq-sep { opacity: 0.25; font-size: 10px; }
+  #ct-toolbar-quota.vis { opacity: 1; transform: translateY(0) scale(1); }
+  #ct-toolbar-quota:hover {
+    box-shadow: 0 14px 38px rgba(0,0,0,0.18), 0 3px 10px rgba(0,0,0,0.08);
+  }
+  #ct-toolbar-quota #ct-peak { align-self: flex-start; }
+  .ct-tq-sep { display: none; }
   .ct-tq-block {
-    display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
   }
-  @media (max-width: 768px) {
-    #ct-toolbar-quota { gap: 6px; padding: 0 6px; }
-    .ct-tq-block { flex-shrink: 1; gap: 4px; }
-    .ct-tq-bar { width: 32px; }
-    .ct-tq-reset { display: none; }
+  .ct-tq-label {
+    color: var(--ct-muted); font-size: 9.5px; font-weight: 800;
+    letter-spacing: .04em; width: 16px; flex-shrink: 0;
   }
-  .ct-tq-label { color: var(--ct-muted); font-size: 10px; }
   .ct-tq-bar {
-    width: 52px; height: 4px; border-radius: 2px;
+    width: 74px; height: 5px; border-radius: 3px;
     background: var(--ct-bg-progress); overflow: hidden; flex-shrink: 0;
   }
-  .ct-tq-fill { height: 100%; width: 0%; border-radius: 2px; background: var(--ct-accent);
+  .ct-tq-fill { height: 100%; width: 0%; border-radius: 3px; background: var(--ct-accent);
     transition: width 0.5s cubic-bezier(.4,0,.2,1); }
-  .ct-tq-pct { font-size: 10px; color: var(--ct-muted); }
-  .ct-tq-reset { font-size: 10px; color: var(--ct-muted); opacity: 0.6; }
+  .ct-tq-pct {
+    font-size: 10px; font-weight: 800; color: var(--ct-text);
+    min-width: 26px; text-align: right; flex-shrink: 0;
+  }
+  .ct-tq-reset {
+    font-size: 9.5px; color: var(--ct-muted); opacity: 0.65;
+    margin-left: auto; flex-shrink: 0;
+  }
+  @media (max-width: 768px) {
+    #ct-toolbar-quota {
+      top: auto; bottom: 96px; right: 14px; left: 14px;
+      min-width: 0; flex-direction: row; align-items: center; gap: 14px;
+      padding: 9px 12px;
+    }
+    #ct-toolbar-quota #ct-peak { align-self: center; }
+    .ct-tq-block { gap: 6px; }
+    .ct-tq-bar { width: 44px; }
+    .ct-tq-reset { display: none; }
+  }
 
   #ct-row-quota {
   display: none;
