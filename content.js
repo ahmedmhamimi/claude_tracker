@@ -11,8 +11,6 @@
 (function () {
   'use strict';
 
-  console.log('[CTS] content.js executing at', new Date().toISOString(), 'readyState:', document.readyState);
-
   // ─── Model Detection ──────────────────────────────────────────────────────
 
   function detectModelFromDOM() {
@@ -181,26 +179,11 @@
   // ─── UI Injection ─────────────────────────────────────────────────────────
 
   function tryInjectUI() {
-    try {
-      _tryInjectUIInner();
-    } catch (err) {
-      console.error('[CTS] tryInjectUI threw:', err);
-    }
-  }
-
-  function _tryInjectUIInner() {
     if (window.CTS.UIInjected && document.getElementById('ct-row')) return;
 
     const composer = document.querySelector('div[contenteditable="true"]')
     || document.querySelector('textarea[placeholder]');
-    if (!composer) {
-      console.log('[CTS] tryInjectUI: no composer found yet');
-      return;
-    }
-    if (!window.ClaudeTrackerUI) {
-      console.error('[CTS] tryInjectUI: window.ClaudeTrackerUI is undefined — ui.js failed to run or threw');
-      return;
-    }
+    if (!composer) return;
 
     // Core UI (CSS, theme observers, tooltip engine) must run exactly once,
     // ever. It used to share window.CTS.UIInjected with the sidebar retry
@@ -230,31 +213,13 @@
       composer.parentElement.appendChild(window.ClaudeTrackerUI.buildComposerRow());
     }
 
-    // Toolbar quota strip
+    // Quota card — floats independently of the composer (fixed-position,
+    // top-right of the viewport) instead of living inside the message box's
+    // toolbar row, so it never crowds the "+" button or wraps awkwardly.
     if (!document.getElementById('ct-toolbar-quota')) {
-      const plusBtn =
-      document.querySelector('button[aria-label="Add content"]') ||
-      document.querySelector('button[data-testid="attach-button"]') ||
-      document.querySelector('button[aria-label*="attach" i]') ||
-      document.querySelector('button[aria-label*="Add" i]') ||
-      composer.closest('form')?.querySelector('button');
-      if (plusBtn) {
-        const strip = window.ClaudeTrackerUI.buildToolbarQuota();
-        const toolbarRow = plusBtn.parentElement;
-        if (toolbarRow) {
-          plusBtn.after(strip);
-          // On wide/desktop viewports Claude's toolbar container often has
-          // overflow:hidden which clips our injected strip. Unlock it on the
-          // immediate row and its parent only — deep ancestor changes risk
-          // breaking Claude's own scroll containment.
-          [toolbarRow, toolbarRow.parentElement].forEach(el => {
-            if (!el) return;
-            const cs = window.getComputedStyle(el);
-            if (cs.overflowX === 'hidden') el.style.overflowX = 'visible';
-            if (cs.overflow  === 'hidden') el.style.overflow  = 'visible';
-          });
-        }
-      }
+      const strip = window.ClaudeTrackerUI.buildToolbarQuota();
+      document.body.appendChild(strip);
+      requestAnimationFrame(() => strip.classList.add('vis'));
     }
 
     // Sidebar quota panel — retried independently on subsequent passes.
@@ -358,24 +323,14 @@
     // A lightweight interval runs in parallel to catch this gap without replacing
     // the observer (which still handles SPA navigations correctly).
 
-    let _rafTicks = 0, _pollerTicks = 0;
-    window.CTS._debugTicks = () => console.log('[CTS] rAF ticks:', _rafTicks, 'poller ticks:', _pollerTicks, 'UIInjected:', window.CTS.UIInjected, 'ct-row exists:', !!document.getElementById('ct-row'), 'composer exists:', !!(document.querySelector('div[contenteditable="true"]') || document.querySelector('textarea[placeholder]')));
-
-    let _lastComposerState = null;
     let _stableCount  = 0;
     const _injectPoller = setInterval(() => {
-      _pollerTicks++;
       const rowMissing     = !document.getElementById('ct-row');
       const toolbarMissing = !document.getElementById('ct-toolbar-quota');
       const composerReady  = !!(
         document.querySelector('div[contenteditable="true"]') ||
         document.querySelector('textarea[placeholder]')
       );
-
-      if (composerReady !== _lastComposerState) {
-        console.log('[CTS] composer state changed to:', composerReady, 'at tick', _pollerTicks);
-        _lastComposerState = composerReady;
-      }
 
       if ((rowMissing || toolbarMissing) && composerReady) {
         _stableCount = 0;
@@ -386,31 +341,6 @@
         if (++_stableCount >= 10) clearInterval(_injectPoller);
       }
     }, 500);
-
-    // ─── rAF Injection Loop ─────────────────────────────────────────────────
-    // Backgrounded/unfocused tabs get setInterval and MutationObserver callback
-    // flushing heavily throttled or batched by the browser (Brave on Wayland is
-    // the worst offender, but Chrome does this too under load) — that's why
-    // the UI only appears the instant DevTools is opened: DevTools forces a
-    // synchronous style/layout/paint flush that drains everything queued up
-    // at once. requestAnimationFrame callbacks are tied to the paint cycle
-    // itself rather than a wall-clock timer, so they get throttled far less
-    // aggressively and give us a second, differently-gated path to the same
-    // check. Runs alongside (not instead of) the observer and setInterval
-    // poller above — cheap no-op checks, and belt-and-suspenders here is the
-    // point.
-    function _rafInjectLoop() {
-      _rafTicks++;
-      if (!document.getElementById('ct-row') || !document.getElementById('ct-toolbar-quota')) {
-        if (!window.CTS.UIInjected) tryInjectUI();
-        else {
-          window.CTS.UIInjected = false;
-          tryInjectUI();
-        }
-      }
-      requestAnimationFrame(_rafInjectLoop);
-    }
-    requestAnimationFrame(_rafInjectLoop);
 
     // ─── Exports ─────────────────────────────────────────────────────────────
 
