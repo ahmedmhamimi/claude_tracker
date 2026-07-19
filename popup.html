@@ -1,137 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Claude Tracker</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+    @keyframes glow {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50%      { opacity: 0.7; transform: scale(1.05); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
     body {
-      width: 260px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #faf9f7;
-      color: #1a1714;
-      border-radius: 12px;
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #0c0c0e;
+      color: #f0f0f5;
+      border-radius: 20px;
       overflow: hidden;
+      position: relative;
     }
 
+    /* Aurora background */
+    .aurora {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      border-radius: 20px;
+      pointer-events: none;
+    }
+    .aurora-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.35;
+      animation: glow 6s ease-in-out infinite;
+    }
+    .aurora-blob.a { width: 200px; height: 200px; background: #e8622a; top: -60px; right: -40px; animation-delay: 0s; }
+    .aurora-blob.b { width: 160px; height: 160px; background: #7c3aed; bottom: 40px; left: -50px; animation-delay: 2s; opacity: 0.2; }
+    .aurora-blob.c { width: 120px; height: 120px; background: #059669; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-delay: 4s; opacity: 0.15; }
+
+    /* Noise texture overlay */
+    .noise {
+      position: absolute; inset: 0;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      border-radius: 20px;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 28px 24px 24px;
+    }
+
+    /* Header */
     .header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 16px 18px 12px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 24px;
+      animation: slideUp 0.5s ease-out both;
     }
-
-    .logo {
-      width: 28px; height: 28px;
-      background: rgba(232, 98, 42, 0.10);
-      border: 1.5px solid rgba(232, 98, 42, 0.30);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px;
+    .logo-wrap {
+      position: relative;
+      width: 44px; height: 44px;
       flex-shrink: 0;
     }
-
+    .logo-glow {
+      position: absolute; inset: -4px;
+      background: linear-gradient(135deg, #e8622a, #ff9a6a);
+      border-radius: 14px;
+      opacity: 0.3;
+      filter: blur(12px);
+      animation: glow 3s ease-in-out infinite;
+    }
+    .logo {
+      position: relative;
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, rgba(232,98,42,0.20), rgba(232,98,42,0.08));
+      border: 1.5px solid rgba(232, 98, 42, 0.35);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 16px rgba(232,98,42,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
     .header-text h1 {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .04em;
-      color: #1a1714;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      color: #fff;
       font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      line-height: 1.2;
     }
     .header-text p {
-      font-size: 9.5px;
-      color: #9a8f85;
-      margin-top: 1px;
-      letter-spacing: .02em;
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 3px;
+      letter-spacing: .04em;
       font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-weight: 600;
     }
 
-    .body {
-      padding: 16px 18px;
-    }
-
+    /* Divider */
     .divider {
       height: 1px;
-      background: rgba(255,255,255,0.06);
-      margin: 2px 0 14px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+      margin: 0 0 22px;
+      animation: fadeIn 0.6s ease-out 0.15s both;
     }
 
+    /* Card */
     .wish-card {
-      background: rgba(232, 98, 42, 0.05);
-      border: 1px solid rgba(232, 98, 42, 0.14);
-      border-radius: 10px;
-      padding: 12px 14px;
       position: relative;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 20px 22px;
       overflow: hidden;
+      animation: slideUp 0.6s ease-out 0.2s both;
+      backdrop-filter: blur(12px);
     }
     .wish-card::before {
       content: '';
-      position: absolute;
-      top: -20px; right: -20px;
-      width: 60px; height: 60px;
-      background: radial-gradient(circle, rgba(232,98,42,0.07) 0%, transparent 70%);
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent 10%, rgba(232,98,42,0.5) 50%, transparent 90%);
+    }
+    .wish-card::after {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 100px; height: 100px;
+      background: radial-gradient(circle, rgba(232,98,42,0.08) 0%, transparent 70%);
       border-radius: 50%;
       pointer-events: none;
     }
 
     .wish-emoji {
-      font-size: 18px;
-      margin-bottom: 6px;
+      font-size: 24px;
+      margin-bottom: 10px;
       display: block;
+      animation: float 4s ease-in-out infinite;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
     }
     .wish-text {
-      font-size: 10px;
-      font-weight: 600;
-      line-height: 1.6;
-      color: #5a4f47;
-      letter-spacing: .02em;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.75;
+      color: rgba(255,255,255,0.70);
+      letter-spacing: .01em;
       font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      position: relative;
+      z-index: 1;
     }
     .wish-text strong {
-      color: #e8622a;
-      font-weight: 800;
+      color: #ff9a6a;
+      font-weight: 700;
+    }
+    .wish-text .sub {
+      display: block;
+      margin-top: 10px;
+      color: rgba(255,255,255,0.30);
+      font-size: 10px;
+      font-weight: 500;
     }
 
+    /* Footer */
     .footer {
-      padding: 8px 18px 14px;
-      font-size: 8.5px;
-      color: #c0b5aa;
-      letter-spacing: .03em;
+      padding: 0 24px 20px;
+      font-size: 9px;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: .06em;
       text-align: center;
       font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+      font-weight: 600;
+      position: relative;
+      z-index: 1;
+      animation: fadeIn 0.7s ease-out 0.35s both;
+    }
+
+    /* Version badge */
+    .version-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(232,98,42,0.10);
+      border: 1px solid rgba(232,98,42,0.20);
+      border-radius: 100px;
+      font-size: 9px;
+      font-weight: 700;
+      color: #ff9a6a;
+      letter-spacing: 0.05em;
+      margin-top: 16px;
+    }
+    .version-badge .dot {
+      width: 5px; height: 5px;
+      background: #4ade80;
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(74,222,128,0.5);
     }
   </style>
+<base target="_blank">
 </head>
 <body>
 
-  <div class="header">
-    <div class="logo">⚡</div>
-    <div class="header-text">
-      <h1 id="popup-h1">CLAUDE TRACKER</h1>
-      <p id="popup-subtitle">Advanced Pro · v3.1</p>
-    </div>
+  <div class="aurora">
+    <div class="aurora-blob a"></div>
+    <div class="aurora-blob b"></div>
+    <div class="aurora-blob c"></div>
   </div>
+  <div class="noise"></div>
 
-  <div class="body">
+  <div class="content">
+    <div class="header">
+      <div class="logo-wrap">
+        <div class="logo-glow"></div>
+        <div class="logo">&#9889;</div>
+      </div>
+      <div class="header-text">
+        <h1 id="popup-h1">CLAUDE TRACKER</h1>
+        <p id="popup-subtitle">Advanced Pro &middot; v3.1</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
     <div class="wish-card">
-      <span class="wish-emoji">🤞</span>
+      <span class="wish-emoji">&#129310;</span>
       <div class="wish-text" id="popup-wish">
-        May you <strong>never</strong> hit the 5h limit<br/>
-        (you will). May your context window<br/>
-        stay vast (it won't). And may every<br/>
-        response be <strong>exactly</strong> what you asked.<br/>
-        <span style="opacity:0.5;font-size:9px">(good luck with that last one)</span>
+        May you <strong>never</strong> hit the 5h limit<br>
+        (you will). May your context window<br>
+        stay vast (it won&#8217;t). And may every<br>
+        response be <strong>exactly</strong> what you asked.<br>
+        <span class="sub">(good luck with that last one)</span>
+      </div>
+      <div style="text-align:center;">
+        <span class="version-badge"><span class="dot"></span> ACTIVE</span>
       </div>
     </div>
   </div>
 
-  <div class="footer" id="popup-footer">CLAUDE ADVANCED PRO TRACKER — claude.ai</div>
+  <div class="footer" id="popup-footer">CLAUDE ADVANCED PRO TRACKER &mdash; claude.ai</div>
 
   <script>
-    // Apply i18n strings on load. Falls back to existing DOM content if getMessage fails.
     (function () {
       const g = key => {
         try { return chrome.i18n.getMessage(key) || null; } catch (e) { return null; }
