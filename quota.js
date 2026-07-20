@@ -38,12 +38,15 @@
     });
 
     // Persist so navigating to a new chat restores bars immediately without
-    // waiting for the next fetch/SSE event.
+    // waiting for the next fetch/SSE event. Tagging with orgId lets a later
+    // account switch detect that this snapshot belongs to a different
+    // account and discard it instead of leaking stale numbers across accounts.
     window.CTS_StorageSet({
       cts_5h_util: window.CTS.current5hUtil,
       cts_7d_util: window.CTS.current7dUtil,
       cts_ts_5h:   window.CTS.targetTimestamps['5h'],
       cts_ts_7d:   window.CTS.targetTimestamps['7d'],
+      cts_org_id:  window.CTS.orgId || null,
     });
   }
 
@@ -96,9 +99,9 @@
       const fmtH = h => { const ampm = h < 12 ? 'AM' : 'PM'; const h12 = h % 12 || 12; return h12 + ':00 ' + ampm; };
       const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
       const tip = (inPeak ? '🔴 PEAK HOURS (now active)' : '🟢 OFF-PEAK (now active)') +
-        '\n\nPeak: Mon–Fri  ' + fmtH(peakStartH) + ' – ' + fmtH(peakEndH) +
-        (tzName ? ' (' + tzName + ')' : '') +
-        '\n\nDuring peak hours, Claude may respond\nmore slowly due to higher server load.\nUsage limits reset faster off-peak.';
+      '\n\nPeak: Mon–Fri  ' + fmtH(peakStartH) + ' – ' + fmtH(peakEndH) +
+      (tzName ? ' (' + tzName + ')' : '') +
+      '\n\nDuring peak hours, Claude may respond\nmore slowly due to higher server load.\nUsage limits reset faster off-peak.';
       badge.setAttribute('data-ct-tip', tip);
     } catch (_) {}
   }
@@ -131,8 +134,8 @@
       const m   = Math.floor((diff % 3600) / 60);
       const s   = diff % 60;
       const txt = win === '5h'
-        ? (h > 0 ? h + 'h ' + m + 'm ' + s + 's' : m + 'm ' + s + 's')
-        : (d > 0 ? d + 'd ' + h + 'h' : h > 0 ? h + 'h ' + m + 'm' : m + 'm ' + s + 's');
+      ? (h > 0 ? h + 'h ' + m + 'm ' + s + 's' : m + 'm ' + s + 's')
+      : (d > 0 ? d + 'd ' + h + 'h' : h > 0 ? h + 'h ' + m + 'm' : m + 'm ' + s + 's');
 
       if (displayEl) displayEl.textContent = txt;
       if (toolbarEl) toolbarEl.textContent  = txt;
@@ -176,7 +179,7 @@
 
   window.CTS_Quota = {
     syncQuotaUI,
-    startCountdownTick,
+ startCountdownTick,
   };
 
 })();

@@ -114,6 +114,11 @@
           lastSeenCount: assistantCount,
           cachedUntil:   null,
         };
+        // Bounded so a tab left open across many conversations doesn't
+        // accumulate one entry per convoId forever. UUID keys preserve
+        // insertion order, so the oldest entry is always first here.
+        const keys = Object.keys(window.CTS.convoCacheMap);
+        if (keys.length > 30) delete window.CTS.convoCacheMap[keys[0]];
       }
       const cState = window.CTS.convoCacheMap[activeCid];
       if (assistantCount > cState.lastSeenCount) {
@@ -178,12 +183,57 @@
 
   // ─── UI Injection ─────────────────────────────────────────────────────────
 
+  // Cheap, cheap-to-maintain guard against the obvious signed-out routes
+  // (login/signup/auth screens). Not exhaustive on its own — see the
+  // stability check below — but avoids even looking for a composer on
+  // pages we already know aren't the real app.
+  function isAuthOrMarketingPage() {
+    const p = window.location.pathname.toLowerCase();
+    return /^\/(login|signin|sign-in|signup|sign-up|auth|logout|oauth)(\/|$)/.test(p);
+  }
+
+  // Guards against building the UI on a composer-shaped element that only
+  // exists for a moment on the signed-out shell (e.g. while the page is
+  // still hydrating, right before the router redirects a signed-out visitor
+  // away). We don't know that page's exact markup, so instead of trying to
+  // blacklist selectors, we just refuse to trust a newly-seen composer until
+  // it's still present and attached ~300ms later. A real app composer easily
+  // survives that; a transient pre-redirect match never does — which is what
+  // was causing the widget to flash in and vanish within a second for
+  // signed-out users.
+  let _pendingComposer = null;
+  let _confirmedComposer = null;
+
   function tryInjectUI() {
     if (window.CTS.UIInjected && document.getElementById('ct-row')) return;
 
+    if (isAuthOrMarketingPage()) {
+      _pendingComposer = null;
+      _confirmedComposer = null;
+      return;
+    }
+
     const composer = document.querySelector('div[contenteditable="true"]')
     || document.querySelector('textarea[placeholder]');
-    if (!composer) return;
+    if (!composer) {
+      _pendingComposer = null;
+      _confirmedComposer = null;
+      return;
+    }
+
+    if (composer !== _confirmedComposer) {
+      if (composer !== _pendingComposer) {
+        _pendingComposer = composer;
+        setTimeout(() => {
+          // Still the same element, still on-page, and we haven't since
+          // navigated to an auth page? Only then is it trusted.
+          if (_pendingComposer !== composer || !composer.isConnected || isAuthOrMarketingPage()) return;
+          _confirmedComposer = composer;
+          tryInjectUI();
+        }, 300);
+      }
+      return;
+    }
 
     // Core UI (CSS, theme observers, tooltip engine) must run exactly once,
     // ever. It used to share window.CTS.UIInjected with the sidebar retry
