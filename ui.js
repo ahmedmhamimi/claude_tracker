@@ -848,7 +848,7 @@ window.ClaudeTrackerUI = (function () {
                 bubble.innerHTML = `
                 <div id="ct-hint-arrow"></div>
                 <div id="ct-hint-close" role="button" aria-label="Dismiss">\u2715</div>
-                <div id="ct-hint-title"><span id="ct-hint-icon">\u270b</span>${withFallback('hintTitle', 'You can move/resize this')}</div>
+                <div id="ct-hint-title"><span id="ct-hint-icon">\u270b</span>${withFallback('hintTitle', 'You can move this')}</div>
                 <div id="ct-hint-body">${withFallback('hintBody', 'Drag it anywhere on screen, or grab a corner to resize.')}</div>
                 `;
                 // Start fully hidden and un-transitioned so the very first

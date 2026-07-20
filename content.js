@@ -114,6 +114,11 @@
           lastSeenCount: assistantCount,
           cachedUntil:   null,
         };
+        // Bounded so a tab left open across many conversations doesn't
+        // accumulate one entry per convoId forever. UUID keys preserve
+        // insertion order, so the oldest entry is always first here.
+        const keys = Object.keys(window.CTS.convoCacheMap);
+        if (keys.length > 30) delete window.CTS.convoCacheMap[keys[0]];
       }
       const cState = window.CTS.convoCacheMap[activeCid];
       if (assistantCount > cState.lastSeenCount) {

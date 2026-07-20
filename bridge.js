@@ -79,8 +79,8 @@
   // fires once per install, not once per tab.
 
   chrome.storage.local.get(
-    ['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d', 'claude_tracker_settings',
-     'cts_magic_intro_seen'],
+    ['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d', 'cts_org_id', 'claude_tracker_settings',
+    'cts_magic_intro_seen'],
     items => {
       document.documentElement.dataset.ctsstorage = JSON.stringify(items || {});
     }
