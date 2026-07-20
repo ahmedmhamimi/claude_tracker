@@ -209,6 +209,7 @@ window.ClaudeTrackerUI = (function () {
   box-shadow: 0 10px 30px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
   font-family: var(--ct-mono); color: var(--ct-muted); white-space: nowrap;
   opacity: 0; transform: translateY(-8px) scale(0.98);
+  transform-origin: 0 0;
   transition: opacity 0.35s ease, transform 0.35s cubic-bezier(.2,.8,.3,1);
   pointer-events: auto;
   }
@@ -259,6 +260,42 @@ window.ClaudeTrackerUI = (function () {
       .ct-tq-block { gap: 6px; }
       .ct-tq-bar { width: 44px; }
       .ct-tq-reset { display: none; }
+    }
+
+    .ct-resize-handle {
+      position: absolute;
+      width: 13px; height: 13px;
+      opacity: 0; transition: opacity 0.2s ease;
+      z-index: 2;
+    }
+    #ct-toolbar-quota:hover .ct-resize-handle,
+    #ct-toolbar-quota.ct-resizing .ct-resize-handle { opacity: 0.7; }
+    .ct-resize-handle:hover { opacity: 1 !important; }
+    #ct-toolbar-quota.ct-resizing { transition: none !important; }
+
+    .ct-resize-handle[data-corner="br"] {
+      right: 2px; bottom: 2px; cursor: nwse-resize !important;
+      background-image:
+      linear-gradient(135deg, transparent 0 42%, var(--ct-muted) 42% 50%, transparent 50% 62%,
+                      var(--ct-muted) 62% 70%, transparent 70% 82%, var(--ct-muted) 82% 90%, transparent 90%);
+    }
+    .ct-resize-handle[data-corner="tl"] {
+      left: 2px; top: 2px; cursor: nwse-resize !important;
+      background-image:
+      linear-gradient(135deg, transparent 0 42%, var(--ct-muted) 42% 50%, transparent 50% 62%,
+                      var(--ct-muted) 62% 70%, transparent 70% 82%, var(--ct-muted) 82% 90%, transparent 90%);
+    }
+    .ct-resize-handle[data-corner="tr"] {
+      right: 2px; top: 2px; cursor: nesw-resize !important;
+      background-image:
+      linear-gradient(45deg, transparent 0 42%, var(--ct-muted) 42% 50%, transparent 50% 62%,
+                      var(--ct-muted) 62% 70%, transparent 70% 82%, var(--ct-muted) 82% 90%, transparent 90%);
+    }
+    .ct-resize-handle[data-corner="bl"] {
+      left: 2px; bottom: 2px; cursor: nesw-resize !important;
+      background-image:
+      linear-gradient(45deg, transparent 0 42%, var(--ct-muted) 42% 50%, transparent 50% 62%,
+                      var(--ct-muted) 62% 70%, transparent 70% 82%, var(--ct-muted) 82% 90%, transparent 90%);
     }
 
     #ct-row-quota {
@@ -452,15 +489,33 @@ window.ClaudeTrackerUI = (function () {
                 } catch (_) { /* ignore malformed/missing stored position */ }
               }
 
+              function currentLeftTop(el) {
+                // getBoundingClientRect() reflects the *visual* (post-transform)
+                // box, which is larger/smaller than the real layout box once the
+                // widget has been resized. Reading the used left/top instead
+                // keeps drag math anchored to the widget's actual position
+                // rather than its scaled appearance.
+                const cs = getComputedStyle(el);
+                let left = parseFloat(cs.left);
+                let top  = parseFloat(cs.top);
+                if (isNaN(left) || isNaN(top)) {
+                  const rect = el.getBoundingClientRect();
+                  if (isNaN(left)) left = rect.left;
+                  if (isNaN(top))  top  = rect.top;
+                }
+                return { left, top };
+              }
+
               document.addEventListener('pointerdown', e => {
                 if (e.button !== 0) return; // left click / primary touch only
+                if (e.target.closest('.ct-resize-handle')) return; // handled by initResizable
                 const el = e.target.closest('#' + DRAG_ID);
                 if (!el) return;
                 dragEl = el;
                 moved = false;
-                const rect = el.getBoundingClientRect();
+                const pos = currentLeftTop(el);
                 startX = e.clientX; startY = e.clientY;
-                startLeft = rect.left; startTop = rect.top;
+                startLeft = pos.left; startTop = pos.top;
                 el.classList.add('ct-dragging');
                 if (el.setPointerCapture) {
                   try { el.setPointerCapture(e.pointerId); } catch (_) {}
@@ -481,9 +536,9 @@ window.ClaudeTrackerUI = (function () {
                 if (!dragEl) return;
                 dragEl.classList.remove('ct-dragging');
                 if (moved) {
-                  const rect = dragEl.getBoundingClientRect();
+                  const pos = currentLeftTop(dragEl);
                   try {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify({ left: rect.left, top: rect.top }));
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify({ left: pos.left, top: pos.top }));
                   } catch (_) {}
                 }
                 dragEl = null;
@@ -494,8 +549,8 @@ window.ClaudeTrackerUI = (function () {
               window.addEventListener('resize', () => {
                 const el = document.getElementById(DRAG_ID);
                 if (el && el.classList.contains('ct-positioned')) {
-                  const rect = el.getBoundingClientRect();
-                  placeAt(el, rect.left, rect.top);
+                  const pos = currentLeftTop(el);
+                  placeAt(el, pos.left, pos.top);
                 }
               });
 
@@ -507,6 +562,159 @@ window.ClaudeTrackerUI = (function () {
               };
                 tryApply();
                 new MutationObserver(tryApply).observe(document.documentElement, { childList: true, subtree: true });
+            })();
+
+            // ─── Resizable floating widget ─────────────────────────────────────
+            // Grips in all four corners of #ct-toolbar-quota let the user scale
+            // the whole card up or down, anchored at the corner OPPOSITE the one
+            // being dragged (grab bottom-left -> top-right stays put, growth is
+            // only down/left).
+            //
+            // Rather than toggling CSS transform-origin per corner (which snaps
+            // the box to a new anchor the instant you switch corners, even
+            // before the mouse moves — the "teleport" bug), transform-origin is
+            // fixed at 0 0 permanently and every corner's anchoring is expressed
+            // instead as an explicit `translate(tx, ty) scale(s)`. At the start
+            // of every drag, tx/ty/s are read from whatever is CURRENTLY applied
+            // (not recomputed from a clean slate), so the very first frame of a
+            // drag always renders identically to the frame before it — no jump,
+            // no matter which corner was used last. Position (left/top) is never
+            // touched here; only the drag-to-move logic above does that.
+            (function initResizable() {
+              const STORAGE_KEY = 'ct-widget-scale';
+              const DRAG_ID = 'ct-toolbar-quota';
+              const HANDLE_CLASS = 'ct-resize-handle';
+              const MIN_SCALE = 0.7, MAX_SCALE = 1.6, DEFAULT_SCALE = 1;
+              // How much scale change one pixel of drag distance produces.
+              // Small on purpose so a normal drag feels gradual, not explosive.
+              const SENSITIVITY = 220;
+
+              // Per-corner sign for turning mouse movement into "grow" vs
+              // "shrink" — positive means dragging away from the anchored
+              // opposite corner.
+              const CORNER_SIGN = {
+                br: { x: 1,  y: 1  },
+                bl: { x: -1, y: 1  },
+                tr: { x: 1,  y: -1 },
+                tl: { x: -1, y: -1 },
+              };
+              // Anchor point for each handle, as a fraction of the widget's own
+              // (unscaled) width/height — i.e. the corner that stays fixed while
+              // that handle is dragged.
+              const CORNER_ANCHOR = {
+                br: { x: 0, y: 0 }, // dragging br anchors top-left
+                bl: { x: 1, y: 0 }, // dragging bl anchors top-right
+                tr: { x: 0, y: 1 }, // dragging tr anchors bottom-left
+                tl: { x: 1, y: 1 }, // dragging tl anchors bottom-right
+              };
+
+              let resizeEl = null, startX = 0, startY = 0, sign = CORNER_SIGN.br;
+              let startScale = DEFAULT_SCALE, startTx = 0, startTy = 0, anchorX = 0, anchorY = 0;
+
+              // Reads whatever translate()/scale() is currently applied (if
+              // none is set yet, that's equivalent to translate(0,0) scale(1)).
+              function readTransform(el) {
+                const t = el.style.transform || '';
+                const mTranslate = /translate\(\s*(-?[\d.]+)px\s*,\s*(-?[\d.]+)px\s*\)/.exec(t);
+                const mScale = /scale\(\s*([\d.]+)\s*\)/.exec(t);
+                return {
+                  tx: mTranslate ? parseFloat(mTranslate[1]) : 0,
+             ty: mTranslate ? parseFloat(mTranslate[2]) : 0,
+             s: mScale ? parseFloat(mScale[1]) : DEFAULT_SCALE,
+                };
+              }
+
+              function writeTransform(el, tx, ty, s) {
+                el.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+                el.dataset.ctScaled = '1';
+              }
+
+              function resetScale(el) {
+                el.style.transform = '';
+                delete el.dataset.ctScaled;
+                try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+              }
+
+              function applyStoredScale(el) {
+                try {
+                  const raw = localStorage.getItem(STORAGE_KEY);
+                  if (!raw) return;
+                  const data = JSON.parse(raw);
+                  if (typeof data.tx === 'number' && typeof data.ty === 'number' && typeof data.s === 'number') {
+                    writeTransform(el, data.tx, data.ty, data.s);
+                  }
+                } catch (_) { /* ignore malformed/missing stored scale */ }
+              }
+
+              document.addEventListener('pointerdown', e => {
+                if (e.button !== 0) return;
+                const handle = e.target.closest('.' + HANDLE_CLASS);
+                if (!handle) return;
+                const el = document.getElementById(DRAG_ID);
+                if (!el) return;
+                const corner = handle.dataset.corner || 'br';
+                const anchorFrac = CORNER_ANCHOR[corner] || CORNER_ANCHOR.br;
+                const current = readTransform(el);
+
+                resizeEl = el;
+                startX = e.clientX; startY = e.clientY;
+                sign = CORNER_SIGN[corner] || CORNER_SIGN.br;
+                startScale = current.s;
+                startTx = current.tx;
+                startTy = current.ty;
+                // Anchor point in the box's own unscaled coordinate space.
+                // offsetWidth/Height reflect the layout (pre-transform) size,
+                // so this stays correct no matter the current scale.
+                anchorX = anchorFrac.x * el.offsetWidth;
+                anchorY = anchorFrac.y * el.offsetHeight;
+
+                el.classList.add('ct-resizing');
+                if (handle.setPointerCapture) {
+                  try { handle.setPointerCapture(e.pointerId); } catch (_) {}
+                }
+                e.preventDefault();
+                e.stopPropagation(); // don't also trigger the drag-to-move handler
+              });
+
+              document.addEventListener('pointermove', e => {
+                if (!resizeEl) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                const delta = (sign.x * dx + sign.y * dy) / 2;
+                const scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, startScale + delta / SENSITIVITY));
+                // Keeps (anchorX, anchorY) fixed on screen as scale changes:
+                // at scale === startScale this reduces exactly to
+                // (startTx, startTy) — i.e. zero movement at drag start.
+                const tx = startTx + (startScale - scale) * anchorX;
+                const ty = startTy + (startScale - scale) * anchorY;
+                writeTransform(resizeEl, tx, ty, scale);
+              });
+
+              function endResize() {
+                if (!resizeEl) return;
+                resizeEl.classList.remove('ct-resizing');
+                try {
+                  const t = readTransform(resizeEl);
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(t));
+                } catch (_) {}
+                resizeEl = null;
+              }
+              document.addEventListener('pointerup', endResize);
+              document.addEventListener('pointercancel', endResize);
+
+              document.addEventListener('dblclick', e => {
+                const handle = e.target.closest('.' + HANDLE_CLASS);
+                if (!handle) return;
+                const el = document.getElementById(DRAG_ID);
+                if (el) resetScale(el);
+              });
+
+                const tryApply = () => {
+                  const el = document.getElementById(DRAG_ID);
+                  if (el && !el.dataset.ctScaled) applyStoredScale(el);
+                };
+                  tryApply();
+                  new MutationObserver(tryApply).observe(document.documentElement, { childList: true, subtree: true });
             })();
       },
 
@@ -609,6 +817,10 @@ window.ClaudeTrackerUI = (function () {
         <span class="ct-tq-pct" id="ct-tq-pct-7d">0%</span>
         <span class="ct-tq-reset" id="ct-tq-tr-7d"></span>
         </div>
+        <div class="ct-resize-handle" data-corner="tl" title="Drag to resize \u2022 double-click to reset"></div>
+        <div class="ct-resize-handle" data-corner="tr" title="Drag to resize \u2022 double-click to reset"></div>
+        <div class="ct-resize-handle" data-corner="bl" title="Drag to resize \u2022 double-click to reset"></div>
+        <div class="ct-resize-handle" data-corner="br" title="Drag to resize \u2022 double-click to reset"></div>
         `;
         return el;
       },
