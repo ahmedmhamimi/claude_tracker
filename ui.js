@@ -35,6 +35,12 @@ window.ClaudeTrackerUI = (function () {
   // Escape a getMessage() result for use inside an HTML attribute value.
   const tipAttr = key =>
   i18n(key).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+  // Same lookup as i18n(), but falls back to a hardcoded default instead of
+  // the raw key when no messages.json entry exists yet for `key`.
+  const withFallback = (key, fallback, ...subs) => {
+    const val = i18n(key, ...subs);
+    return val === key ? fallback : val;
+  };
 
   // ─── CSS Themes ───────────────────────────────────────────────────────────
 
@@ -53,6 +59,7 @@ window.ClaudeTrackerUI = (function () {
     --ct-bg-progress: rgba(255, 255, 255, 0.10);
     --ct-mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
     --ct-ghost-bg: rgba(40, 36, 30, 0.95);
+    --ct-accent-rgb: 232, 98, 42;
   }
   `;
 
@@ -71,6 +78,7 @@ window.ClaudeTrackerUI = (function () {
     --ct-bg-progress: #e5e7eb;
     --ct-mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
     --ct-ghost-bg: rgba(255, 255, 255, 0.92);
+    --ct-accent-rgb: 217, 119, 6;
   }
   `;
 
@@ -349,6 +357,84 @@ window.ClaudeTrackerUI = (function () {
     opacity: 0; transition: opacity 0.12s ease;
     }
     #ct-tooltip.vis { opacity: 1; }
+
+    /* One-time onboarding hint — points at the movable/resizable widget. */
+    #ct-hint {
+    position: fixed; z-index: 9998;
+    max-width: 220px;
+    padding: 11px 26px 12px 13px;
+    border-radius: 12px;
+    background: var(--ct-ghost-bg);
+    border: 1px solid var(--ct-border);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08);
+    font-family: var(--ct-mono); color: var(--ct-muted);
+    font-size: 11px; font-weight: 600; line-height: 1.55;
+    opacity: 0; transform: translateY(6px) scale(0.94);
+    transform-origin: top right;
+    pointer-events: none;
+    transition: opacity 0.5s cubic-bezier(.2,.8,.3,1), transform 0.5s cubic-bezier(.2,.8,.3,1);
+    }
+    #ct-hint.vis {
+    opacity: 1; transform: translateY(0) scale(1);
+    pointer-events: auto;
+    }
+    /* Kept on a separate class from .vis and applied only after the
+     * entrance transition finishes. A CSS animation and a CSS transition
+     * on the same property (transform) racing from the same trigger causes
+     * the animation to win instantly, killing the transition — that was
+     * the source of the bubble "popping" into place instead of easing in. */
+    #ct-hint.ct-hint-bob-active {
+    animation: ct-hint-bob 2.6s ease-in-out infinite;
+    }
+    #ct-hint-arrow {
+    position: absolute; top: -7px; right: 28px;
+    width: 13px; height: 13px;
+    background: var(--ct-ghost-bg);
+    border-left: 1px solid var(--ct-border);
+    border-top: 1px solid var(--ct-border);
+    transform: rotate(45deg);
+    border-radius: 2px 0 0 0;
+    }
+    #ct-hint-close {
+    position: absolute; top: 7px; right: 7px;
+    width: 16px; height: 16px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    color: var(--ct-muted); font-size: 11px; line-height: 1;
+    cursor: pointer; background: transparent;
+    transition: background 0.15s ease, color 0.15s ease;
+    }
+    #ct-hint-close:hover { background: var(--ct-bg-progress); color: var(--ct-text); }
+    #ct-hint-title {
+    display: flex; align-items: center; gap: 6px;
+    font-weight: 800; color: var(--ct-text); margin-bottom: 3px;
+    }
+    #ct-hint-icon { font-size: 12px; filter: saturate(1.3); }
+    #ct-hint-body { color: var(--ct-muted); }
+
+    /* Used when there isn't room below the widget — bubble sits above it
+     *  instead, so the arrow and entrance direction both flip to match. */
+    #ct-hint.ct-hint-above { transform-origin: bottom right; }
+    #ct-hint.ct-hint-above:not(.vis) { transform: translateY(-6px) scale(0.94); }
+    #ct-hint.ct-hint-above #ct-hint-arrow {
+    top: auto; bottom: -7px;
+    border-left: none; border-top: none;
+    border-right: 1px solid var(--ct-border);
+    border-bottom: 1px solid var(--ct-border);
+    border-radius: 0 0 2px 0;
+    }
+
+    @keyframes ct-hint-bob {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50%      { transform: translateY(-3px) scale(1); }
+    }
+    @keyframes ct-hint-pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(var(--ct-accent-rgb), 0.45); }
+      70%  { box-shadow: 0 0 0 9px rgba(var(--ct-accent-rgb), 0); }
+      100% { box-shadow: 0 0 0 0 rgba(var(--ct-accent-rgb), 0); }
+    }
+    #ct-toolbar-quota.ct-hint-pulse { animation: ct-hint-pulse-ring 1.8s ease-out 3; }
     `;
 
     // ─── Theme Detection ──────────────────────────────────────────────────────
@@ -715,6 +801,151 @@ window.ClaudeTrackerUI = (function () {
                 };
                   tryApply();
                   new MutationObserver(tryApply).observe(document.documentElement, { childList: true, subtree: true });
+            })();
+
+            // ─── One-time onboarding hint ──────────────────────────────────────
+            // The floating quota widget is draggable and resizable, but nothing
+            // about its appearance says so. The very first time it shows up in
+            // the page, point a small bubble at it; once dismissed (or once the
+            // user actually drags/resizes it, or after it's been on screen a
+            // while) it is marked as seen in localStorage and never shown again.
+            (function initHintBubble() {
+              const SEEN_KEY = 'ct-hint-seen';
+              const DRAG_ID = 'ct-toolbar-quota';
+              // Widget's own show transition (see #ct-toolbar-quota.vis) is
+              // 0.35s. Waiting past that before we measure its position means
+              // we never grab a rect mid-transition, which was the source of
+              // the bubble appearing to "lag" or jump right after showing up.
+              const SETTLE_DELAY = 450;
+              const GAP = 10;
+
+              let alreadySeen = true;
+              try { alreadySeen = localStorage.getItem(SEEN_KEY) === '1'; } catch (_) { alreadySeen = true; }
+              if (alreadySeen) return;
+
+              let armed = false; // widget found + visible, waiting to show
+              let shown = false;
+
+              function markSeen() {
+                try { localStorage.setItem(SEEN_KEY, '1'); } catch (_) {}
+              }
+
+              function dismiss(bubble, widget) {
+                if (!bubble || bubble.dataset.ctDismissed) return;
+                bubble.dataset.ctDismissed = '1';
+                bubble.classList.remove('vis');
+                if (widget) widget.classList.remove('ct-hint-pulse');
+                markSeen();
+                setTimeout(() => bubble.remove(), 400);
+              }
+
+              function showHint(widget) {
+                if (shown) return;
+                shown = true;
+
+                const bubble = document.createElement('div');
+                bubble.id = 'ct-hint';
+                bubble.innerHTML = `
+                <div id="ct-hint-arrow"></div>
+                <div id="ct-hint-close" role="button" aria-label="Dismiss">\u2715</div>
+                <div id="ct-hint-title"><span id="ct-hint-icon">\u270b</span>${withFallback('hintTitle', 'You can move/resize this')}</div>
+                <div id="ct-hint-body">${withFallback('hintBody', 'Drag it anywhere on screen, or grab a corner to resize.')}</div>
+                `;
+                // Start fully hidden and un-transitioned so the very first
+                // position() below never gets animated to — only the later
+                // class toggle (after layout has settled) triggers the
+                // fade/rise transition, keeping the entrance smooth.
+                bubble.style.visibility = 'hidden';
+                document.body.appendChild(bubble);
+
+                // Positions the bubble under the widget by default. If there
+                // isn't enough room below (e.g. narrow-viewport layout where
+                // the widget docks near the bottom of the screen), it flips
+                // to sit above instead — it never overlaps the widget.
+                function position() {
+                  const r = widget.getBoundingClientRect();
+                  const bw = bubble.offsetWidth || 220;
+                  const bh = bubble.offsetHeight || 72;
+                  const fitsBelow = r.bottom + GAP + bh + 8 <= window.innerHeight;
+
+                  let top = fitsBelow ? r.bottom + GAP : r.top - GAP - bh;
+                  let left = Math.max(8, Math.min(r.right - bw, window.innerWidth - bw - 8));
+
+                  bubble.classList.toggle('ct-hint-above', !fitsBelow);
+                  bubble.style.top  = top + 'px';
+                  bubble.style.left = left + 'px';
+                }
+
+                position();
+                bubble.style.visibility = '';
+
+                // Two rAFs: the first lets the browser paint the bubble in
+                // its pre-transition (invisible) state, the second then
+                // flips the class so the opacity/transform change is always
+                // picked up as an animated transition, never an instant pop.
+                requestAnimationFrame(() => {
+                  position();
+                  requestAnimationFrame(() => {
+                    bubble.classList.add('vis');
+                    widget.classList.add('ct-hint-pulse');
+
+                    // Start the idle "bob" loop only once the entrance
+                    // transition has actually finished, not the instant
+                    // .vis is added. Starting a CSS animation on `transform`
+                    // while a transition on `transform` is still mid-flight
+                    // makes the browser cut the transition short and snap
+                    // to its end state — that was the "laggy"/non-smooth pop.
+                    let bobStarted = false;
+                    const startBob = () => {
+                      if (bobStarted) return;
+                      bobStarted = true;
+                      bubble.classList.add('ct-hint-bob-active');
+                    };
+                    bubble.addEventListener('transitionend', function onEnd(e) {
+                      if (e.target !== bubble || e.propertyName !== 'transform') return;
+                      bubble.removeEventListener('transitionend', onEnd);
+                      startBob();
+                    });
+                    // Safety net in case transitionend never fires (tab
+                    // backgrounded, reduced-motion overrides, etc).
+                    setTimeout(startBob, 550);
+                  });
+                });
+
+                window.addEventListener('resize', position);
+
+                bubble.querySelector('#ct-hint-close').addEventListener('click', e => {
+                  e.stopPropagation();
+                  dismiss(bubble, widget);
+                });
+
+                // Interacting with the widget itself (dragging or resizing)
+                // counts as "got it" and dismisses the hint immediately.
+                widget.addEventListener('pointerdown', () => dismiss(bubble, widget), { once: true });
+
+                // Otherwise fade it out on its own after a few seconds so it
+                // never lingers and gets in the way.
+                setTimeout(() => dismiss(bubble, widget), 8000);
+              }
+
+              const tryShow = () => {
+                if (armed) return;
+                const el = document.getElementById(DRAG_ID);
+                // Wait until the widget itself has finished announcing its
+                // own entrance (the .vis class content.js/this module adds
+                // once it's ready) before arming the settle timer — showing
+                // the hint while the widget is still fading/scaling in was
+                // the other half of the "laggy" feel.
+                if (!el || !el.classList.contains('vis')) return;
+                armed = true;
+                observer.disconnect();
+                setTimeout(() => showHint(el), SETTLE_DELAY);
+              };
+              const observer = new MutationObserver(tryShow);
+              tryShow();
+              if (!armed) {
+                observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+              }
             })();
       },
 
