@@ -907,9 +907,19 @@ window.ClaudeTrackerUI = (function () {
             // about its appearance says so. The very first time it shows up in
             // the page, point a small bubble at it; once dismissed (or once the
             // user actually drags/resizes it, or after it's been on screen a
-            // while) it is marked as seen in localStorage and never shown again.
-            (function initHintBubble() {
-              const SEEN_KEY = 'ct-hint-seen';
+            // while) it is marked as seen and never shown again.
+            //
+            // The seen-flag is bridged through chrome.storage.local (see
+            // bridge.js: 'cts_hint_seen' in its storage-read list, plus the
+            // 'cts:storage:set' write proxy) rather than kept in this page's
+            // own localStorage. This file runs in the MAIN world and has no
+            // direct chrome.* access, but claude.ai clears its own localStorage
+            // on logout as part of purging session state — a plain localStorage
+            // flag here got wiped by that and made the hint reappear on every
+            // fresh login. chrome.storage.local belongs to the extension, not
+            // the page, so the site's own cleanup can't touch it.
+            (async function initHintBubble() {
+              const SEEN_KEY = 'cts_hint_seen';
               const DRAG_ID = 'ct-toolbar-quota';
               // Widget's own show transition (see #ct-toolbar-quota.vis) is
               // 0.35s. Waiting past that before we measure its position means
@@ -918,15 +928,41 @@ window.ClaudeTrackerUI = (function () {
               const SETTLE_DELAY = 450;
               const GAP = 10;
 
+              // bridge.js stamps document.documentElement.dataset.ctsstorage
+              // once its (async) chrome.storage.local.get resolves. That can
+              // land after this script has already started running, so poll
+              // briefly for it rather than assuming it's there on first check.
+              async function readSeenFlag() {
+                const POLL_INTERVAL = 30;
+                const POLL_TIMEOUT = 2000;
+                const start = Date.now();
+                while (Date.now() - start < POLL_TIMEOUT) {
+                  const raw = document.documentElement.dataset.ctsstorage;
+                  if (raw !== undefined) {
+                    try { return JSON.parse(raw)[SEEN_KEY] === true; }
+                    catch (_) { return false; }
+                  }
+                  await new Promise(r => setTimeout(r, POLL_INTERVAL));
+                }
+                // Bridge never showed up (e.g. chrome.storage unreachable for
+                // some reason) — fail open rather than silently never showing
+                // the hint at all.
+                return false;
+              }
+
               let alreadySeen = true;
-              try { alreadySeen = localStorage.getItem(SEEN_KEY) === '1'; } catch (_) { alreadySeen = true; }
+              try { alreadySeen = await readSeenFlag(); } catch (_) { alreadySeen = true; }
               if (alreadySeen) return;
 
               let armed = false; // widget found + visible, waiting to show
               let shown = false;
 
               function markSeen() {
-                try { localStorage.setItem(SEEN_KEY, '1'); } catch (_) {}
+                try {
+                  document.dispatchEvent(new CustomEvent('cts:storage:set', {
+                    detail: { [SEEN_KEY]: true }
+                  }));
+                } catch (_) {}
               }
 
               function dismiss(bubble, widget) {

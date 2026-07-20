@@ -77,10 +77,17 @@
   // first-run ring-ping + callout (magic.js) has been shown. Lives here for
   // the same reason — it must survive reloads so the intro really only
   // fires once per install, not once per tab.
+  //
+  // 'cts_hint_seen' is the same idea for the draggable-widget onboarding
+  // hint (ui.js's initHintBubble). It used to be a plain localStorage flag,
+  // which meant it got wiped whenever claude.ai cleared its own site data
+  // on logout — making the hint reappear on every fresh login. Moved here
+  // for the same reason as the Magic intro flag above: chrome.storage.local
+  // is the extension's own storage, untouched by the site's logout cleanup.
 
   chrome.storage.local.get(
     ['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d', 'cts_org_id', 'claude_tracker_settings',
-    'cts_magic_intro_seen'],
+    'cts_magic_intro_seen', 'cts_hint_seen'],
     items => {
       document.documentElement.dataset.ctsstorage = JSON.stringify(items || {});
     }
