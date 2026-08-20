@@ -153,13 +153,28 @@
     updateInlineStats();
   }
 
+  // ─── Sidebar Root ─────────────────────────────────────────────────────────
+  // Anthropic's sidebar redesign (Aug 2026) dropped the <nav> element
+  // entirely — the sidebar is now `<aside class="dframe-sidebar">` wrapping
+  // a `div[data-testid="sidebar"]` body. data-testid is a test hook, so it's
+  // the most likely selector to survive the next visual refactor; the old
+  // `nav`-based selectors are kept as trailing fallbacks in case any layout
+  // (e.g. a different surface/breakpoint) still uses the old markup.
+  function getSidebarRoot() {
+    return document.querySelector('[data-testid="sidebar"]')
+    || document.querySelector('aside.dframe-sidebar')
+    || document.querySelector('nav.flex-col')
+    || document.querySelector('[class*="sidebar"] nav')
+    || document.querySelector('nav');
+  }
+
   // ─── Sidebar Observer ─────────────────────────────────────────────────────
 
   let _sidebarObserver = null;
 
   function setupSidebarObserver() {
     if (_sidebarObserver) { _sidebarObserver.disconnect(); _sidebarObserver = null; }
-    const nav = document.querySelector('nav.flex-col') || document.querySelector('nav');
+    const nav = getSidebarRoot();
     if (!nav) return;
 
     function checkCollapsed() {
@@ -278,12 +293,14 @@
     // it no longer aborts the rest of this function — countdown tick,
     // composer stats, and toolbar updates should still work either way.
     if (!document.getElementById('ct-quota')) {
-      const sidebar = document.querySelector('nav.flex-col')
-      || document.querySelector('[class*="sidebar"] nav')
-      || document.querySelector('nav');
+      const sidebar = getSidebarRoot();
       if (sidebar) {
         const qBox = window.ClaudeTrackerUI.buildQuotaContainer();
-        const footer = sidebar.querySelector('.mt-auto') || sidebar.lastElementChild;
+        // The old layout had a `.mt-auto` footer row to insert before; the
+        // redesigned `[data-testid="sidebar"]` body has no such footer, so
+        // just append — it lands right after the scrollable chat list,
+        // which is where the panel used to visually sit anyway.
+        const footer = sidebar.querySelector('.mt-auto');
         if (footer) sidebar.insertBefore(qBox, footer);
         else sidebar.appendChild(qBox);
 
@@ -349,11 +366,7 @@
     // Only treat (b) as unhealthy: check for ct-quota's absence ONLY when a
     // real sidebar is actually present right now, so this can never loop
     // forever on a layout that structurally can't have one.
-    const sidebarPresent = !!(
-      document.querySelector('nav.flex-col') ||
-      document.querySelector('[class*="sidebar"] nav') ||
-      document.querySelector('nav')
-    );
+    const sidebarPresent = !!getSidebarRoot();
     const sidebarMissingQuota = sidebarPresent && !document.getElementById('ct-quota');
 
     if (!document.getElementById('ct-toolbar-quota') || !document.getElementById('ct-row') || sidebarMissingQuota) {
