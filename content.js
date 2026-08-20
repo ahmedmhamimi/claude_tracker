@@ -296,13 +296,10 @@
       const sidebar = getSidebarRoot();
       if (sidebar) {
         const qBox = window.ClaudeTrackerUI.buildQuotaContainer();
-        // The old layout had a `.mt-auto` footer row to insert before; the
-        // redesigned `[data-testid="sidebar"]` body has no such footer, so
-        // just append — it lands right after the scrollable chat list,
-        // which is where the panel used to visually sit anyway.
-        const footer = sidebar.querySelector('.mt-auto');
-        if (footer) sidebar.insertBefore(qBox, footer);
-        else sidebar.appendChild(qBox);
+        // Pin the panel to the very top of the sidebar, above the nav
+        // buttons (New/Projects/Artifacts/.../Design) and the chat list,
+        // rather than after them.
+        sidebar.insertBefore(qBox, sidebar.firstElementChild);
 
         setTimeout(() => qBox.classList.add('vis'), 200);
         // Retry fetch on a backoff schedule to handle cold-start: orgId may not be
