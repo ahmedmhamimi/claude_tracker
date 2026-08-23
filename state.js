@@ -32,6 +32,9 @@
  *   lastSpeedTps       number|null     — t/s of last response
  *   convoCacheMap      object          — convoId → cache tracking state
  *   sessionConvTokens  number          — total token count from last conversation fetch
+ *   convoDateMap       object          — convo UUID → created_at ISO string, for sidebar date badges
+ *   convoListFetchInFlight boolean     — whether a chat_conversations list fetch is pending
+ *   lastConvoListFetch number          — epoch ms of last successful conversation-list fetch
  */
 
 (function (root) {
@@ -84,6 +87,11 @@ root.CTS = {
 
  // Analysis scratch
  sessionConvTokens:   0,
+
+ // Sidebar chat-date badges
+ convoDateMap:            {},
+ convoListFetchInFlight:  false,
+ lastConvoListFetch:      0,
 };
 
 // Restore last-known-good 7d utilization so page refreshes don't flash 0%

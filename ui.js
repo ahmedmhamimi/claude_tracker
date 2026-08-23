@@ -135,6 +135,40 @@ window.ClaudeTrackerUI = (function () {
   @keyframes ct-stream { from{opacity:.2} to{opacity:1} }
   @keyframes ct-throb  { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(.6);opacity:.4} }
 
+  /* Sidebar chat-list "created on" badge — anchored to the row a chat link
+   * lives in (see content.js's injectSidebarDates). pointer-events: none so
+   * it never intercepts clicks meant for the chat link underneath it. */
+  /* Sidebar chat-list "created on" badge — anchored to the chat link itself
+   * (see content.js's injectSidebarDates). The title node gets an inline
+   * padding-right reservation so it truncates before reaching this, and the
+   * left edge fades using --ct-date-bg (sampled per-row from the real page
+   * background) as a safety net for any text that still runs underneath.
+   * Colored with the extension's own accent so it reads as "ours" rather
+   * than blending into the site's native row text, in both themes. */
+  .ct-chat-date {
+    position: absolute;
+    right: 4px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 6px 0 22px;
+    font-family: var(--ct-mono);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: var(--ct-accent);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 2;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--ct-date-bg, var(--ct-ghost-bg)) 20px,
+      var(--ct-date-bg, var(--ct-ghost-bg))
+    );
+  }
+
   #ct-quota {
   display: flex; flex-direction: column; gap: 12px;
   padding: 4px 0px 14px 0px; margin: 8px 12px;

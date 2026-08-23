@@ -108,6 +108,22 @@
     return { totalTokens, lastInputTokens, lastOutputTokens, assistantCount: assistantMsgs.length };
   }
 
+  // ─── Chat Date Formatter ───────────────────────────────────────────────────
+  // Used by the sidebar chat-list date badges. Same-year conversations get a
+  // short "Mon D" label; anything older also gets the year so it stays
+  // unambiguous without needing extra width for every row.
+
+  function formatChatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const sameYear = d.getFullYear() === new Date().getFullYear();
+    const opts = sameYear
+      ? { month: 'short', day: 'numeric' }
+      : { month: 'short', day: 'numeric', year: 'numeric' };
+    return d.toLocaleDateString(undefined, opts);
+  }
+
   // ─── Peak Status ──────────────────────────────────────────────────────────
   // Anthropic peak hours: Mon–Fri 05:00–11:00 PT.
 
@@ -156,6 +172,7 @@
     extractText,
     estimateTokens,
     analyseConversation,
+    formatChatDate,
     getPeakStatus,
   };
 

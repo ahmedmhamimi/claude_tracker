@@ -6,6 +6,7 @@
  * - initNetworkInterceptor() -> void: installs window.fetch hook (called once at parse)
  * - triggerUsageFetch() -> Promise<void>: polls /usage endpoint and routes to quota.js
  * - fetchConversationData() -> Promise<void>: fetches conversation JSON and routes to content.js
+ * - fetchConversationList() -> Promise<void>: fetches the chat list (uuid + created_at) and routes sidebar date badges to content.js
  * - sniffStream(response, t0) -> Response: taps an SSE completion stream, populates CTS state
  * - getConvoId() -> string|null: extracts active conversation UUID from URL or state
  */
@@ -46,6 +47,9 @@
           }
           // Trigger conversation fetch → applyAnalysis → badge update
           setTimeout(fetchConversationData, 600);
+          // A brand-new chat won't have a sidebar date badge yet (it wasn't
+          // in the last list fetch) — refresh so it picks one up.
+          setTimeout(fetchConversationList, 800);
           break;
         }
 
@@ -182,6 +186,38 @@
     finally { window.CTS.convFetchInFlight = false; }
   }
 
+  // ─── Conversation List Fetcher ──────────────────────────────────────────
+  // Powers the sidebar "created on" date badges. This is the same list
+  // endpoint the app itself uses to populate the sidebar, so it returns
+  // every conversation's uuid + created_at in one call — no need to hit the
+  // (much heavier) per-conversation endpoint for each row.
+
+  async function fetchConversationList() {
+    if (!window.CTS.orgId || window.CTS.convoListFetchInFlight) return;
+    window.CTS.convoListFetchInFlight = true;
+    try {
+      const res = await window.__originalFetch(
+        `https://claude.ai/api/organizations/${window.CTS.orgId}/chat_conversations`,
+        { method: 'GET', headers: { ...window.CTS.authHeaders } }
+      );
+      if (res.status !== 200) return;
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        const map = {};
+        data.forEach(c => {
+          const ts = c && (c.created_at || c.updated_at);
+          if (c && c.uuid && ts) map[c.uuid] = ts;
+        });
+        window.CTS.convoDateMap = map;
+        window.CTS.lastConvoListFetch = Date.now();
+        if (window.CTS_Content && window.CTS_Content.injectSidebarDates) {
+          window.CTS_Content.injectSidebarDates();
+        }
+      }
+    } catch (_) {}
+    finally { window.CTS.convoListFetchInFlight = false; }
+  }
+
   // ─── Fetch Hook ──────────────────────────────────────────────────────────
 
   function initNetworkInterceptor() {
@@ -312,6 +348,7 @@
   window.CTS_Network = {
     triggerUsageFetch,
     fetchConversationData,
+    fetchConversationList,
     getConvoId,
   };
 

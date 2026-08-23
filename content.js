@@ -5,6 +5,7 @@
  * - CTS_Content.tryInjectUI() -> void: injects all UI components if the composer is present and not yet injected
  * - CTS_Content.applyAnalysis(result, convoId) -> void: processes conversation analysis output, updates context bar, chips
  * - CTS_Content.updateInlineStats() -> void: refreshes turn count, cost, and latency pills in the composer row
+ * - CTS_Content.injectSidebarDates() -> void: stamps each sidebar chat-list row with its creation date
  * - startControlTicks() -> void: alias that delegates to CTS_Quota.startCountdownTick
  */
 
@@ -196,6 +197,109 @@
     }
   }
 
+  // ─── Sidebar Chat Dates ───────────────────────────────────────────────────
+  // Stamps a small "created on" badge onto each chat row in the sidebar list.
+  // Dates come from window.CTS.convoDateMap (uuid -> created_at), populated by
+  // CTS_Network.fetchConversationList(). Rows are matched by the /chat/<uuid>
+  // href every sidebar list item links to, so this doesn't depend on any
+  // particular internal class name — just the one thing guaranteed to be
+  // stable: where the link points.
+
+  function findChatRows() {
+    const sidebar = getSidebarRoot();
+    if (!sidebar) return [];
+    return Array.from(sidebar.querySelectorAll('a[href^="/chat/"]'));
+  }
+
+  // Heuristic title-node finder: walks the link's subtree for the deepest
+  // element that has its own text and no element children — i.e. the actual
+  // label, whatever the site happens to call its class. Picking this out
+  // specifically (instead of truncating the whole row) means we only ever
+  // touch the one node that actually needs to give up space for the badge.
+  function findTitleEl(a) {
+    let best = null;
+    const stack = [a];
+    while (stack.length) {
+      const el = stack.pop();
+      const text = (el.textContent || '').trim();
+      if (el.children.length === 0 && text) {
+        if (!best || text.length > best.textContent.trim().length) best = el;
+      }
+      for (const child of el.children) stack.push(child);
+    }
+    return best;
+  }
+
+  // Walks up from an element to find the first ancestor with a real
+  // (non-transparent) background color, so the date badge can fade into
+  // whatever the row is actually sitting on — sidebar background differs
+  // between light/dark themes and isn't exposed as one of the extension's
+  // own CSS variables, so this samples it directly instead of guessing.
+  function getEffectiveBg(el) {
+    let node = el;
+    while (node && node !== document.documentElement) {
+      const bg = getComputedStyle(node).backgroundColor;
+      if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg;
+      node = node.parentElement;
+    }
+    return getComputedStyle(document.body).backgroundColor || '#ffffff';
+  }
+
+  function injectSidebarDates() {
+    const map = window.CTS.convoDateMap;
+    if (!map || !Object.keys(map).length) return;
+
+    findChatRows().forEach(a => {
+      const m = a.getAttribute('href').match(/\/chat\/([a-f0-9-]{36})/i);
+      if (!m) return;
+      const iso = map[m[1]];
+      if (!iso) return;
+
+      if (!a.dataset.ctDateInit) {
+        a.dataset.ctDateInit = '1';
+        if (getComputedStyle(a).position === 'static') a.style.position = 'relative';
+
+        // Reserve space on the actual title node so it truncates with an
+        // ellipsis before ever reaching the badge, instead of running under it.
+        const titleEl = findTitleEl(a);
+        if (titleEl) {
+          titleEl.style.display = 'block';
+          titleEl.style.overflow = 'hidden';
+          titleEl.style.textOverflow = 'ellipsis';
+          titleEl.style.whiteSpace = 'nowrap';
+          titleEl.style.boxSizing = 'border-box';
+          titleEl.style.paddingRight = '56px';
+        }
+      }
+
+      // Refreshed every pass (cheap) rather than once, so a live light/dark
+      // theme toggle updates the fade instead of keeping a stale sample.
+      a.style.setProperty('--ct-date-bg', getEffectiveBg(a));
+
+      let badge = a.querySelector(':scope > .ct-chat-date');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'ct-chat-date';
+        a.appendChild(badge);
+      }
+
+      const label = window.CTS_Shared.formatChatDate(iso);
+      if (badge.textContent !== label) badge.textContent = label;
+      const full = new Date(iso).toLocaleString();
+      if (badge.title !== full) badge.title = full;
+    });
+  }
+
+  let _sidebarDatesQueued = false;
+  function scheduleSidebarDates() {
+    if (_sidebarDatesQueued) return;
+    _sidebarDatesQueued = true;
+    requestAnimationFrame(() => {
+      _sidebarDatesQueued = false;
+      injectSidebarDates();
+    });
+  }
+
   // ─── UI Injection ─────────────────────────────────────────────────────────
 
   // Cheap, cheap-to-maintain guard against the obvious signed-out routes
@@ -314,6 +418,18 @@
       }
     }
 
+    // Chat-list dates: (re)fetch on a light cadence — not on every call,
+    // since tryInjectUI can run many times per second during an SPA
+    // navigation — and stamp whatever we already have immediately so rows
+    // don't sit unlabeled until the next fetch completes.
+    if (getSidebarRoot()) {
+      const sinceLastFetch = Date.now() - (window.CTS.lastConvoListFetch || 0);
+      if (!window.CTS.lastConvoListFetch || sinceLastFetch > 45000) {
+        window.CTS_Network.fetchConversationList();
+      }
+      scheduleSidebarDates();
+    }
+
     // Repaint quota bars from persisted state on every injection path — not just
     // when the sidebar is freshly built. The toolbar strip may be re-injected by
     // the MutationObserver independently (SPA navigation nukes it while the sidebar
@@ -351,6 +467,12 @@
     }
   }, 4000);
 
+  // Keep sidebar chat dates fresh even on a quiet tab (new chats created in
+  // another tab, renames, etc.) without waiting on a mutation to trigger it.
+  setInterval(() => {
+    if (window.CTS.orgId && getSidebarRoot()) window.CTS_Network.fetchConversationList();
+  }, 60000);
+
   // ─── MutationObserver ─────────────────────────────────────────────────────
 
   const mutationObserver = new MutationObserver(() => {
@@ -370,6 +492,12 @@
       window.CTS.UIInjected = false;
     }
     if (!window.CTS.UIInjected) tryInjectUI();
+
+    // Sidebar chat list is virtualized/re-rendered independently of the
+    // quota panel (scrolling, renaming, new chats), so it needs its own
+    // lightweight re-stamp pass on every mutation batch rather than only
+    // whenever the rest of the UI happens to reinject.
+    if (sidebarPresent) scheduleSidebarDates();
   });
 
     mutationObserver.observe(document.documentElement, { childList: true, subtree: true });
@@ -408,6 +536,7 @@
       tryInjectUI,
       applyAnalysis,
       updateInlineStats,
+      injectSidebarDates,
     };
 
 })();
