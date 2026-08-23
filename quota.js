@@ -59,6 +59,7 @@
     _tickStarted = true;
     setInterval(() => {
       _tickPeak();
+      _tickCache();
       _tickResetTimers();
       _tickSpeedPill();
       _tickStreamingAttr();
@@ -104,6 +105,34 @@
       '\n\nDuring peak hours, Claude may respond\nmore slowly due to higher server load.\nUsage limits reset faster off-peak.';
       badge.setAttribute('data-ct-tip', tip);
     } catch (_) {}
+  }
+
+  function _tickCache() {
+    const badge = document.getElementById('ct-cache');
+    const label = document.getElementById('ct-cache-t');
+    if (!badge || !label) return;
+
+    // Same signal used for the per-message "cached" chip: Anthropic's
+    // prompt cache checkpoint lasts 1 hour from a conversation's first
+    // reply. window.CTS.cachedUntilTs is that expiry timestamp, set in
+    // content.js's applyAnalysis(). Not a real API flag — inferred from
+    // "this conversation has replied before, and it's within the hour."
+    const untilTs = window.CTS.cachedUntilTs;
+    const isCached = !!(untilTs && untilTs > Date.now());
+
+    badge.className = isCached ? 'cached' : 'uncached';
+    if (isCached) {
+      const s   = Math.max(0, Math.floor((untilTs - Date.now()) / 1000));
+      const m   = Math.floor(s / 60);
+      const sec = s % 60;
+      label.textContent = 'cached · ' + (m > 0 ? m + 'm ' + sec + 's' : sec + 's');
+    } else {
+      label.textContent = 'not cached';
+    }
+
+    const tip = (isCached ? 'CACHED (now active)' : 'NOT CACHED') +
+    '\n\nHow this is worked out:\nAnthropic caches a conversation\'s prompt for\n1 hour after its first reply. If it has already\nreplied once and that hour has not passed,\nthis is marked cached.\n\nThis is inferred, not read from a real\ncache-hit flag — Claude.ai does not expose one.\nWhen cached, replies are typically\nfaster and cheaper to generate.';
+    badge.setAttribute('data-ct-tip', tip);
   }
 
   function _tickResetTimers() {

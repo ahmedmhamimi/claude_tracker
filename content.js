@@ -81,15 +81,6 @@
 
     window.CTS.sessionConvTokens = totalTokens;
 
-    // Context bar
-    const barFill = document.getElementById('ct-ctx-bar-fill');
-    const barNode = document.getElementById('ct-ctx-bar');
-    if (barFill && barNode) {
-      barFill.style.width       = pct + '%';
-      barFill.style.background  = pct > 85 ? 'var(--ct-red)' : pct > 60 ? 'var(--ct-orange)' : 'var(--ct-blue)';
-      barNode.classList.toggle('vis', pct > 2);
-    }
-
     // Context pill
     const ctxPill = document.getElementById('ct-p-ctx');
     const ctxText = document.getElementById('ct-p-ctx-t');
@@ -372,16 +363,6 @@
     if (!window.CTS.coreUIInjected) {
       window.CTS.coreUIInjected = true;
       window.ClaudeTrackerUI.init();
-    }
-
-    // Context bar
-    const wrap = composer.closest('form') || composer.parentElement?.parentElement;
-    if (wrap && !document.getElementById('ct-ctx-bar')) {
-      wrap.style.position = 'relative';
-      const bar = document.createElement('div');
-      bar.id = 'ct-ctx-bar';
-      bar.innerHTML = `<div id="ct-ctx-bar-fill"></div>`;
-      wrap.prepend(bar);
     }
 
     // Composer stats row

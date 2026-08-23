@@ -147,6 +147,14 @@
     "message": "peak",
     "description": "Text during peak hours"
   },
+  "uncachedText": {
+    "message": "not cached",
+    "description": "Text when the conversation's prompt cache is not active"
+  },
+  "cacheTip": {
+    "message": "Whether this conversation is using a cached prompt.\nCached replies are usually faster and cheaper.",
+    "description": "Tooltip on the cached/not-cached indicator"
+  },
   "toolbar5hTip": {
     "message": "5-hour quota usage.\nResets 5h after your first message in the window.\nToken-weighted — longer exchanges fill it faster.\nMagic compression helps keep this lower.",
     "description": "Tooltip on the 5h bar in the toolbar"

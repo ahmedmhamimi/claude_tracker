@@ -86,20 +86,6 @@ window.ClaudeTrackerUI = (function () {
   `;
 
   const STRUCTURAL_CSS = `
-  #ct-ctx-bar {
-  position: absolute; left: 0; right: 0; top: 0;
-  height: 3px; border-radius: 3px 3px 0 0;
-  background: var(--ct-bg-progress);
-  overflow: hidden; opacity: 0;
-  transition: opacity 0.4s; pointer-events: none; z-index: 10;
-  }
-  #ct-ctx-bar.vis { opacity: 1; }
-  #ct-ctx-bar-fill {
-  height: 100%; width: 0%;
-  background: var(--ct-blue);
-  transition: width 0.5s cubic-bezier(.4,0,.2,1);
-  }
-
   #ct-row {
   display: flex; flex-direction: row; align-items: center;
   gap: 8px; padding: 4px 16px 6px;
@@ -214,7 +200,7 @@ window.ClaudeTrackerUI = (function () {
     white-space: nowrap;
   }
 
-  #ct-peak {
+  #ct-peak, #ct-cache {
   display: inline-flex; align-items: center; gap: 6px;
   font-family: var(--ct-mono); font-size: 9.5px; font-weight: 800;
   letter-spacing: .05em; text-transform: uppercase;
@@ -225,6 +211,9 @@ window.ClaudeTrackerUI = (function () {
   #ct-peak.offpeak { background: rgba(74,222,128,.12); border-color: var(--ct-green); color: var(--ct-green); }
   .ct-peak-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   #ct-peak.peak .ct-peak-dot { animation: ct-throb 1.2s infinite; }
+
+  #ct-cache.cached    { background: rgba(192,132,252,.12); border-color: var(--ct-purple); color: var(--ct-purple); }
+  #ct-cache.uncached  { background: rgba(120,120,120,.10); border-color: var(--ct-border); color: var(--ct-muted); }
 
   .ct-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .ct-chips.ct-chips-inline { margin-top: 0; margin-right: 4px; flex-wrap: nowrap; }
@@ -281,6 +270,9 @@ window.ClaudeTrackerUI = (function () {
   box-shadow: 0 18px 44px rgba(0,0,0,0.22), 0 4px 12px rgba(0,0,0,0.1);
   }
   #ct-toolbar-quota #ct-peak { align-self: flex-start; }
+  #ct-tq-badges {
+  display: flex; align-items: center; gap: 6px; min-width: 0;
+  }
 
   #ct-tq-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -1209,7 +1201,10 @@ window.ClaudeTrackerUI = (function () {
         el.id = 'ct-toolbar-quota';
         el.innerHTML = `
         <div id="ct-tq-header">
+        <div id="ct-tq-badges">
         <div id="ct-peak" class="offpeak" data-ct-tip="${tipAttr('peakTip')}"><span class="ct-peak-dot"></span><span id="ct-peak-t">${i18n('offPeakText')}</span></div>
+        <div id="ct-cache" class="uncached" data-ct-tip="${tipAttr('cacheTip', 'Whether this conversation is using a cached prompt.')}"><span class="ct-peak-dot"></span><span id="ct-cache-t">${withFallback('uncachedText', 'not cached')}</span></div>
+        </div>
         <button type="button" id="ct-collapse-toggle" class="ct-collapse-toggle" aria-expanded="true" data-ct-tip="${tipAttr('collapseWidgetTip', 'Collapse')}">
         <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
