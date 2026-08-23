@@ -98,7 +98,7 @@
       const peakEndH    = (11 + diffH + 24) % 24;
       const fmtH = h => { const ampm = h < 12 ? 'AM' : 'PM'; const h12 = h % 12 || 12; return h12 + ':00 ' + ampm; };
       const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-      const tip = (inPeak ? '🔴 PEAK HOURS (now active)' : '🟢 OFF-PEAK (now active)') +
+      const tip = (inPeak ? 'PEAK HOURS (now active)' : 'OFF-PEAK (now active)') +
       '\n\nPeak: Mon–Fri  ' + fmtH(peakStartH) + ' – ' + fmtH(peakEndH) +
       (tzName ? ' (' + tzName + ')' : '') +
       '\n\nDuring peak hours, Claude may respond\nmore slowly due to higher server load.\nUsage limits reset faster off-peak.';

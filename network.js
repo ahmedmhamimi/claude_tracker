@@ -79,6 +79,10 @@
               window.CTS.lastConfirmedModelMeta = meta;
               streamT0 = Date.now();
               window.CTS.sessionMsgCount++;
+              // Snapshot the 5h utilization as it stood right before this
+              // message's usage is counted, so message_limit below can
+              // compute exactly how many points this one turn consumed.
+              window.CTS.preMessage5hUtil = window.CTS.current5hUtil;
             }
 
             if (j.type === 'content_block_delta' && j.delta?.text) {
@@ -116,6 +120,18 @@
                 '5h': h5 ? { utilization: window.CTS.isLimitHit ? 100 : h5.utilization, resetsAt: h5.resets_at } : null,
                 '7d': safe7d,
               });
+
+              // Per-message quota usage: how many percentage points of the
+              // 5h window this turn consumed, using the real API-reported
+              // utilization (not a token/cost estimate). Only meaningful
+              // once we actually had a pre-message baseline to diff against
+              // — the very first message of a session has none yet.
+              if (h5 && window.CTS.preMessage5hUtil != null) {
+                const delta = window.CTS.current5hUtil - window.CTS.preMessage5hUtil;
+                window.CTS.lastMsgQuotaDelta = delta >= 0 ? delta : null;
+              } else {
+                window.CTS.lastMsgQuotaDelta = null;
+              }
             }
           } catch (_) {}
         }

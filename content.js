@@ -136,16 +136,23 @@
     }
 
     // Per-response chips
-    const allMessages = document.querySelectorAll('[data-testid="assistant-message"]');
-    if (allMessages.length > 0) {
+    // Anthropic's Aug 2026 DOM update dropped the assistant-message testid;
+    // assistant turns are now [data-testid="transcript-row"] rows that
+    // contain an action bar (copy/retry/thumbs), which user rows never have.
+    const allRows = document.querySelectorAll('[data-testid="transcript-row"]');
+    const assistantRows = Array.from(allRows).filter(
+      row => row.querySelector('[data-testid^="action-bar-"]')
+    );
+    if (assistantRows.length > 0) {
       const payload = {
         latMs:      window.CTS.lastLatencyMs,
         tps:        window.CTS.lastSpeedTps,
         outputTok:  lastOutputTokens,
+        quotaPct:   window.CTS.lastMsgQuotaDelta,
         stopReason: window.CTS.stopReasonHistory[0],
       };
       window.ClaudeTrackerUI.renderChips(
-        allMessages[allMessages.length - 1],
+        assistantRows[assistantRows.length - 1],
         payload,
         !!(window.CTS.cachedUntilTs && window.CTS.cachedUntilTs > Date.now())
       );

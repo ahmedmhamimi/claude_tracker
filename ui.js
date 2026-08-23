@@ -227,6 +227,7 @@ window.ClaudeTrackerUI = (function () {
   #ct-peak.peak .ct-peak-dot { animation: ct-throb 1.2s infinite; }
 
   .ct-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .ct-chips.ct-chips-inline { margin-top: 0; margin-right: 4px; flex-wrap: nowrap; }
   .ct-chip {
     font-family: var(--ct-mono); font-size: 10px; font-weight: 700; color: var(--ct-muted);
     background: var(--ct-surface); border: 2px solid var(--ct-border);
@@ -237,6 +238,13 @@ window.ClaudeTrackerUI = (function () {
   .ct-chip.slow    { color: var(--ct-orange); border-color: var(--ct-orange); }
   .ct-chip.cached  { color: var(--ct-purple); border-color: var(--ct-purple); }
   .ct-chip.maxed   { color: var(--ct-red); border-color: var(--ct-red); }
+  .ct-chip.quota   { color: var(--ct-accent); border-color: var(--ct-accent); }
+
+  .ct-chips-inline .ct-chip {
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px;
+    background: transparent; border: 1px solid var(--ct-border); color: var(--ct-muted);
+  }
+  .ct-chips-inline .ct-chip.quota { color: var(--ct-accent); border-color: var(--ct-accent); }
 
   /* Floating quota card — lives on its own, detached from the composer.
    * Anchored fixed to the viewport (top-right on desktop, tucked above the
@@ -1232,47 +1240,76 @@ window.ClaudeTrackerUI = (function () {
         return el;
       },
 
-      renderChips(lastMessageNode, chipsData, cached) {
-        if (!lastMessageNode || lastMessageNode.querySelector('.ct-chips')) return;
+      renderChips(assistantRow, chipsData, cached) {
+        if (!assistantRow || assistantRow.querySelector('.ct-chips')) return;
         const container = document.createElement('div');
         container.className = 'ct-chips';
 
         if (chipsData.latMs != null) {
           const item = document.createElement('div');
           item.className = 'ct-chip ' + (chipsData.latMs < 800 ? 'fast' : chipsData.latMs > 2000 ? 'slow' : '');
-          item.textContent = `\u23f1\ufe0f ${chipsData.latMs}ms`;
+          item.textContent = `${chipsData.latMs}ms`;
+          item.setAttribute('data-ct-tip', tipAttr('chipLatTip', 'How long Claude took to start replying.'));
           container.appendChild(item);
         }
         if (chipsData.tps != null) {
           const item = document.createElement('div');
           item.className = 'ct-chip';
-          item.textContent = `\u26a1 ${chipsData.tps} t/s`;
+          item.textContent = `${chipsData.tps} t/s`;
+          item.setAttribute('data-ct-tip', tipAttr('chipSpdTip', 'How fast Claude generated this reply.'));
+          container.appendChild(item);
+        }
+        if (chipsData.quotaPct != null) {
+          const item = document.createElement('div');
+          item.className = 'ct-chip quota';
+          const pctText = chipsData.quotaPct < 1 && chipsData.quotaPct > 0
+            ? '<1%'
+            : `${Math.round(chipsData.quotaPct)}%`;
+          item.textContent = `${pctText} of limit`;
+          item.setAttribute('data-ct-tip', tipAttr('msgQuotaTip', 'How much of your usage limit this message used.'));
           container.appendChild(item);
         }
         if (chipsData.outputTok != null) {
           const item = document.createElement('div');
           item.className = 'ct-chip';
-          item.textContent = `#\ufe0f\u20e3 ${chipsData.outputTok} ${i18n('chipOut')}`;
+          item.textContent = `${chipsData.outputTok} ${i18n('chipOut')}`;
+          item.setAttribute('data-ct-tip', tipAttr('chipOutTip', 'How many tokens this reply contains.'));
           container.appendChild(item);
         }
         if (cached) {
           const item = document.createElement('div');
           item.className = 'ct-chip cached';
-          item.textContent = `\ud83d\udcbe ${i18n('chipCached')}`;
+          item.textContent = `${i18n('chipCached')}`;
+          item.setAttribute('data-ct-tip', tipAttr('chipCachedTip', 'This reply reused a cached prompt, so it was cheaper and faster.'));
           container.appendChild(item);
         }
         if (chipsData.stopReason && chipsData.stopReason !== '\u2014' && chipsData.stopReason !== 'end_turn') {
           const item = document.createElement('div');
           item.className = 'ct-chip maxed';
-          item.textContent = `\ud83d\uded1 ${i18n('chipLimitHit')}`;
+          item.textContent = `${i18n('chipLimitHit')}`;
+          item.setAttribute('data-ct-tip', tipAttr('chipMaxedTip', 'Claude stopped early — the reply hit its length limit.'));
           container.appendChild(item);
         }
 
-        const insertionPoint =
-        lastMessageNode.querySelector('[class*="prose"]') ||
-        lastMessageNode.querySelector('p:last-of-type') ||
-        lastMessageNode;
-        insertionPoint.insertAdjacentElement('afterend', container);
+        // Insert inline into the action bar (copy/retry/thumbs/"time ago"
+        // row) instead of below the message body, so it sits next to the
+        // timestamp the way Claude's own action bar items do.
+        const actionBarBtn = assistantRow.querySelector('[data-testid^="action-bar-"]');
+        const timeEl = assistantRow.querySelector('time');
+        const actionBarFlex = actionBarBtn ? actionBarBtn.closest('div') : null;
+
+        if (actionBarFlex) {
+          container.classList.add('ct-chips-inline');
+          if (timeEl && timeEl.parentElement === actionBarFlex) {
+            actionBarFlex.insertBefore(container, timeEl);
+          } else {
+            actionBarFlex.appendChild(container);
+          }
+          return;
+        }
+
+        // Fallback for older/unexpected DOM: append after the row.
+        assistantRow.insertAdjacentElement('afterend', container);
       },
 
     };

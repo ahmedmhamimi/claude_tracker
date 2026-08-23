@@ -99,6 +99,30 @@
     "message": "Average time-to-first-token (TTFT)\nacross all responses this session.\n\nMeasures how long the server takes to start\nresponding — not total generation time.\nHigher during peak hours.",
     "description": "Tooltip on the average latency pill"
   },
+  "msgQuotaTip": {
+    "message": "How much of your usage limit this message used.",
+    "description": "Tooltip on the per-message quota-usage chip"
+  },
+  "chipLatTip": {
+    "message": "How long Claude took to start replying.",
+    "description": "Tooltip on the per-message latency chip"
+  },
+  "chipSpdTip": {
+    "message": "How fast Claude generated this reply.",
+    "description": "Tooltip on the per-message speed chip"
+  },
+  "chipOutTip": {
+    "message": "How many tokens this reply contains.",
+    "description": "Tooltip on the per-message output-token chip"
+  },
+  "chipCachedTip": {
+    "message": "This reply reused a cached prompt, so it was cheaper and faster.",
+    "description": "Tooltip on the per-message cached chip"
+  },
+  "chipMaxedTip": {
+    "message": "Claude stopped early — the reply hit its length limit.",
+    "description": "Tooltip on the per-message limit-hit chip"
+  },
   "ghostTurns": {
     "message": "turns",
     "description": "Label in floating ghost overlay"
