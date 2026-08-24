@@ -228,20 +228,11 @@
     return best;
   }
 
-  // Walks up from an element to find the first ancestor with a real
-  // (non-transparent) background color, so the date badge can fade into
-  // whatever the row is actually sitting on — sidebar background differs
-  // between light/dark themes and isn't exposed as one of the extension's
-  // own CSS variables, so this samples it directly instead of guessing.
-  function getEffectiveBg(el) {
-    let node = el;
-    while (node && node !== document.documentElement) {
-      const bg = getComputedStyle(node).backgroundColor;
-      if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg;
-      node = node.parentElement;
-    }
-    return getComputedStyle(document.body).backgroundColor || '#ffffff';
-  }
+  // Must match the .ct-chat-date `right` value in ui.js — the gap that
+  // clears Claude's own row-actions button on hover. Used below to compute
+  // how much space the title actually needs to give up, on top of it.
+  const DATE_RIGHT_OFFSET = 34;
+  const DATE_TITLE_GAP = 4; // breathing room between title text and date
 
   function injectSidebarDates() {
     const map = window.CTS.convoDateMap;
@@ -253,12 +244,11 @@
       const iso = map[m[1]];
       if (!iso) return;
 
-      if (!a.dataset.ctDateInit) {
+      const isInit = !a.dataset.ctDateInit;
+      if (isInit) {
         a.dataset.ctDateInit = '1';
         if (getComputedStyle(a).position === 'static') a.style.position = 'relative';
 
-        // Reserve space on the actual title node so it truncates with an
-        // ellipsis before ever reaching the badge, instead of running under it.
         const titleEl = findTitleEl(a);
         if (titleEl) {
           titleEl.style.display = 'block';
@@ -266,13 +256,8 @@
           titleEl.style.textOverflow = 'ellipsis';
           titleEl.style.whiteSpace = 'nowrap';
           titleEl.style.boxSizing = 'border-box';
-          titleEl.style.paddingRight = '56px';
         }
       }
-
-      // Refreshed every pass (cheap) rather than once, so a live light/dark
-      // theme toggle updates the fade instead of keeping a stale sample.
-      a.style.setProperty('--ct-date-bg', getEffectiveBg(a));
 
       let badge = a.querySelector(':scope > .ct-chat-date');
       if (!badge) {
@@ -282,7 +267,21 @@
       }
 
       const label = window.CTS_Shared.formatChatDate(iso);
-      if (badge.textContent !== label) badge.textContent = label;
+      if (badge.textContent !== label) {
+        badge.textContent = label;
+
+        // Reserve exactly as much title space as this label actually needs
+        // (plus the fixed kebab-button clearance and a small gap) — measured
+        // per-row rather than a fixed guess, so short labels like "Aug 24"
+        // don't truncate the title any more than they have to, while longer
+        // ones (older chats grow a year, e.g. "Aug 24, 2025") still get the
+        // room they need automatically.
+        const titleEl = findTitleEl(a);
+        if (titleEl) {
+          titleEl.style.paddingRight =
+            (DATE_RIGHT_OFFSET + badge.offsetWidth + DATE_TITLE_GAP) + 'px';
+        }
+      }
       const full = new Date(iso).toLocaleString();
       if (badge.title !== full) badge.title = full;
     });
