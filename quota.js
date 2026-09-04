@@ -149,6 +149,23 @@
         if (toolbarEl) toolbarEl.textContent  = '';
         if (!window.CTS.activeResetTriggers[win]) {
           window.CTS.activeResetTriggers[win] = true;
+
+          // The window has actually rolled over at this instant, so drop the
+          // bar/percentage to 0% right away instead of leaving the stale
+          // pre-reset number on screen for the 1.5s until the fetch below
+          // resolves (or longer, if that fetch fails).
+          if (win === '5h') window.CTS.current5hUtil = 0;
+          if (win === '7d') {
+            window.CTS.current7dUtil = 0;
+            try { sessionStorage.setItem('cts_7d_util', '0'); } catch (_) {}
+          }
+          window.ClaudeTrackerUI.updateQuotaBars(win, 0, null);
+          if (win === '5h') window.CTS.isLimitHit = false;
+          window.CTS_StorageSet({
+            cts_5h_util: window.CTS.current5hUtil,
+            cts_7d_util: window.CTS.current7dUtil,
+          });
+
           setTimeout(() => {
             window.CTS_Network.triggerUsageFetch();
             window.CTS.activeResetTriggers[win] = false;
