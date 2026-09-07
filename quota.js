@@ -24,7 +24,15 @@
       if (window.CTS.isLimitHit && win === '5h') raw = 1;
 
       const pct = Math.round(raw * 100);
-      if (win === '5h') window.CTS.current5hUtil = pct;
+      if (win === '5h') {
+        window.CTS.current5hUtil = pct;
+        // Mirrors the 7d sessionStorage cache below so a fresh document load
+        // (new tab, reload, full navigation) has an instant, synchronous
+        // value to paint before the async chrome.storage.local restore
+        // (bridge.js) resolves. See state.js's restore comment for why this
+        // matters — 5h previously had no such fast-path at all.
+        try { sessionStorage.setItem('cts_5h_util', String(pct)); } catch (_) {}
+      }
       if (win === '7d') {
         window.CTS.current7dUtil = pct;
         try { sessionStorage.setItem('cts_7d_util', String(pct)); } catch (_) {}
@@ -154,7 +162,10 @@
           // bar/percentage to 0% right away instead of leaving the stale
           // pre-reset number on screen for the 1.5s until the fetch below
           // resolves (or longer, if that fetch fails).
-          if (win === '5h') window.CTS.current5hUtil = 0;
+          if (win === '5h') {
+            window.CTS.current5hUtil = 0;
+            try { sessionStorage.setItem('cts_5h_util', '0'); } catch (_) {}
+          }
           if (win === '7d') {
             window.CTS.current7dUtil = 0;
             try { sessionStorage.setItem('cts_7d_util', '0'); } catch (_) {}
@@ -169,7 +180,14 @@
           setTimeout(() => {
             window.CTS_Network.triggerUsageFetch();
             window.CTS.activeResetTriggers[win] = false;
-            window.CTS.isLimitHit = false;
+            // isLimitHit tracks the 5h window specifically (see state.js's
+            // doc comment). This used to be cleared unconditionally here,
+            // so a 7d rollover happening while the account was genuinely at
+            // its 5h limit would incorrectly un-flag isLimitHit — dropping
+            // the 5h bar's forced 100% back down to whatever raw number the
+            // next fetch/SSE event happens to report, even though the
+            // account was (and still is) actually at the 5h cap.
+            if (win === '5h') window.CTS.isLimitHit = false;
           }, 1500);
         }
         return;
@@ -204,15 +222,23 @@
 
   function _tickUIHealthCheck() {
     // See matching comment in content.js's mutationObserver: ct-quota's
-    // absence only signals a real problem when a sidebar nav exists to put
-    // it in. Checking unconditionally caused the incognito freeze; checking
+    // absence only signals a real problem when a sidebar exists to put it
+    // in. Checking unconditionally caused the incognito freeze; checking
     // never (the first fix) silently broke the legitimate retry needed when
     // an SPA transition brings a sidebar back without a full page reload.
-    const sidebarPresent = !!(
-      document.querySelector('nav.flex-col') ||
-      document.querySelector('[class*="sidebar"] nav') ||
-      document.querySelector('nav')
-    );
+    //
+    // This used to duplicate that detection with its own `nav`-only
+    // selectors, which pre-dated Anthropic's Aug 2026 sidebar redesign
+    // (content.js's getSidebarRoot() comment: the redesign dropped <nav>
+    // entirely in favour of `[data-testid="sidebar"]`/`aside.dframe-sidebar`).
+    // The two detectors had drifted apart: on the new markup this one could
+    // find no sidebar at all and simply never re-trigger tryInjectUI(),
+    // silently disabling this health check's half of the self-healing path.
+    // Reuse content.js's own detector instead so there's exactly one
+    // definition of "what counts as the sidebar" for both call sites.
+    const sidebarPresent = !!(window.CTS_Content && window.CTS_Content.getSidebarRoot
+      ? window.CTS_Content.getSidebarRoot()
+      : document.querySelector('nav'));
     const sidebarMissingQuota = sidebarPresent && !document.getElementById('ct-quota');
 
     if (!document.getElementById('ct-toolbar-quota') || !document.getElementById('ct-row') || sidebarMissingQuota) {

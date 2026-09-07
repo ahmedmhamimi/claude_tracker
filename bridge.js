@@ -35,6 +35,12 @@
     'peakTip', 'offPeakText', 'onPeakText',
     'toolbar5hTip', 'toolbar7dTip',
     'chipOut', 'chipCached', 'chipLimitHit',
+    // These eight have real translations in messages.json but were missing
+    // from this list, so chrome.i18n.getMessage() for them was never called
+    // and ui.js's tipAttr()/withFallback() always fell through to the
+    // hardcoded English fallback text, even for non-English locales.
+    'cacheTip', 'uncachedText', 'chipCachedTip', 'chipLatTip',
+    'chipMaxedTip', 'chipOutTip', 'chipSpdTip', 'msgQuotaTip',
     'magicPanelTitle', 'magicBtnLabel', 'magicBtnTip', 'magicPillTip',
     'magicTokensSaved', 'magicMeasuredSub',
     'magicEstSavings', 'magicEstSub',

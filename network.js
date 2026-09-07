@@ -290,6 +290,12 @@
             window.CTS.current5hUtil = 0;
             window.CTS.current7dUtil = 0;
             window.CTS.targetTimestamps = { '5h': null, '7d': null };
+            // Clear both session caches, not just 7d's — now that 5h has its
+            // own sessionStorage fast-path (see state.js/quota.js), leaving
+            // a stale cts_5h_util behind here would let this org's 5h number
+            // leak instantly into a subsequent different-org tab's first
+            // paint, the same bug this block exists to prevent for 7d.
+            try { sessionStorage.removeItem('cts_5h_util'); } catch (_) {}
             try { sessionStorage.removeItem('cts_7d_util'); } catch (_) {}
             window.CTS_StorageSet({
               cts_5h_util: 0, cts_7d_util: 0,
@@ -318,6 +324,7 @@
                 window.CTS.current7dUtil = 0;
                 window.CTS.targetTimestamps = { '5h': null, '7d': null };
                 window.CTS.isLimitHit = false;
+                try { sessionStorage.removeItem('cts_5h_util'); } catch (_) {}
                 try { sessionStorage.removeItem('cts_7d_util'); } catch (_) {}
                 window.CTS_StorageSet({
                   cts_5h_util: 0, cts_7d_util: 0,

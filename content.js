@@ -524,6 +524,14 @@
       applyAnalysis,
       updateInlineStats,
       injectSidebarDates,
+      // Exported so quota.js's _tickUIHealthCheck can use the exact same
+      // (post Aug-2026-redesign) sidebar detection instead of its own
+      // separate, narrower `nav`-only selectors — those two had drifted out
+      // of sync, which meant the health-check's self-healing retry could
+      // silently stop firing on layouts where the old selectors no longer
+      // matched anything, even though a real sidebar (and a real missing
+      // #ct-quota) was present.
+      getSidebarRoot,
     };
 
 })();

@@ -98,8 +98,24 @@ root.CTS = {
  lastConvoListFetch:      0,
 };
 
-// Restore last-known-good 7d utilization so page refreshes don't flash 0%
-// while waiting for the first SSE event to confirm the real value.
+// Restore last-known-good 5h/7d utilization so page refreshes (or any fresh
+// document load — new tab, full navigation, reload) don't flash/settle on 0%
+// while waiting on the chrome.storage.local round trip below, which has to
+// hop through bridge.js (ISOLATED world) and is not guaranteed to resolve
+// before the first paint. sessionStorage is synchronous and same-tab, so it
+// covers that gap immediately; the chrome.storage restore further down
+// still wins moments later once it resolves (it also works across new tabs,
+// which sessionStorage does not).
+//
+// 5h previously had no such fast-path at all — only 7d did — so a slow
+// bridge round trip would leave the 5h bar sitting at 0% (the field's
+// default) for however long that took, while 7d stayed correct throughout.
+// That asymmetry is what made the 5h "usage limit" appear to reset to zero
+// intermittently on fresh loads.
+try {
+  const _5h = sessionStorage.getItem('cts_5h_util');
+  if (_5h !== null) root.CTS.current5hUtil = parseInt(_5h, 10) || 0;
+} catch (_) {}
 try {
   const _7d = sessionStorage.getItem('cts_7d_util');
   if (_7d !== null) root.CTS.current7dUtil = parseInt(_7d, 10) || 0;
