@@ -113,11 +113,11 @@ root.CTS = {
 // That asymmetry is what made the 5h "usage limit" appear to reset to zero
 // intermittently on fresh loads.
 try {
-  const _5h = sessionStorage.getItem('cts_5h_util');
+  const _5h = sessionStorage.getItem('cts_5h_util') || localStorage.getItem('cts_global_5h_util');
   if (_5h !== null) root.CTS.current5hUtil = parseInt(_5h, 10) || 0;
 } catch (_) {}
 try {
-  const _7d = sessionStorage.getItem('cts_7d_util');
+  const _7d = sessionStorage.getItem('cts_7d_util') || localStorage.getItem('cts_global_7d_util');
   if (_7d !== null) root.CTS.current7dUtil = parseInt(_7d, 10) || 0;
 } catch (_) {}
 

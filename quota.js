@@ -31,11 +31,17 @@
         // value to paint before the async chrome.storage.local restore
         // (bridge.js) resolves. See state.js's restore comment for why this
         // matters — 5h previously had no such fast-path at all.
-        try { sessionStorage.setItem('cts_5h_util', String(pct)); } catch (_) {}
+        try {
+          sessionStorage.setItem('cts_5h_util', String(pct));
+          localStorage.setItem('cts_global_5h_util', String(pct));
+        } catch (_) {}
       }
       if (win === '7d') {
         window.CTS.current7dUtil = pct;
-        try { sessionStorage.setItem('cts_7d_util', String(pct)); } catch (_) {}
+        try {
+          sessionStorage.setItem('cts_7d_util', String(pct));
+          localStorage.setItem('cts_global_7d_util', String(pct));
+        } catch (_) {}
       }
 
       let ts = d.resetsAt;
@@ -164,11 +170,17 @@
           // resolves (or longer, if that fetch fails).
           if (win === '5h') {
             window.CTS.current5hUtil = 0;
-            try { sessionStorage.setItem('cts_5h_util', '0'); } catch (_) {}
+            try {
+              sessionStorage.setItem('cts_5h_util', '0');
+              localStorage.setItem('cts_global_5h_util', '0');
+            } catch (_) {}
           }
           if (win === '7d') {
             window.CTS.current7dUtil = 0;
-            try { sessionStorage.setItem('cts_7d_util', '0'); } catch (_) {}
+            try {
+              sessionStorage.setItem('cts_7d_util', '0');
+              localStorage.setItem('cts_global_7d_util', '0');
+            } catch (_) {}
           }
           window.ClaudeTrackerUI.updateQuotaBars(win, 0, null);
           if (win === '5h') window.CTS.isLimitHit = false;

@@ -485,10 +485,25 @@
     window.CTS.UIInjected = true;
   }
 
-  // ─── Inactivity Poller ────────────────────────────────────────────────────
+  // ─── Inactivity Poller & Connectivity Hooks ───────────────────────────────
 
   ['mousemove', 'click', 'keydown'].forEach(e => {
     document.addEventListener(e, () => { window.CTS.lastActivityTime = Date.now(); }, { passive: true });
+  });
+
+  window.addEventListener('online', () => {
+    if (window.CTS_Network) window.CTS_Network.triggerUsageFetch();
+  });
+
+  let _lastVisibilityFetch = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      const now = Date.now();
+      if (now - _lastVisibilityFetch > 60000 || window.CTS.current5hUtil === 0) {
+        _lastVisibilityFetch = now;
+        if (window.CTS_Network) window.CTS_Network.triggerUsageFetch();
+      }
+    }
   });
 
   setInterval(() => {
@@ -507,6 +522,13 @@
   setInterval(() => {
     if (window.CTS.orgId && getSidebarRoot()) window.CTS_Network.fetchConversationList();
   }, 60000);
+
+  // Periodic usage check every 5 seconds when tab is visible
+  setInterval(() => {
+    if (document.visibilityState === 'visible' && window.CTS && window.CTS.orgId && window.CTS_Network) {
+      window.CTS_Network.triggerUsageFetch();
+    }
+  }, 5000);
 
   // ─── MutationObserver ─────────────────────────────────────────────────────
 
