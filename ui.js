@@ -87,10 +87,21 @@ window.ClaudeTrackerUI = (function () {
 
   const STRUCTURAL_CSS = `
   #ct-row {
+  /* Deliberately NOT flex here, and deliberately inserted in content.js as
+   * a SIBLING right before the composer card rather than as a child
+   * inside it — see the comment above that insertion for why. Two earlier
+   * attempts fought the parent's own flex layout with CSS (flex-basis,
+   * display:block as a flex item) and both were unreliable, because an
+   * element's own display/basis can't override a flex-row parent that
+   * plus real toolbars are nowrap. Living outside the card avoids the
+   * problem entirely. margin-bottom pulls it flush against the card's top
+   * edge so there's no visible gap between the two. */
+  display: block; width: 100%; box-sizing: border-box;
+  padding: 6px 16px 0; margin-bottom: -2px; overflow: hidden;
+  }
+  #ct-row-inner {
   display: flex; flex-direction: row; align-items: center;
-  gap: 8px; padding: 4px 16px 6px;
-  overflow: hidden; min-width: 0; box-sizing: border-box; width: 100%;
-  flex-wrap: nowrap;
+  gap: 8px; overflow: hidden; min-width: 0; flex-wrap: nowrap;
   }
   #ct-row-left {
   display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;
@@ -1160,6 +1171,7 @@ window.ClaudeTrackerUI = (function () {
         const row = document.createElement('div');
         row.id = 'ct-row';
         row.innerHTML = `
+        <div id="ct-row-inner">
         <div id="ct-row-left">
         <div class="ct-pill" id="ct-p-ctx" data-ct-tip="${tipAttr('ctxPillTip')}">
         <span class="ct-pill-dot"></span><span id="ct-p-ctx-t">${i18n('ctxPillLabel')}</span>
@@ -1178,6 +1190,7 @@ window.ClaudeTrackerUI = (function () {
         </div>
         </div>
         <div id="ct-row-right"></div>
+        </div>
         `;
 
         return row;

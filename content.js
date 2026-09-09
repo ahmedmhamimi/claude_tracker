@@ -365,8 +365,56 @@
     }
 
     // Composer stats row
-    if (!document.getElementById('ct-row') && composer.parentElement) {
-      composer.parentElement.appendChild(window.ClaudeTrackerUI.buildComposerRow());
+    //
+    // We used to appendChild() this straight onto composer.parentElement —
+    // but that element is just the tight auto-resize wrapper hugging the
+    // contenteditable itself, sized to fit the text area and nothing else.
+    // Appending a new flow child there doesn't grow the composer card; it
+    // gets squeezed into the same box the placeholder/text occupies, so our
+    // row visually overlaps it instead of appearing as its own line below.
+    //
+    // Two earlier attempts at fixing this both leaned on CSS
+    // (flex-basis:100%, then display:block) to force #ct-row onto its own
+    // line no matter where it landed. Neither worked reliably: as a flex
+    // *item*, an element's own display/basis doesn't override the parent
+    // flex container's algorithm for placing it in the row — only the
+    // parent's own flex-wrap setting decides that, and real toolbars are
+    // nowrap. So CSS alone can't fix this; the insertion point itself has
+    // to be structurally correct.
+    //
+    // Also, "the toolbar row" isn't a fixed number of DOM levels above the
+    // send button across page states: on the mid-conversation composer the
+    // "+"/toolbar sits in its own row nested below the textarea, but on the
+    // landing-page composer the DOM is flatter and the send button's
+    // immediate parent is the SAME flex-row that also contains the
+    // composer itself — i.e. sendBtn.parentElement isn't reliably "just
+    // the toolbar", it can be the whole card.
+    //
+    // So instead of guessing a fixed number of levels, we walk up from the
+    // send button until we reach an ancestor that also contains the
+    // composer (the point where the toolbar and the textarea are known to
+    // share a common container), and insert #ct-row as that ancestor's
+    // PRECEDING SIBLING. That guarantees #ct-row always lands one level
+    // outside any row-flex toolbar/card, in the card's own parent's block
+    // flow, regardless of how deep or flat the surrounding DOM is.
+    if (!document.getElementById('ct-row')) {
+      const sendBtn =
+      composer.parentElement?.closest('form')?.querySelector('button[aria-label*="send" i], button[type="submit"]') ||
+      document.querySelector('button[aria-label*="send" i]');
+      let card = null;
+      if (sendBtn) {
+        let node = sendBtn.parentElement;
+        while (node && node !== document.body) {
+          if (node.contains(composer)) { card = node; break; }
+          node = node.parentElement;
+        }
+      }
+      const stats = window.ClaudeTrackerUI.buildComposerRow();
+      if (card && card.parentElement) {
+        card.parentElement.insertBefore(stats, card);
+      } else if (composer.parentElement) {
+        composer.parentElement.appendChild(stats);
+      }
     }
 
     // Quota card — floats independently of the composer (fixed-position,
