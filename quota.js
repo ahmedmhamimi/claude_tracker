@@ -211,6 +211,16 @@
           }
           window.ClaudeTrackerUI.updateQuotaBars(win, 0, null);
           if (win === '5h') window.CTS.isLimitHit = false;
+          // Note: targetTimestamps[win] is deliberately left as-is (still the
+          // just-passed timestamp) rather than nulled out here. _tickResetTimers'
+          // own "if (!target) return" guard at the top of this function means a
+          // null target would stop this whole retry block from ever running
+          // again, since only a non-null (even if stale) target reaches this
+          // "diff <= 0" branch that schedules the corrective fetch below. The
+          // real fix for the stale-timestamp bug this used to guard against is
+          // in network.js: triggerUsageFetch and the SSE message_limit handler
+          // now always overwrite targetTimestamps[win] with a fresh resets_at
+          // when the API provides one, instead of only writing it when unset.
           window.CTS_StorageSet({
             cts_5h_util: window.CTS.current5hUtil,
             cts_7d_util: window.CTS.current7dUtil,

@@ -120,8 +120,12 @@
                   let raw7d = h7d.utilization;
                   if (raw7d > 1 && raw7d <= 100) raw7d /= 100;
                   if (raw7d < 1) safe7d = { utilization: h7d.utilization, resetsAt: h7d.resets_at };
-                  // Always capture reset timestamp even when blocking the utilization
-                  if (h7d.resets_at && !window.CTS.targetTimestamps['7d']) {
+                  // Always take the API's resets_at when present, not just
+                  // when nothing is stored yet — see the matching fix and
+                  // comment in triggerUsageFetch above for why "only if
+                  // unset" permanently blocks the timestamp from ever
+                  // advancing past a rollover.
+                  if (h7d.resets_at) {
                     const ts7 = Math.floor(Date.parse(h7d.resets_at) / 1000);
                     if (!isNaN(ts7)) window.CTS.targetTimestamps['7d'] = ts7;
                   }
@@ -187,7 +191,16 @@
               let raw7d = d7.utilization;
               if (raw7d > 1 && raw7d <= 100) raw7d /= 100;
               if (raw7d != null && raw7d < 1) safe7d = { utilization: d7.utilization, resetsAt: d7.resets_at };
-              if (d7.resets_at && !window.CTS.targetTimestamps['7d']) {
+              // Always take the API's resets_at when we have one, not just
+              // when we don't already have a value stored. The old
+              // "only if currently unset" guard meant that once a window
+              // rolled over, the stale pre-rollover timestamp (left in place
+              // by quota.js's _tickResetTimers, which only zeroes the
+              // utilization, not the timestamp) was truthy and permanently
+              // blocked this from ever being refreshed — the countdown
+              // target never moved, so the display stuck on "refreshing…"
+              // until a live message's SSE event happened to overwrite it.
+              if (d7.resets_at) {
                 const ts7 = Math.floor(Date.parse(d7.resets_at) / 1000);
                 if (!isNaN(ts7)) window.CTS.targetTimestamps['7d'] = ts7;
               }
