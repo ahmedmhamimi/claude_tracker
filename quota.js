@@ -21,9 +21,24 @@
       let raw = d.utilization;
       if (raw > 1 && raw <= 100) raw /= 100;
       raw = Math.max(0, Math.min(1, raw));
+      // isLimitHit is meant to hold the 5h bar at 100% only up until the real
+      // reset time passes — not indefinitely. Cross-checking against the
+      // known reset timestamp here means a stuck flag (tab backgrounded
+      // through the rollover, timer throttled, etc.) can no longer make this
+      // function discard genuinely fresh, correct data from every periodic
+      // fetch forever: once real time has passed the reset, we trust the
+      // freshly-fetched utilization instead of the flag.
+      const knownReset5h = window.CTS.targetTimestamps['5h'];
+      if (knownReset5h && knownReset5h <= Math.floor(Date.now() / 1000)) {
+        window.CTS.isLimitHit = false;
+      }
       if (window.CTS.isLimitHit && win === '5h') raw = 1;
 
       const pct = Math.round(raw * 100);
+      let ts = d.resetsAt;
+      if (typeof ts === 'string') ts = Math.floor(Date.parse(ts) / 1000);
+      if (ts && !isNaN(ts)) window.CTS.targetTimestamps[win] = ts;
+
       if (win === '5h') {
         window.CTS.current5hUtil = pct;
         // Mirrors the 7d sessionStorage cache below so a fresh document load
@@ -31,9 +46,17 @@
         // value to paint before the async chrome.storage.local restore
         // (bridge.js) resolves. See state.js's restore comment for why this
         // matters — 5h previously had no such fast-path at all.
+        // Also mirror the reset timestamp alongside it: state.js's sync
+        // restore needs this to know whether the cached % is still valid
+        // for the window it was captured in, or belongs to one that has
+        // already rolled over.
         try {
           sessionStorage.setItem('cts_5h_util', String(pct));
           localStorage.setItem('cts_global_5h_util', String(pct));
+          if (ts && !isNaN(ts)) {
+            sessionStorage.setItem('cts_ts_5h', String(ts));
+            localStorage.setItem('cts_global_ts_5h', String(ts));
+          }
         } catch (_) {}
       }
       if (win === '7d') {
@@ -41,12 +64,12 @@
         try {
           sessionStorage.setItem('cts_7d_util', String(pct));
           localStorage.setItem('cts_global_7d_util', String(pct));
+          if (ts && !isNaN(ts)) {
+            sessionStorage.setItem('cts_ts_7d', String(ts));
+            localStorage.setItem('cts_global_ts_7d', String(ts));
+          }
         } catch (_) {}
       }
-
-      let ts = d.resetsAt;
-      if (typeof ts === 'string') ts = Math.floor(Date.parse(ts) / 1000);
-      if (ts && !isNaN(ts)) window.CTS.targetTimestamps[win] = ts;
 
       window.ClaudeTrackerUI.updateQuotaBars(win, pct, ts);
     });
@@ -173,6 +196,8 @@
             try {
               sessionStorage.setItem('cts_5h_util', '0');
               localStorage.setItem('cts_global_5h_util', '0');
+              sessionStorage.removeItem('cts_ts_5h');
+              localStorage.removeItem('cts_global_ts_5h');
             } catch (_) {}
           }
           if (win === '7d') {
@@ -180,6 +205,8 @@
             try {
               sessionStorage.setItem('cts_7d_util', '0');
               localStorage.setItem('cts_global_7d_util', '0');
+              sessionStorage.removeItem('cts_ts_7d');
+              localStorage.removeItem('cts_global_ts_7d');
             } catch (_) {}
           }
           window.ClaudeTrackerUI.updateQuotaBars(win, 0, null);

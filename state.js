@@ -112,14 +112,39 @@ root.CTS = {
 // default) for however long that took, while 7d stayed correct throughout.
 // That asymmetry is what made the 5h "usage limit" appear to reset to zero
 // intermittently on fresh loads.
+// Guard the synchronous fast-path against a reset window that has already
+// rolled over since this snapshot was written (e.g. the tab was opened long
+// after the 5h/7d window reset). Without this check we'd paint last window's
+// stale percentage instantly and correctly, then have nothing ever correct
+// it: the chrome.storage.local restore below already guards its own copy of
+// this same data (see fiveHExpired/sevenDExpired there), but it runs after
+// this block and only ever *skips* overwriting — it never rolls back what
+// this block already painted. So both copies need the same expiry check.
 try {
-  const _5h = sessionStorage.getItem('cts_5h_util') || localStorage.getItem('cts_global_5h_util');
-  if (_5h !== null) root.CTS.current5hUtil = parseInt(_5h, 10) || 0;
+  const _5hTs = parseInt(sessionStorage.getItem('cts_ts_5h') || localStorage.getItem('cts_global_ts_5h'), 10);
+  const _5hExpired = !isNaN(_5hTs) && _5hTs <= Math.floor(Date.now() / 1000);
+  if (!_5hExpired) {
+    const _5h = sessionStorage.getItem('cts_5h_util') || localStorage.getItem('cts_global_5h_util');
+    if (_5h !== null) root.CTS.current5hUtil = parseInt(_5h, 10) || 0;
+  }
 } catch (_) {}
 try {
-  const _7d = sessionStorage.getItem('cts_7d_util') || localStorage.getItem('cts_global_7d_util');
-  if (_7d !== null) root.CTS.current7dUtil = parseInt(_7d, 10) || 0;
+  const _7dTs = parseInt(sessionStorage.getItem('cts_ts_7d') || localStorage.getItem('cts_global_ts_7d'), 10);
+  const _7dExpired = !isNaN(_7dTs) && _7dTs <= Math.floor(Date.now() / 1000);
+  if (!_7dExpired) {
+    const _7d = sessionStorage.getItem('cts_7d_util') || localStorage.getItem('cts_global_7d_util');
+    if (_7d !== null) root.CTS.current7dUtil = parseInt(_7d, 10) || 0;
+  }
 } catch (_) {}
+
+// A stuck isLimitHit (see quota.js's syncQuotaUI — it forces the 5h bar to
+// 100% whenever this is true) must never survive a fresh document load.
+// It's meant to be transient, cleared once the 5h window's reset timer
+// fires while the tab is open (quota.js's _tickResetTimers) — but that path
+// depends on the tab staying open and the timestamp being correct. Starting
+// every fresh load with it false guarantees a stuck flag can't persist
+// beyond a reload, independent of whether the timer path ever ran.
+root.CTS.isLimitHit = false;
 
 // Restore quota utilization and reset timestamps from chrome.storage.local so
 // navigating to a new chat doesn't flash 0% bars while waiting for the first fetch.
@@ -174,6 +199,17 @@ root.CTS._storageReady = new Promise(resolve => {
         // with its own limits, logged in after a different account had
         // already cached its usage here).
         root.CTS._restoredOrgId = items.cts_org_id || null;
+
+        // Both caches (this one and the sessionStorage fast-path above) agree
+        // the restored snapshot is stale, so the bars are sitting at their
+        // fresh defaults (0%) rather than a real confirmed number. Ask for
+        // the truth directly instead of waiting on the indirect retry chain
+        // in content.js's tryInjectUI (which only fires once a sidebar
+        // exists and only checks current5hUtil === 0, not "we know this is
+        // stale"), or on orgId being captured from some unrelated fetch.
+        if ((fiveHExpired || sevenDExpired) && root.CTS.orgId && root.CTS_Network) {
+          root.CTS_Network.triggerUsageFetch();
+        }
       } catch (_) {}
       root.CTS._storageRestored = true;
       resolve();

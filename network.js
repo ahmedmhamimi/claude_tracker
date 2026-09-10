@@ -329,6 +329,8 @@
             // paint, the same bug this block exists to prevent for 7d.
             try { sessionStorage.removeItem('cts_5h_util'); localStorage.removeItem('cts_global_5h_util'); } catch (_) {}
             try { sessionStorage.removeItem('cts_7d_util'); localStorage.removeItem('cts_global_7d_util'); } catch (_) {}
+            try { sessionStorage.removeItem('cts_ts_5h'); localStorage.removeItem('cts_global_ts_5h'); } catch (_) {}
+            try { sessionStorage.removeItem('cts_ts_7d'); localStorage.removeItem('cts_global_ts_7d'); } catch (_) {}
             window.CTS_StorageSet({
               cts_5h_util: 0, cts_7d_util: 0,
               cts_ts_5h: null, cts_ts_7d: null,
@@ -358,6 +360,8 @@
                 window.CTS.isLimitHit = false;
                 try { sessionStorage.removeItem('cts_5h_util'); } catch (_) {}
                 try { sessionStorage.removeItem('cts_7d_util'); } catch (_) {}
+                try { sessionStorage.removeItem('cts_ts_5h'); } catch (_) {}
+                try { sessionStorage.removeItem('cts_ts_7d'); } catch (_) {}
                 window.CTS_StorageSet({
                   cts_5h_util: 0, cts_7d_util: 0,
                   cts_ts_5h: null, cts_ts_7d: null,
