@@ -118,5 +118,58 @@
   },
   "popupWish": {
     "message": "Пусть лимиты будут далеко."
+  },
+  "reviewTitle": {
+    "message": "TokenLens помогает вам не терять нить?"
+  },
+  "reviewBody": {
+    "message": "Отзывы — это то, как другие люди находят TokenLens. Если расширение этого заслужило, пять звёзд очень помогут."
+  },
+  "reviewStat": {
+    "message": "Дней с TokenLens: $DAYS$",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewNotNow": {
+    "message": "Не сейчас"
+  },
+  "reviewStar1": {
+    "message": "Не моё"
+  },
+  "reviewStar2": {
+    "message": "Нормально"
+  },
+  "reviewStar3": {
+    "message": "Неплохо"
+  },
+  "reviewStar4": {
+    "message": "Очень хорошо"
+  },
+  "reviewStar5": {
+    "message": "Обожаю"
+  },
+  "reviewThanksTitle": {
+    "message": "Спасибо. Правда."
+  },
+  "reviewThanksBody": {
+    "message": "Страница отзывов открылась в новой вкладке. Это займёт около 20 секунд и поможет больше, чем вы думаете."
+  },
+  "reviewLowTitle": {
+    "message": "Спасибо за честность."
+  },
+  "reviewLowBody": {
+    "message": "Расскажите, чего не хватает, и мы над этим поработаем. Это займёт минуту."
+  },
+  "reviewLowCta": {
+    "message": "Рассказать, чего не хватает"
+  },
+  "reviewPublicAnyway": {
+    "message": "Написать публичный отзыв"
+  },
+  "closeLabel": {
+    "message": "Закрыть"
   }
 }

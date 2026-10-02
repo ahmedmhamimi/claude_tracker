@@ -118,5 +118,58 @@
   },
   "popupWish": {
     "message": "Semoga batas Anda selalu jauh."
+  },
+  "reviewTitle": {
+    "message": "Apakah TokenLens membantu Anda tetap mengalir?"
+  },
+  "reviewBody": {
+    "message": "Ulasan adalah cara orang lain menemukan TokenLens. Jika layak, lima bintang sangat membantu."
+  },
+  "reviewStat": {
+    "message": "Hari bersama TokenLens: $DAYS$",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewNotNow": {
+    "message": "Nanti saja"
+  },
+  "reviewStar1": {
+    "message": "Bukan untuk saya"
+  },
+  "reviewStar2": {
+    "message": "Lumayan"
+  },
+  "reviewStar3": {
+    "message": "Cukup bagus"
+  },
+  "reviewStar4": {
+    "message": "Sangat bagus"
+  },
+  "reviewStar5": {
+    "message": "Suka sekali"
+  },
+  "reviewThanksTitle": {
+    "message": "Terima kasih. Sungguh."
+  },
+  "reviewThanksBody": {
+    "message": "Halaman ulasan baru saja terbuka di tab baru. Hanya sekitar 20 detik dan dampaknya lebih besar dari yang Anda kira."
+  },
+  "reviewLowTitle": {
+    "message": "Terima kasih atas kejujuran Anda."
+  },
+  "reviewLowBody": {
+    "message": "Beri tahu kami apa yang kurang dan kami akan memperbaikinya. Hanya semenit."
+  },
+  "reviewLowCta": {
+    "message": "Beri tahu apa yang kurang"
+  },
+  "reviewPublicAnyway": {
+    "message": "Tulis ulasan publik saja"
+  },
+  "closeLabel": {
+    "message": "Tutup"
   }
 }

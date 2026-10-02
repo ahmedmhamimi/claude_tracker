@@ -118,5 +118,58 @@
   },
   "popupWish": {
     "message": "Que tus límites se mantengan lejos."
+  },
+  "reviewTitle": {
+    "message": "¿TokenLens te mantiene en tu ritmo?"
+  },
+  "reviewBody": {
+    "message": "Las reseñas son la forma en que otras personas descubren TokenLens. Si se lo ha ganado, cinco estrellas ayudan muchísimo."
+  },
+  "reviewStat": {
+    "message": "Días con TokenLens: $DAYS$",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewNotNow": {
+    "message": "Ahora no"
+  },
+  "reviewStar1": {
+    "message": "No es para mí"
+  },
+  "reviewStar2": {
+    "message": "Está bien"
+  },
+  "reviewStar3": {
+    "message": "Bastante bueno"
+  },
+  "reviewStar4": {
+    "message": "Muy bueno"
+  },
+  "reviewStar5": {
+    "message": "Me encanta"
+  },
+  "reviewThanksTitle": {
+    "message": "Gracias. De verdad."
+  },
+  "reviewThanksBody": {
+    "message": "Se abrió la página de reseñas en una pestaña nueva. Toma unos 20 segundos y ayuda más de lo que imaginas."
+  },
+  "reviewLowTitle": {
+    "message": "Gracias por ser sincero."
+  },
+  "reviewLowBody": {
+    "message": "Cuéntanos qué falta y trabajaremos en ello. Toma un minuto."
+  },
+  "reviewLowCta": {
+    "message": "Cuéntanos qué falta"
+  },
+  "reviewPublicAnyway": {
+    "message": "Mejor escribir una reseña pública"
+  },
+  "closeLabel": {
+    "message": "Cerrar"
   }
 }

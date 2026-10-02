@@ -118,5 +118,58 @@
   },
   "popupWish": {
     "message": "愿你的额度始终充裕。"
+  },
+  "reviewTitle": {
+    "message": "TokenLens 帮你保持心流了吗？"
+  },
+  "reviewBody": {
+    "message": "评价是让更多人发现 TokenLens 的方式。如果它值得，五星会帮上大忙。"
+  },
+  "reviewStat": {
+    "message": "与 TokenLens 相伴的天数：$DAYS$",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewNotNow": {
+    "message": "以后再说"
+  },
+  "reviewStar1": {
+    "message": "不适合我"
+  },
+  "reviewStar2": {
+    "message": "还行"
+  },
+  "reviewStar3": {
+    "message": "挺不错"
+  },
+  "reviewStar4": {
+    "message": "非常好"
+  },
+  "reviewStar5": {
+    "message": "太喜欢了"
+  },
+  "reviewThanksTitle": {
+    "message": "真心感谢。"
+  },
+  "reviewThanksBody": {
+    "message": "评价页面已在新标签页打开。只需约 20 秒，却能帮上很大的忙。"
+  },
+  "reviewLowTitle": {
+    "message": "感谢你的坦诚。"
+  },
+  "reviewLowBody": {
+    "message": "告诉我们还缺什么，我们会改进。只需一分钟。"
+  },
+  "reviewLowCta": {
+    "message": "告诉我们还缺什么"
+  },
+  "reviewPublicAnyway": {
+    "message": "改为撰写公开评价"
+  },
+  "closeLabel": {
+    "message": "关闭"
   }
 }

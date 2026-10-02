@@ -30,12 +30,18 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://claude.ai/*"],
-      "js": ["bridge.js"],
+      "matches": [
+        "https://claude.ai/*"
+      ],
+      "js": [
+        "bridge.js"
+      ],
       "run_at": "document_start"
     },
     {
-      "matches": ["https://claude.ai/*"],
+      "matches": [
+        "https://claude.ai/*"
+      ],
       "js": [
         "shared.js",
         "state.js",
@@ -49,15 +55,26 @@
       "world": "MAIN"
     },
     {
-      "matches": ["https://claude.ai/*"],
-      "js": ["welcome.js"],
+      "matches": [
+        "https://claude.ai/*"
+      ],
+      "js": [
+        "theme.js",
+        "welcome.js",
+        "review.js"
+      ],
       "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "fonts/*"],
-      "matches": ["https://claude.ai/*"]
+      "resources": [
+        "icons/*",
+        "fonts/*"
+      ],
+      "matches": [
+        "https://claude.ai/*"
+      ]
     }
   ]
 }

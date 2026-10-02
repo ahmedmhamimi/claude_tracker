@@ -118,5 +118,58 @@
   },
   "popupWish": {
     "message": "Mögen deine Limits weit weg bleiben."
+  },
+  "reviewTitle": {
+    "message": "Hält TokenLens dich im Flow?"
+  },
+  "reviewBody": {
+    "message": "Über Bewertungen finden andere Menschen TokenLens. Wenn es sich das verdient hat, helfen fünf Sterne enorm."
+  },
+  "reviewStat": {
+    "message": "Tage mit TokenLens: $DAYS$",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewNotNow": {
+    "message": "Nicht jetzt"
+  },
+  "reviewStar1": {
+    "message": "Nichts für mich"
+  },
+  "reviewStar2": {
+    "message": "Okay"
+  },
+  "reviewStar3": {
+    "message": "Ziemlich gut"
+  },
+  "reviewStar4": {
+    "message": "Richtig gut"
+  },
+  "reviewStar5": {
+    "message": "Ich liebe es"
+  },
+  "reviewThanksTitle": {
+    "message": "Danke. Wirklich."
+  },
+  "reviewThanksBody": {
+    "message": "Die Bewertungsseite hat sich in einem neuen Tab geöffnet. Das dauert etwa 20 Sekunden und hilft mehr, als du denkst."
+  },
+  "reviewLowTitle": {
+    "message": "Danke für deine Ehrlichkeit."
+  },
+  "reviewLowBody": {
+    "message": "Sag uns, was fehlt, und wir arbeiten daran. Das dauert eine Minute."
+  },
+  "reviewLowCta": {
+    "message": "Sag uns, was fehlt"
+  },
+  "reviewPublicAnyway": {
+    "message": "Stattdessen öffentlich bewerten"
+  },
+  "closeLabel": {
+    "message": "Schließen"
   }
 }

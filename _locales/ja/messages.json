@@ -118,5 +118,58 @@
   },
   "popupWish": {
     "message": "上限が、ずっと遠くにありますように。"
+  },
+  "reviewTitle": {
+    "message": "TokenLensは、あなたの集中を支えられていますか？"
+  },
+  "reviewBody": {
+    "message": "レビューは、ほかの人がTokenLensを見つけるきっかけになります。気に入っていただけたなら、星5つが大きな力になります。"
+  },
+  "reviewStat": {
+    "message": "TokenLensと過ごした日数: $DAYS$",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewNotNow": {
+    "message": "今はしない"
+  },
+  "reviewStar1": {
+    "message": "合わなかった"
+  },
+  "reviewStar2": {
+    "message": "まあまあ"
+  },
+  "reviewStar3": {
+    "message": "なかなか良い"
+  },
+  "reviewStar4": {
+    "message": "とても良い"
+  },
+  "reviewStar5": {
+    "message": "大好き"
+  },
+  "reviewThanksTitle": {
+    "message": "本当にありがとうございます。"
+  },
+  "reviewThanksBody": {
+    "message": "レビューページを新しいタブで開きました。約20秒で完了し、想像以上に力になります。"
+  },
+  "reviewLowTitle": {
+    "message": "率直なご意見ありがとうございます。"
+  },
+  "reviewLowBody": {
+    "message": "足りない点を教えてください。1分ほどで済みます。"
+  },
+  "reviewLowCta": {
+    "message": "足りない点を伝える"
+  },
+  "reviewPublicAnyway": {
+    "message": "代わりに公開レビューを書く"
+  },
+  "closeLabel": {
+    "message": "閉じる"
   }
 }

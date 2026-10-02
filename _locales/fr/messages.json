@@ -118,5 +118,58 @@
   },
   "popupWish": {
     "message": "Que vos limites restent bien loin."
+  },
+  "reviewTitle": {
+    "message": "TokenLens vous aide-t-il à rester dans votre élan ?"
+  },
+  "reviewBody": {
+    "message": "Les avis sont la façon dont d’autres personnes découvrent TokenLens. S’il les a mérités, cinq étoiles comptent beaucoup."
+  },
+  "reviewStat": {
+    "message": "Jours avec TokenLens : $DAYS$",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "reviewNotNow": {
+    "message": "Pas maintenant"
+  },
+  "reviewStar1": {
+    "message": "Pas pour moi"
+  },
+  "reviewStar2": {
+    "message": "Correct"
+  },
+  "reviewStar3": {
+    "message": "Plutôt bien"
+  },
+  "reviewStar4": {
+    "message": "Très bien"
+  },
+  "reviewStar5": {
+    "message": "J’adore"
+  },
+  "reviewThanksTitle": {
+    "message": "Merci. Vraiment."
+  },
+  "reviewThanksBody": {
+    "message": "La page d’avis vient de s’ouvrir dans un nouvel onglet. Cela prend environ 20 secondes et aide plus qu’on ne le croit."
+  },
+  "reviewLowTitle": {
+    "message": "Merci pour votre franchise."
+  },
+  "reviewLowBody": {
+    "message": "Dites-nous ce qui manque et nous y travaillerons. Cela prend une minute."
+  },
+  "reviewLowCta": {
+    "message": "Dites-nous ce qui manque"
+  },
+  "reviewPublicAnyway": {
+    "message": "Écrire un avis public à la place"
+  },
+  "closeLabel": {
+    "message": "Fermer"
   }
 }

@@ -2,8 +2,9 @@
  * First-run welcome splash. Shown exactly once, right after a fresh install.
  *
  * Runs in the ISOLATED world (it needs chrome.storage / chrome.i18n and the
- * extension's bundled font) and draws inside a shadow root so claude.ai's CSS
- * can't touch it and ours can't leak out.
+ * bundled font) and draws inside a shadow root so claude.ai's CSS can't touch
+ * it. Look and feel come from theme.js (warm paper + terracotta, follows
+ * claude.ai's light/dark mode).
  *
  * Flow:
  *   background.js sets cts_show_welcome = true on install and opens Claude.
@@ -13,8 +14,7 @@
  *   the message box and pulses the real widget.
  *
  * While the splash is up, <html data-cts-welcome="active">; when it is gone
- * (or was never going to show) it is "done". ui.js holds its drag-hint bubble
- * until then.
+ * (or was never going to show) it is "done". ui.js and review.js wait on it.
  */
 
 (function () {
@@ -23,6 +23,7 @@
   if (window.top !== window) return;
 
   const ROOT = document.documentElement;
+  const Theme = window.CTS_Theme;
   const finish = () => { ROOT.dataset.ctsWelcome = 'done'; };
   const t = (key, fallback) => {
     try { return chrome.i18n.getMessage(key) || fallback; } catch (_) { return fallback; }
@@ -75,16 +76,16 @@
 
   // ─── Live usage (the number inside the lens) ────────────────────────────────
 
-  // Resolves with the % of the 5-hour window still left, or null if no reading
-  // lands within `timeoutMs`. The MAIN-world code writes cts_5h_util as soon as
-  // its first usage request succeeds, usually within a second or two.
-  function waitForRemaining(timeoutMs) {
-    const toRemaining = items => {
+  // Resolves with { rem, ts }: % of the 5-hour window still left and when it
+  // resets, or null if no reading lands within `timeoutMs`. The MAIN-world code
+  // writes cts_5h_util as soon as its first usage request succeeds.
+  function waitForUsage(timeoutMs) {
+    const read = items => {
       if (typeof items.cts_5h_util !== 'number') return null;
       const ts = items.cts_ts_5h;
       const expired = ts != null && ts <= Math.floor(Date.now() / 1000);
       const used = expired ? 0 : items.cts_5h_util;
-      return Math.max(0, Math.min(100, Math.round(100 - used)));
+      return { rem: Math.max(0, Math.min(100, Math.round(100 - used))), ts: expired ? null : ts };
     };
 
     return new Promise(resolve => {
@@ -99,201 +100,173 @@
       const onChange = (changes, area) => {
         if (area !== 'local' || !changes.cts_5h_util) return;
         chrome.storage.local.get(['cts_5h_util', 'cts_ts_5h'], items => {
-          const r = toRemaining(items);
-          if (r != null) settle(r);
+          const r = read(items);
+          if (r) settle(r);
         });
       };
       const timer = setTimeout(() => settle(null), timeoutMs);
       chrome.storage.onChanged.addListener(onChange);
       chrome.storage.local.get(['cts_5h_util', 'cts_ts_5h'], items => {
-        const r = toRemaining(items);
-        if (r != null) settle(r);
+        const r = read(items);
+        if (r) settle(r);
       });
     });
   }
 
-  // ─── Font ───────────────────────────────────────────────────────────────────
-  // @font-face does not register from inside a shadow root, so the faces are
-  // added to the document through the FontFace API under a private family name.
-
-  async function loadFonts() {
-    const faces = [
-      ['normal', 'fonts/instrument-serif-latin-400-normal.woff2'],
-      ['italic', 'fonts/instrument-serif-latin-400-italic.woff2'],
-    ];
-    try {
-      await Promise.race([
-        Promise.all(faces.map(async ([style, path]) => {
-          const face = new FontFace('TokenLens Serif', `url(${chrome.runtime.getURL(path)})`, { style, weight: '400' });
-          await face.load();
-          document.fonts.add(face);
-        })),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('font timeout')), 1200)),
-      ]);
-    } catch (_) { /* fall back to the system serif stack */ }
+  function formatReset(ts) {
+    const s = ts - Math.floor(Date.now() / 1000);
+    if (s <= 0) return '';
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return h > 0 ? `${h}h ${m}m` : `${Math.max(1, m)}m`;
   }
 
   // ─── Markup ─────────────────────────────────────────────────────────────────
 
   const CSS = `
+    ${Theme.TOKENS}
     :host { all: initial; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    button { font: inherit; }
 
     .stage {
-      --serif: 'TokenLens Serif', 'Iowan Old Style', 'Palatino Linotype', Georgia, 'Noto Serif', 'Noto Serif CJK JP', 'Noto Serif CJK SC', serif;
-      --sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Hiragino Sans', 'Noto Sans CJK JP', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-      --lens: clamp(210px, min(44vh, 78vw), 340px);
+      --lens: clamp(250px, min(32vw, 64vh), 440px);
       position: fixed; inset: 0; overflow: auto;
-      display: grid; place-items: center;
-      padding: clamp(20px, 4vh, 48px) 24px;
-      color: #FFF1DF;
+      display: grid; grid-template-rows: auto 1fr;
+      padding: 26px clamp(22px, 5vw, 72px) 32px;
+      background: var(--bg); color: var(--text);
       font-family: var(--sans);
-      background: #0C1236;
-      opacity: 0;
-      transition: opacity .8s ease;
+      opacity: 0; transition: opacity .55s ease;
     }
     .stage.in { opacity: 1; }
 
-    .sky {
-      position: absolute; inset: 0;
-      background: radial-gradient(90% 75% at 50% 36%, #223389 0%, #151F5C 52%, #0C1236 100%);
+    /* top bar */
+    .top { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; letter-spacing: -.005em; }
+    .x {
+      width: 38px; height: 38px; display: grid; place-items: center;
+      border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer;
+      transition: background .15s, color .15s;
     }
-    .dawn {
-      position: absolute; left: -15%; right: -15%; bottom: -34%; height: 90%;
-      background: radial-gradient(50% 56% at 50% 60%, rgba(255,152,84,.64) 0%, rgba(255,120,72,.28) 38%, rgba(255,120,72,0) 72%);
-      transform: translateY(38%); opacity: 0;
-      transition: transform 4.6s cubic-bezier(.16,.8,.2,1), opacity 2.6s ease;
-    }
-    .in .dawn { transform: none; opacity: 1; }
+    .x:hover { background: var(--surface); color: var(--text); }
 
+    /* body */
     main {
-      position: relative; z-index: 1;
-      display: flex; flex-direction: column; align-items: center;
-      text-align: center; max-width: 42rem;
+      width: 100%; max-width: 1160px; margin: 0 auto; align-self: center;
+      display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
+      align-items: center; gap: clamp(32px, 6vw, 104px);
     }
-
-    /* The lens: the one memorable thing. It starts out of focus and resolves. */
-    .lens {
-      position: relative; width: var(--lens); height: var(--lens);
-      filter: blur(28px); opacity: 0; transform: scale(1.22);
-      transition: filter 2s cubic-bezier(.2,.7,.2,1), opacity 1.3s ease, transform 2s cubic-bezier(.2,.7,.2,1);
-    }
-    .focus .lens { filter: blur(0); opacity: 1; transform: none; }
-    .lens svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-
-    .tick-dim { stroke: rgba(176,194,255,.24); stroke-linecap: round; fill: none; }
-    .glow { filter: drop-shadow(0 0 5px rgba(255,160,92,.55)); }
-    .tick-lit { stroke: var(--c); stroke-linecap: round; opacity: 0; transition: opacity .3s ease; }
-    .tick-lit.on { opacity: 1; }
-
-    .readout {
-      position: absolute; inset: 0;
-      display: grid; place-content: center; justify-items: center; gap: calc(var(--lens) * .015);
-    }
-    .num {
-      font-family: var(--serif); font-weight: 400;
-      font-size: calc(var(--lens) * .28); line-height: .9;
-      letter-spacing: -.02em; color: #FFF4E6;
-      font-variant-numeric: lining-nums tabular-nums;
-    }
-    .num .pc { font-size: .42em; margin-left: .04em; vertical-align: .62em; opacity: .85; }
-    .cap {
-      max-width: calc(var(--lens) * .5); text-wrap: balance;
-      font-size: clamp(11px, calc(var(--lens) * .042), 14px); line-height: 1.3;
-      color: rgba(224,232,255,.72);
-    }
-
-    .rise {
-      opacity: 0; transform: translateY(14px); filter: blur(6px);
-      transition: opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1), filter .9s ease;
-    }
-    .show-h .r-h, .show-p .r-p, .show-b .r-b, .show-f .r-f { opacity: 1; transform: none; filter: none; }
+    .copy { text-align: left; }
 
     h1 {
-      margin-top: clamp(18px, 3.6vh, 36px);
-      font-family: var(--serif); font-weight: 400; font-style: italic;
-      font-size: clamp(34px, 5.2vw, 64px); line-height: 1.05; letter-spacing: -.012em;
-      color: #FFF1DF; max-width: 21ch; text-wrap: balance;
+      font-family: var(--serif); font-weight: 400;
+      font-size: clamp(40px, 5vw, 76px); line-height: 1.04; letter-spacing: -.022em;
+      max-width: 14em; text-wrap: balance;
     }
-    p.body {
-      margin-top: 16px; max-width: 34em;
-      font-size: clamp(15px, 1.5vw, 18px); line-height: 1.55;
-      color: rgba(228,234,255,.8); text-wrap: pretty;
+    h1 .ln { display: block; }
+    .body {
+      margin-top: clamp(16px, 2.6vh, 26px); max-width: 31em;
+      font-size: clamp(16px, 1.45vw, 19px); line-height: 1.58; color: var(--muted); text-wrap: pretty;
     }
     .go {
-      margin-top: clamp(22px, 4vh, 34px);
+      margin-top: clamp(24px, 4.2vh, 40px);
       appearance: none; border: 0; cursor: pointer;
-      padding: 15px 30px; border-radius: 999px;
-      font: 600 16px/1 var(--sans); color: #1B2158;
-      background: linear-gradient(180deg, #FFE8C6, #FFCF94);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.4), 0 10px 34px rgba(255,150,80,.38);
-      transition: transform .25s ease, box-shadow .25s ease, opacity .9s ease, filter .9s ease;
+      padding: 15px 26px; border-radius: 12px;
+      font-size: 16px; font-weight: 600; letter-spacing: -.005em;
+      color: var(--on-btn); background: var(--btn);
+      transition: background .18s, transform .18s;
     }
-    .go.rise { transition: opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1), filter .9s ease, box-shadow .25s ease; }
-    .show-b .go:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.5), 0 14px 44px rgba(255,150,80,.5); }
+    .go:hover { background: var(--btn-hover); transform: translateY(-1px); }
+    .go:active { transform: none; }
     .go:focus { outline: none; }
-    .kbd .go:focus-visible { outline: 2px solid #9DBBFF; outline-offset: 4px; }
-    .fine { margin-top: 20px; font-size: 12.5px; color: rgba(205,216,255,.55); }
+    .kbd .go:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .fine { margin-top: 18px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .fine svg { flex: none; }
 
-    .cjk h1 { font-style: normal; font-weight: 500; letter-spacing: 0; line-height: 1.3; max-width: 16em; font-size: clamp(28px, 4.2vw, 50px); word-break: keep-all; overflow-wrap: anywhere; }
+    /* the lens: the one memorable thing */
+    .lens { position: relative; width: var(--lens); height: var(--lens); justify-self: center; }
+    .lens svg.ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .tick-dim { stroke: var(--tick); stroke-linecap: round; fill: none; }
+    .tick-lit { stroke: var(--accent); stroke-linecap: round; opacity: 0; transition: opacity .25s ease; }
+    .tick-lit.on { opacity: 1; }
+    .face { fill: var(--card); stroke: var(--line); stroke-width: 1.2; }
+    .tip { fill: var(--accent); opacity: 0; transition: opacity .5s ease; }
+    .tip.on { opacity: 1; }
 
-    .stage.leaving {
-      opacity: 0; transform: scale(1.05); filter: blur(10px);
-      transition: opacity .55s ease, transform .55s ease, filter .55s ease;
+    .readout { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; }
+    .num {
+      font-family: var(--serif); font-weight: 400;
+      font-size: calc(var(--lens) * .3); line-height: .92; letter-spacing: -.03em;
+      font-variant-numeric: lining-nums tabular-nums;
     }
+    .num .pc { font-size: .4em; margin-left: .05em; vertical-align: .72em; color: var(--muted); letter-spacing: 0; }
+    .cap {
+      margin-top: calc(var(--lens) * .02); max-width: calc(var(--lens) * .5); text-wrap: balance;
+      font-size: clamp(11.5px, calc(var(--lens) * .042), 14.5px); line-height: 1.3; color: var(--muted);
+    }
+    .sub { margin-top: calc(var(--lens) * .035); font-family: var(--serif); font-style: italic; font-size: clamp(13px, calc(var(--lens) * .05), 17px); color: var(--accent); }
+
+    /* the copy fades in once, as a block, after the ring starts to light */
+    .reveal { opacity: 0; transform: translateY(8px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.7,.2,1); }
+    .shown .reveal { opacity: 1; transform: none; }
+
+    .cjk h1 { font-weight: 500; letter-spacing: 0; line-height: 1.28; font-size: clamp(34px, 4.6vw, 62px); word-break: keep-all; overflow-wrap: anywhere; }
+
+    .stage.leaving { opacity: 0; transition: opacity .4s ease; }
 
     .rm, .rm * { transition: none !important; animation: none !important; }
-    .rm .rise { opacity: 1; transform: none; filter: none; }
-    .rm .lens { filter: none; opacity: 1; transform: none; }
-    .rm .dawn { transform: none; opacity: 1; }
+    .rm .reveal { opacity: 1; transform: none; }
 
-    @media (max-height: 640px) {
+    @media (max-width: 860px) {
+      .stage { --lens: clamp(220px, min(70vw, 40vh), 340px); }
+      main { grid-template-columns: 1fr; gap: 28px; align-self: start; padding-top: 8px; }
+      .lens { order: -1; }
+      h1 { font-size: clamp(34px, 9vw, 52px); }
+    }
+    @media (max-height: 640px) and (min-width: 861px) {
       .fine { display: none; }
-      h1 { font-size: clamp(28px, 4.6vw, 44px); }
+      h1 { font-size: clamp(34px, 4.6vw, 56px); }
     }
   `;
-
-  function lerp(a, b, k) { return Math.round(a + (b - a) * k); }
-  function tickColor(k) {   // ember -> candlelight across the ring
-    return `rgb(${lerp(255, 255, k)}, ${lerp(150, 232, k)}, ${lerp(84, 190, k)})`;
-  }
 
   function ringSVG() {
     let dim = '', lit = '';
     for (let i = 0; i < TICKS; i++) {
       const major = i % MAJOR_EVERY === 0;
-      const len = major ? 24 : 12;
-      const w = major ? 3.4 : 2.2;
-      const line = (cls, extra) =>
-        `<line class="${cls}" x1="0" y1="-152" x2="0" y2="${-(152 - len)}" stroke-width="${w}" transform="rotate(${i * 360 / TICKS})" ${extra || ''}/>`;
+      const len = major ? 24 : 13;
+      const w = major ? 3.6 : 2.4;
+      const line = cls =>
+        `<line class="${cls}" x1="0" y1="-152" x2="0" y2="${-(152 - len)}" stroke-width="${w}" transform="rotate(${i * 360 / TICKS})"/>`;
       dim += line('tick-dim');
-      lit += line('tick-lit', `style="--c:${tickColor(i / (TICKS - 1))}"`);
+      lit += line('tick-lit');
     }
     return `
-      <svg viewBox="-170 -170 340 340" aria-hidden="true">
-        <defs>
-          <radialGradient id="glass" cx="34%" cy="28%" r="82%">
-            <stop offset="0" stop-color="#fff" stop-opacity=".17"/>
-            <stop offset=".5" stop-color="#fff" stop-opacity=".04"/>
-            <stop offset="1" stop-color="#fff" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <circle r="167" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="1"/>
+      <svg class="ring" viewBox="-170 -170 340 340" aria-hidden="true">
+        <circle class="face" r="114"/>
         <g>${dim}</g>
-        <g class="glow">${lit}</g>
-        <circle r="116" fill="url(#glass)"/>
-        <circle r="116" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1.5"/>
-        <path d="M -82 -62 A 102 102 0 0 1 -26 -98" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="3" stroke-linecap="round"/>
+        <g>${lit}</g>
+        <circle class="tip" id="tip" r="5.5" cx="0" cy="-165"/>
       </svg>`;
   }
+
+  const LOCK = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+  const CLOSE = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 
   // Japanese/Chinese have no spaces to break on: offer a break after each
   // sentence mark so a headline never splits in the middle of a phrase.
   function setHeadline(el, text) {
-    if (!isCJK) { el.textContent = text; return; }
-    text.split(/(?<=[。！？，、])/).forEach(part => {
-      el.appendChild(document.createTextNode(part));
-      el.appendChild(document.createElement('wbr'));
+    if (isCJK) {
+      text.split(/(?<=[。！？，、])/).forEach(part => {
+        el.appendChild(document.createTextNode(part));
+        el.appendChild(document.createElement('wbr'));
+      });
+      return;
+    }
+    // Latin scripts: each sentence is its own line, so a line never ends mid-thought.
+    text.split(/(?<=[.!?\u00a1\u00bf])\s+/).forEach(sentence => {
+      const line = document.createElement('span');
+      line.className = 'ln';
+      line.textContent = sentence;
+      el.appendChild(line);
     });
   }
 
@@ -305,25 +278,31 @@
     const host = document.createElement('div');
     host.id = 'cts-welcome-host';
     host.style.cssText = 'position:fixed;inset:0;z-index:2147483647;';
+    const disposeTheme = Theme.attach(host);
     const root = host.attachShadow({ mode: 'open' });
 
     root.innerHTML = `
       <style>${CSS}</style>
       <div class="stage${isCJK ? ' cjk' : ''}${reduceMotion ? ' rm' : ''}" role="dialog" aria-modal="true" aria-labelledby="ttl">
-        <div class="sky"></div>
-        <div class="dawn"></div>
+        <header class="top">
+          <div class="brand">${Theme.mark(26)}<span>TokenLens</span></div>
+          <button class="x" type="button">${CLOSE}</button>
+        </header>
         <main>
+          <section class="copy">
+            <h1 id="ttl" class="reveal"></h1>
+            <p class="body reveal"></p>
+            <button class="go reveal" type="button"></button>
+            <p class="fine reveal">${LOCK}<span id="fine"></span></p>
+          </section>
           <div class="lens">
             ${ringSVG()}
             <div class="readout">
-              <div class="num" id="num" aria-live="off"><span id="n">5h</span></div>
+              <div class="num" id="num"><span id="n">5h</span></div>
               <div class="cap" id="cap"></div>
+              <div class="sub" id="sub"></div>
             </div>
           </div>
-          <h1 id="ttl" class="rise r-h"></h1>
-          <p class="body rise r-p"></p>
-          <button class="go rise r-b" type="button"></button>
-          <p class="fine rise r-f"></p>
         </main>
       </div>`;
 
@@ -332,14 +311,16 @@
     setHeadline($('#ttl'), t('welcomeTitle', 'Stay in your flow. We\u2019ll watch the clock.'));
     $('.body').textContent = t('welcomeBody', 'TokenLens shows how much of your 5-hour limit is left, right where you chat, so a limit never catches you off guard.');
     $('.go').textContent = t('welcomeCta', 'Start chatting');
-    $('.fine').textContent = t('privacyLine', 'Runs only on claude.ai. Nothing leaves your browser.');
+    $('#fine').textContent = t('privacyLine', 'Runs only on claude.ai. Nothing leaves your browser.');
     $('#cap').textContent = t('welcomeWindow', 'your 5-hour window');
+    $('.x').setAttribute('aria-label', t('closeLabel', 'Close'));
 
     const litTicks = Array.from(root.querySelectorAll('.tick-lit'));
+    const tip = $('#tip');
     const startedAt = performance.now();
 
-    // Fonts first, so the headline never flashes in a fallback face.
-    await loadFonts();
+    // Font first, so the headline never flashes in a fallback face.
+    await Theme.loadFonts();
     document.documentElement.appendChild(host);
 
     const button = $('.go');
@@ -349,7 +330,7 @@
     const onKey = e => {
       stage.classList.add('kbd');
       if (e.key === 'Escape') { e.stopPropagation(); close(); }
-      else if (e.key === 'Tab') { e.preventDefault(); button.focus(); }
+      else if (e.key === 'Tab') { e.preventDefault(); (e.shiftKey ? $('.x') : button).focus(); }
     };
     document.addEventListener('keydown', onKey, true);
 
@@ -361,56 +342,62 @@
       stage.classList.add('leaving');
       setTimeout(() => {
         host.remove();
+        disposeTheme();
         finish();
         handBack();
-      }, reduceMotion ? 0 : 560);
+      }, reduceMotion ? 0 : 420);
     }
     button.addEventListener('click', close);
+    $('.x').addEventListener('click', close);
 
-    // Begin: sky fades up, the lens starts to focus.
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      stage.classList.add('in');
-      setTimeout(() => stage.classList.add('focus'), 150);
-    }));
+    requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add('in')));
 
-    // Meanwhile wait (briefly) for the real number. Never hold the show for it.
-    const remaining = await waitForRemaining(1600);
+    // Wait (briefly) for the real number. Never hold the show for it.
+    const usage = await waitForUsage(1600);
     const sinceStart = performance.now() - startedAt;
-    if (!reduceMotion && sinceStart < 1000) await new Promise(r => setTimeout(r, 1000 - sinceStart));
+    if (!reduceMotion && sinceStart < 700) await new Promise(r => setTimeout(r, 700 - sinceStart));
 
-    lightUp(remaining);
+    lightUp(usage);
+    setTimeout(() => stage.classList.add('shown'), reduceMotion ? 0 : 450);
 
-    const at = (ms, cls) => setTimeout(() => stage.classList.add(cls), reduceMotion ? 0 : ms);
-    at(900,  'show-h');
-    at(1500, 'show-p');
-    at(2000, 'show-b');
-    at(2500, 'show-f');
-
-    function lightUp(rem) {
+    function lightUp(u) {
       const nEl = $('#n');
       const num = $('#num');
-      if (rem == null) {
+      let count = TICKS;
+
+      if (!u) {
         // No reading yet (offline, or a brand-new account): light the whole ring
         // and name the window instead of inventing a number.
-        litTicks.forEach((el, i) => setTimeout(() => el.classList.add('on'), reduceMotion ? 0 : i * 20));
         nEl.textContent = '5h';
-        return;
+      } else {
+        $('#cap').textContent = t('welcomeLeft', 'of your 5-hour limit left');
+        count = u.rem === 0 ? 0 : Math.max(1, Math.round(u.rem / 100 * TICKS));
+        const pc = document.createElement('span');
+        pc.className = 'pc';
+        pc.textContent = '%';
+        num.appendChild(pc);
+        const reset = u.ts ? formatReset(u.ts) : '';
+        if (reset) $('#sub').textContent = `${t('quotaResetsIn', 'resets in')} ${reset}`;
       }
-      $('#cap').textContent = t('welcomeLeft', 'of your 5-hour limit left');
-      const count = rem === 0 ? 0 : Math.max(1, Math.round(rem / 100 * TICKS));
+
+      const STEP = 24;
       litTicks.slice(0, count).forEach((el, i) =>
-        setTimeout(() => el.classList.add('on'), reduceMotion ? 0 : i * 22));
+        setTimeout(() => el.classList.add('on'), reduceMotion ? 0 : i * STEP));
 
-      const pc = document.createElement('span');
-      pc.className = 'pc';
-      pc.textContent = '%';
-      num.appendChild(pc);
+      // A small marker where "left" ends and "used" begins, like a clock hand.
+      if (u && count > 0 && count < TICKS) {
+        tip.setAttribute('transform', `rotate(${(count - 1) * 360 / TICKS})`);
+        setTimeout(() => tip.classList.add('on'), reduceMotion ? 0 : count * STEP + 150);
+      }
 
-      if (reduceMotion || rem === 0) { nEl.textContent = String(rem); return; }
-      const dur = 1500, t0 = performance.now();
+      if (!u) return;
+      if (reduceMotion || u.rem === 0) { nEl.textContent = String(u.rem); return; }
+      // Linear and the same length as the ring's sweep, so the number is always
+      // exactly what the lit ticks show.
+      const dur = Math.max(1, count * STEP), t0 = performance.now();
       const step = now => {
         const k = Math.min(1, (now - t0) / dur);
-        nEl.textContent = String(Math.round(rem * (1 - Math.pow(1 - k, 3))));
+        nEl.textContent = String(Math.round(u.rem * k));
         if (k < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
