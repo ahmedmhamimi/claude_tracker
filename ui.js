@@ -45,6 +45,10 @@ window.ClaudeTrackerUI = (function () {
     return val === key ? fallback : val;
   };
 
+  // True while we have neither a cached nor a live usage reading to show.
+  const isLoadingFirstReading = () =>
+    !window.CTS.dataReady && !(window.CTS.current5hUtil > 0 || window.CTS.current7dUtil > 0);
+
   // ─── CSS Themes ───────────────────────────────────────────────────────────
 
   const DARK_THEME_CSS = `
@@ -435,6 +439,22 @@ window.ClaudeTrackerUI = (function () {
     opacity: 0; transition: opacity 0.12s ease;
     }
     #ct-tooltip.vis { opacity: 1; }
+
+    /* First-load state: until a real usage reading lands, show a quiet sweep
+       instead of a misleading 0%. data-ct-loading="idle" = gave up waiting
+       (e.g. offline); keep the dash but stop animating. */
+    [data-ct-loading] .ct-tq-pct, [data-ct-loading] .ct-bar-pct { opacity: .45; }
+    [data-ct-loading="1"] .ct-tq-fill, [data-ct-loading="1"] .ct-progress-fill {
+      width: 100% !important;
+      background: linear-gradient(90deg, transparent 0%, rgba(var(--ct-accent-rgb), .55) 50%, transparent 100%);
+      background-size: 200% 100%;
+      animation: ct-load-sweep 1.4s ease-in-out infinite;
+    }
+    [data-ct-loading="idle"] .ct-tq-fill, [data-ct-loading="idle"] .ct-progress-fill { width: 0% !important; }
+    @keyframes ct-load-sweep { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      [data-ct-loading="1"] .ct-tq-fill, [data-ct-loading="1"] .ct-progress-fill { animation: none; background: rgba(var(--ct-accent-rgb), .3); }
+    }
 
     /* One-time onboarding hint — points at the movable/resizable widget. */
     #ct-hint {
@@ -1009,6 +1029,23 @@ window.ClaudeTrackerUI = (function () {
               try { alreadySeen = await readSeenFlag(); } catch (_) { alreadySeen = true; }
               if (alreadySeen) return;
 
+              // Fresh install: let the welcome splash (welcome.js) finish first,
+              // so the hint isn't spent behind it. welcome.js sets
+              // data-cts-welcome="done" when the splash closes.
+              try {
+                const st = JSON.parse(document.documentElement.dataset.ctsstorage || '{}');
+                if (st.cts_show_welcome === true) {
+                  const finished = await new Promise(resolve => {
+                    const t0 = Date.now();
+                    const iv = setInterval(() => {
+                      if (document.documentElement.dataset.ctsWelcome === 'done') { clearInterval(iv); resolve(true); }
+                      else if (Date.now() - t0 > 15 * 60 * 1000) { clearInterval(iv); resolve(false); }
+                    }, 300);
+                  });
+                  if (!finished) return;
+                }
+              } catch (_) {}
+
               let armed = false; // widget found + visible, waiting to show
               let shown = false;
 
@@ -1139,9 +1176,27 @@ window.ClaudeTrackerUI = (function () {
             })();
       },
 
+      // Called once a real usage reading has landed (see quota.js syncQuotaUI).
+      // Clears the loading state and paints whatever the true values are,
+      // including a genuine 0% for an account with no active window yet.
+      markReady() {
+        document.querySelectorAll('[data-ct-loading]').forEach(el => el.removeAttribute('data-ct-loading'));
+        ['5h', '7d'].forEach(w => {
+          const util = w === '5h' ? window.CTS.current5hUtil : window.CTS.current7dUtil;
+          this.updateQuotaBars(w, util || 0, window.CTS.targetTimestamps[w]);
+        });
+      },
+
+      // Stop animating if the first reading never arrives (offline, blocked
+      // request). The next real reading still clears it via markReady().
+      settleLoading() {
+        document.querySelectorAll('[data-ct-loading="1"]').forEach(el => el.setAttribute('data-ct-loading', 'idle'));
+      },
+
       buildQuotaContainer() {
         const el = document.createElement('div');
         el.id = 'ct-quota';
+        if (isLoadingFirstReading()) el.setAttribute('data-ct-loading', '1');
         el.innerHTML = `
         <div class="ct-quota-row">
         <div class="ct-quota-header" data-ct-tip="${tipAttr('quota5hTip')}">
@@ -1149,7 +1204,7 @@ window.ClaudeTrackerUI = (function () {
         </div>
         <div class="ct-progress-wrap">
         <div class="ct-progress-bg"><div id="ct-fill-5h" class="ct-progress-fill"></div></div>
-        <span class="ct-bar-pct" id="ct-bar-pct-5h">0%</span>
+        <span class="ct-bar-pct" id="ct-bar-pct-5h">\u2014</span>
         </div>
         <div class="ct-quota-footer"><span>${i18n('quotaResetsIn')}</span><span id="ct-tr5h">\u2014</span></div>
         </div>
@@ -1159,7 +1214,7 @@ window.ClaudeTrackerUI = (function () {
         </div>
         <div class="ct-progress-wrap">
         <div class="ct-progress-bg"><div id="ct-fill-7d" class="ct-progress-fill"></div></div>
-        <span class="ct-bar-pct" id="ct-bar-pct-7d">0%</span>
+        <span class="ct-bar-pct" id="ct-bar-pct-7d">\u2014</span>
         </div>
         <div class="ct-quota-footer"><span>${i18n('quotaResetsIn')}</span><span id="ct-tr7d">\u2014</span></div>
         </div>
@@ -1208,6 +1263,9 @@ window.ClaudeTrackerUI = (function () {
       },
 
       updateQuotaBars(win, pct, ts) {
+        // While the first real reading is pending, a 0 is just a default, not data.
+        if (pct === 0 && document.querySelector('[data-ct-loading]')) return;
+        if (pct > 0) document.querySelectorAll('[data-ct-loading]').forEach(el => el.removeAttribute('data-ct-loading'));
         const fillEl = document.getElementById(`ct-fill-${win}`);
         const barPct = document.getElementById(`ct-bar-pct-${win}`);
         if (fillEl) fillEl.style.width = pct + '%';
@@ -1222,6 +1280,7 @@ window.ClaudeTrackerUI = (function () {
       buildToolbarQuota() {
         const el = document.createElement('div');
         el.id = 'ct-toolbar-quota';
+        if (isLoadingFirstReading()) el.setAttribute('data-ct-loading', '1');
         el.innerHTML = `
         <div id="ct-tq-header">
         <div id="ct-tq-badges">
@@ -1240,14 +1299,14 @@ window.ClaudeTrackerUI = (function () {
         <div class="ct-tq-bar">
         <div id="ct-tq-fill-5h" class="ct-tq-fill"></div>
         </div>
-        <span class="ct-tq-pct" id="ct-tq-pct-5h">0%</span>
+        <span class="ct-tq-pct" id="ct-tq-pct-5h">\u2014</span>
         <span class="ct-tq-reset" id="ct-tq-tr-5h"></span>
         </div>
         <span class="ct-tq-sep">\u00b7</span>
         <div class="ct-tq-block" data-ct-tip="${tipAttr('toolbar7dTip')}">
         <span class="ct-tq-label">7d</span>
         <div class="ct-tq-bar"><div id="ct-tq-fill-7d" class="ct-tq-fill"></div></div>
-        <span class="ct-tq-pct" id="ct-tq-pct-7d">0%</span>
+        <span class="ct-tq-pct" id="ct-tq-pct-7d">\u2014</span>
         <span class="ct-tq-reset" id="ct-tq-tr-7d"></span>
         </div>
         <div class="ct-resize-handle" data-corner="tl" title="Drag to resize \u2022 double-click to reset"></div>

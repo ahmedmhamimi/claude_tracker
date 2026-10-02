@@ -11,44 +11,14 @@
   "actionTitle": {
     "message": "TokenLens – Трекер Claude"
   },
-  "popupH1": {
-    "message": "CLAUDE TRACKER"
-  },
-  "popupSubtitle": {
-    "message": "Advanced Pro · v5.5"
-  },
-  "popupWishText": {
-    "message": "Пусть ты <strong>никогда</strong> не достигнешь лимита 5ч<br/>(достигнешь). Пусть окно контекста<br/>останется огромным (не останется). Пусть каждый<br/>ответ будет <strong>именно</strong> тем, что ты просил.<br/><span style=\"opacity:0.5;font-size:9px\">(удачи с последним)</span>"
-  },
-  "popupFooter": {
-    "message": "CLAUDE ADVANCED PRO TRACKER — claude.ai"
-  },
-  "badgeTip": {
-    "message": "Токены, сэкономленные за сессию.\nИзмеряется по сокращению символов (÷4).\nОбновляется после каждого ответа.\nВход: сокращения, паразиты, markdown из истории."
-  },
-  "tokSuffix": {
-    "message": " tok"
-  },
   "quota5hLabel": {
     "message": "Лимит 5 часов"
   },
   "quota5hTip": {
-    "message": "Скользящая 5-часовая квота.\n\nСбрасывается через 5 часов после первого сообщения.\nОбщая для всех диалогов.\n\nВзвешена по токенам. Магия\nзамедляет заполнение."
+    "message": "Скользящая 5-часовая квота.\n\nСбрасывается через 5 часов после первого сообщения.\nОбщая для всех диалогов.\n\nВзвешена по токенам: длинные сообщения расходуют больше."
   },
   "quotaResetsIn": {
     "message": "сброс через"
-  },
-  "wmTip": {
-    "message": "Без Магии: оценка 5-ч квоты без сжатия.\n\n  ██ Оранж = фактическое\n  ██ Фиол = без Магии\n\nЧто сжимается:\n· Вход: сокращения, паразиты\n· История: markdown из прошлых ответов\n· Выход: ~15–20% меньше токенов"
-  },
-  "wmHeaderText": {
-    "message": "без магии"
-  },
-  "wmActualLabel": {
-    "message": "факт"
-  },
-  "wmWithoutLabel": {
-    "message": "без магии"
   },
   "quota7dLabel": {
     "message": "Лимит 7 дней"
@@ -93,7 +63,7 @@
     "message": "пик"
   },
   "toolbar5hTip": {
-    "message": "Использование 5-ч квоты.\nСброс через 5ч.\nМагия помогает снизить значение."
+    "message": "Использование 5-ч квоты.\nСброс через 5ч после первого сообщения.\nВзвешена по токенам: длинные диалоги заполняют её быстрее."
   },
   "toolbar7dTip": {
     "message": "Использование 7-д квоты.\nСброс через 7 дней.\nДолгосрочный потолок."
@@ -107,133 +77,46 @@
   "chipLimitHit": {
     "message": "лимит дост."
   },
-  "magicPanelTitle": {
-    "message": "Магическое сжатие"
+  "welcomeTitle": {
+    "message": "Не теряйте нить. Время мы возьмём на себя."
   },
-  "magicBtnLabel": {
-    "message": "Магия"
+  "welcomeBody": {
+    "message": "TokenLens показывает, сколько осталось от вашего 5-часового лимита, прямо в чате — чтобы лимит никогда не заставал врасплох."
   },
-  "magicBtnTip": {
-    "message": "Магическое сжатие\n\nСжимает сообщения перед отправкой — удаляет паразитов,\nсжимает историю — чтобы 5-ч квота расходовалась медленнее.\n\nНажмите для настройки."
+  "welcomeCta": {
+    "message": "Начать чат"
   },
-  "magicPillTip": {
-    "message": "Нетто токенов сэкономлено Магией.\n\n· Вход: сокращения, паразиты\n· История: markdown удалён\n· Код: комментарии удалены\n\nМеньше токенов = квота расходуется медленнее."
+  "privacyLine": {
+    "message": "Работает только на claude.ai. Ничего не покидает ваш браузер."
   },
-  "magicTokensSaved": {
-    "message": "↓ $COUNT$ токенов сэкономлено",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "42"
-      }
-    }
+  "welcomeLeft": {
+    "message": "вашего 5-часового лимита осталось"
   },
-  "magicMeasuredSub": {
-    "message": "Оценка из сжатия входа и истории (символы÷4)"
+  "welcomeWindow": {
+    "message": "ваше 5-часовое окно"
   },
-  "magicEstSavings": {
-    "message": "~$PCT$% ожидаемая экономия",
-    "placeholders": {
-      "pct": {
-        "content": "$1",
-        "example": "23"
-      }
-    }
+  "popupActive": {
+    "message": "Активно на этой вкладке"
   },
-  "magicEstSub": {
-    "message": "Отправьте сообщение, чтобы начать измерения"
+  "popupReload": {
+    "message": "Перезагрузите вкладку, чтобы включить TokenLens."
   },
-  "magicDesc": {
-    "message": "Магия сжимает сообщения перед отправкой — удаляет паразита, сжимает историю и указывает Claude пропускать декоративное форматирование — чтобы 5-ч квота расходовалась медленнее."
+  "popupReloadBtn": {
+    "message": "Перезагрузить вкладку"
   },
-  "magicSelectAll": {
-    "message": "Выбрать всё"
+  "popupOpen": {
+    "message": "Откройте Claude, чтобы увидеть расход."
   },
-  "magicDeselectAll": {
-    "message": "Снять всё"
+  "popupOpenBtn": {
+    "message": "Открыть Claude"
   },
-  "magicSectionInput": {
-    "message": "Сжатие входа (экономия видна на значке)"
+  "popupLoading": {
+    "message": "Загружаем данные об использовании…"
   },
-  "magicSectionOutput": {
-    "message": "Директивы вывода (сокращают ответы Claude)"
+  "popupNoWindow": {
+    "message": "Нет активного окна"
   },
-  "magicEstLabel": {
-    "message": "ож. экономия"
-  },
-  "magicReset": {
-    "message": "Сброс"
-  },
-  "magicSave": {
-    "message": "Сохранить"
-  },
-  "impactSilent": {
-    "message": "незаметно"
-  },
-  "impactNotice": {
-    "message": "заметно"
-  },
-  "impactTradeoff": {
-    "message": "компромисс"
-  },
-  "techWhitespaceLabel": {
-    "message": "Очистка пробелов и unicode"
-  },
-  "techWhitespaceTip": {
-    "message": "Кавычки → прямые, em-тире → --, пустые строки слиты. 0–3 токена на сообщение."
-  },
-  "techContractionsLabel": {
-    "message": "Применение сокращений"
-  },
-  "techContractionsTip": {
-    "message": "\"will not\" → \"won't\" (2 → 1 ток.). BPE-токенизаторы рассматривают сокращения как единый токен. ~0.5–1 за вхождение."
-  },
-  "techFillersLabel": {
-    "message": "Удаление паразитов"
-  },
-  "techFillersTip": {
-    "message": "\"in order to\" → \"to\" (−3 т.), длинные фразы удалены (−6). Наибольшая единичная экономия."
-  },
-  "techNumbersLabel": {
-    "message": "Нормализация чисел"
-  },
-  "techNumbersTip": {
-    "message": "\"1,000,000\" → \"1M\". ~1–2 токена за число. Код не затрагивается."
-  },
-  "techCodeCommentsLabel": {
-    "message": "Удаление комментариев"
-  },
-  "techCodeCommentsTip": {
-    "message": "Удаляет // строчные, /* */ блочные и # комментарии. Измеримо. См. значок."
-  },
-  "techJsonMinifyLabel": {
-    "message": "Минификация JSON / конфига"
-  },
-  "techJsonMinifyTip": {
-    "message": "Минифицирует ```json блоки. Только валидный JSON. 20–40% экономии."
-  },
-  "techNoMarkdownOutputLabel": {
-    "message": "Ответы без форматирования"
-  },
-  "techNoMarkdownOutputTip": {
-    "message": "Добавляет ~8 токенов директивы. Claude пропускает markdown (#, **, -). 5–15% экономии вывода. Не отслеживается в значке."
-  },
-  "techNoPreambleLabel": {
-    "message": "Без преамбулы и заключений"
-  },
-  "techNoPreambleTip": {
-    "message": "Добавляет ~6 токенов. Удаляет \"Great question!\" и подобные. ~10–40 токенов за ответ."
-  },
-  "techExpertModeLabel": {
-    "message": "Режим эксперта (пропустить основы)"
-  },
-  "techExpertModeTip": {
-    "message": "Добавляет ~7 токенов. Claude пропускает введение и определения. экономия 0–30%."
-  },
-  "techStripHistoryMarkdownLabel": {
-    "message": "Удалить markdown из истории"
-  },
-  "techStripHistoryMarkdownTip": {
-    "message": "Удаляет ##, **, - из прошлых ответов. Измеримо — видно на значке. Форматирование сохраняется."
+  "popupWish": {
+    "message": "Пусть лимиты будут далеко."
   }
 }

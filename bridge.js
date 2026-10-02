@@ -6,15 +6,18 @@
  * dataset attributes — the DOM is shared between worlds, so MAIN-world scripts
  * can read them synchronously (i18n) or poll asynchronously (storage).
  *
- * Also proxies chrome.storage.local.set on behalf of MAIN-world scripts:
- * listen for 'cts:storage:set' CustomEvents dispatched on document.
+ * Also:
+ *  - proxies chrome.storage.local.set on behalf of MAIN-world scripts
+ *    (listen for 'cts:storage:set' CustomEvents dispatched on document), and
+ *  - answers the popup's 'cts:status' ping so the popup can tell whether
+ *    TokenLens is actually running in this tab.
  */
 
 (function () {
   'use strict';
 
   // ─── i18n bridge ─────────────────────────────────────────────────────────
-  // Collect every message key used across the extension and bake them into a
+  // Collect every message key used by MAIN-world scripts and bake them into a
   // single JSON blob on the root element. MAIN-world scripts read this once
   // and cache it locally, so there is no per-call DOM access overhead.
   //
@@ -24,10 +27,7 @@
 
   const ALL_KEYS = [
     'extName', 'extShortName', 'extDescription', 'actionTitle',
-    'popupH1', 'popupSubtitle', 'popupWishText', 'popupFooter',
-    'badgeTip', 'tokSuffix',
     'quota5hLabel', 'quota5hTip', 'quotaResetsIn',
-    'wmTip', 'wmHeaderText', 'wmActualLabel', 'wmWithoutLabel',
     'quota7dLabel', 'quota7dTip',
     'ctxPillLabel', 'ctxPillTip',
     'spdPillTip', 'turnsPillTip', 'costPillTip', 'latPillTip',
@@ -35,29 +35,8 @@
     'peakTip', 'offPeakText', 'onPeakText',
     'toolbar5hTip', 'toolbar7dTip',
     'chipOut', 'chipCached', 'chipLimitHit',
-    // These eight have real translations in messages.json but were missing
-    // from this list, so chrome.i18n.getMessage() for them was never called
-    // and ui.js's tipAttr()/withFallback() always fell through to the
-    // hardcoded English fallback text, even for non-English locales.
     'cacheTip', 'uncachedText', 'chipCachedTip', 'chipLatTip',
     'chipMaxedTip', 'chipOutTip', 'chipSpdTip', 'msgQuotaTip',
-    'magicPanelTitle', 'magicBtnLabel', 'magicBtnTip', 'magicPillTip',
-    'magicTokensSaved', 'magicMeasuredSub',
-    'magicEstSavings', 'magicEstSub',
-    'magicDesc', 'magicSelectAll', 'magicDeselectAll',
-    'magicSectionInput', 'magicSectionOutput',
-    'magicEstLabel', 'magicReset', 'magicSave',
-    'impactSilent', 'impactNotice', 'impactTradeoff',
-    'techWhitespaceLabel', 'techWhitespaceTip',
-    'techContractionsLabel', 'techContractionsTip',
-    'techFillersLabel', 'techFillersTip',
-    'techNumbersLabel', 'techNumbersTip',
-    'techCodeCommentsLabel', 'techCodeCommentsTip',
-    'techJsonMinifyLabel', 'techJsonMinifyTip',
-    'techNoMarkdownOutputLabel', 'techNoMarkdownOutputTip',
-    'techNoPreambleLabel', 'techNoPreambleTip',
-    'techExpertModeLabel', 'techExpertModeTip',
-    'techStripHistoryMarkdownLabel', 'techStripHistoryMarkdownTip',
   ];
 
   const msgs = {};
@@ -74,26 +53,18 @@
   // state.js polls for dataset.ctsstorage to appear instead of relying on a
   // promise that would require chrome.* access from MAIN world.
   //
-  // 'claude_tracker_settings' is the Magic panel's persisted technique
-  // toggles (compressor.js reads/writes this key — see its loadSettings/
-  // saveSettings). It lives in chrome.storage.local rather than the page's
-  // own localStorage so it survives clearing claude.ai's site data.
+  // 'cts_hint_seen' is a one-time flag for the draggable-widget onboarding
+  // hint (ui.js's initHintBubble). It lives in chrome.storage.local rather
+  // than the page's localStorage because claude.ai clears its own site data
+  // on logout, which used to make the hint reappear on every fresh login.
   //
-  // 'cts_magic_intro_seen' is a one-time flag: true once the Magic button's
-  // first-run ring-ping + callout (magic.js) has been shown. Lives here for
-  // the same reason — it must survive reloads so the intro really only
-  // fires once per install, not once per tab.
-  //
-  // 'cts_hint_seen' is the same idea for the draggable-widget onboarding
-  // hint (ui.js's initHintBubble). It used to be a plain localStorage flag,
-  // which meant it got wiped whenever claude.ai cleared its own site data
-  // on logout — making the hint reappear on every fresh login. Moved here
-  // for the same reason as the Magic intro flag above: chrome.storage.local
-  // is the extension's own storage, untouched by the site's logout cleanup.
+  // 'cts_show_welcome' is set by background.js on a fresh install. While it is
+  // true the first-run splash (welcome.js) has not been shown yet, so the hint
+  // bubble holds back until the splash is done.
 
   chrome.storage.local.get(
-    ['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d', 'cts_org_id', 'claude_tracker_settings',
-    'cts_magic_intro_seen', 'cts_hint_seen'],
+    ['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d', 'cts_org_id',
+     'cts_hint_seen', 'cts_show_welcome'],
     items => {
       document.documentElement.dataset.ctsstorage = JSON.stringify(items || {});
     }
@@ -106,6 +77,20 @@
   document.addEventListener('cts:storage:set', e => {
     if (e.detail && typeof e.detail === 'object') {
       chrome.storage.local.set(e.detail);
+    }
+  });
+
+  // ─── popup status ping ───────────────────────────────────────────────────
+  // popup.js sends { type: 'cts:status' } to the active tab. Getting any reply
+  // proves the extension is running in that tab; no reply means the tab was
+  // opened before TokenLens was installed/updated and needs a reload.
+
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg && msg.type === 'cts:status') {
+      sendResponse({
+        ok: true,
+        ui: !!document.getElementById('ct-toolbar-quota'),
+      });
     }
   });
 

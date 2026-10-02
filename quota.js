@@ -13,6 +13,9 @@
 
   function syncQuotaUI(limits) {
     if (!limits) return;
+    // A real reading has arrived: stop showing the loading state, even if the
+    // account has no active window yet (a brand-new user legitimately sits at 0%).
+    window.CTS.dataReady = true;
 
     ['5h', '7d'].forEach(win => {
       const d = limits[win];
@@ -85,6 +88,8 @@
       cts_ts_7d:   window.CTS.targetTimestamps['7d'],
       cts_org_id:  window.CTS.orgId || null,
     });
+
+    window.ClaudeTrackerUI.markReady();
   }
 
   // ─── Countdown Tick ───────────────────────────────────────────────────────

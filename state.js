@@ -12,6 +12,7 @@
  *   current5hUtil      number          — latest 5h utilization % (0–100)
  *   current7dUtil      number          — latest 7d utilization % (0–100)
  *   isLimitHit         boolean         — whether the 5h limit has been reached
+ *   dataReady          boolean         — whether a real usage reading has landed (until then the bars show a loading state, not 0%)
  *   preMessage5hUtil   number|null     — 5h util % captured at message_start, before this turn's usage lands
  *   lastMsgQuotaDelta  number|null     — percentage points of the 5h window consumed by the last message
  *   UIInjected         boolean         — whether DOM components have been injected
@@ -57,6 +58,7 @@ root.CTS = {
   current5hUtil:       0,
   current7dUtil:       0,
   isLimitHit:          false,
+  dataReady:           false, // true once a real usage reading (not a default 0) has landed
   preMessage5hUtil:    null,  // 5h util % snapshotted at message_start, for per-turn delta
   lastMsgQuotaDelta:   null,  // percentage points of the 5h window used by the last message
 

@@ -426,6 +426,22 @@
       requestAnimationFrame(() => strip.classList.add('vis'));
     }
 
+    // First-reading retries. These used to live only inside the sidebar branch
+    // below, so layouts without a sidebar never retried a failed first fetch.
+    // Backoff covers the cold start where orgId isn't captured yet; the last
+    // step stops the loading animation if nothing ever arrives.
+    if (!window.CTS._usageRetriesArmed) {
+      window.CTS._usageRetriesArmed = true;
+      [300, 1200, 2800, 5500, 9000].forEach(delay => {
+        setTimeout(() => {
+          if (!window.CTS.dataReady) window.CTS_Network.triggerUsageFetch();
+        }, delay);
+      });
+      setTimeout(() => {
+        if (!window.CTS.dataReady) window.ClaudeTrackerUI.settleLoading();
+      }, 15000);
+    }
+
     // Sidebar quota panel — retried independently on subsequent passes.
     // Absence of a sidebar <nav> is a legitimate terminal state on some
     // layouts (e.g. Incognito chat has none), not an error condition, so
@@ -447,7 +463,7 @@
         // Stops retrying once we have real data.
         [300, 1200, 2800, 5500].forEach(delay => {
           setTimeout(() => {
-            if (window.CTS.current5hUtil === 0) window.CTS_Network.triggerUsageFetch();
+            if (!window.CTS.dataReady) window.CTS_Network.triggerUsageFetch();
           }, delay);
         });
       }
