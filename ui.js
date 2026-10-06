@@ -295,13 +295,17 @@ window.ClaudeTrackerUI = (function () {
   user-select: none;
   box-shadow: 0 18px 44px rgba(0,0,0,0.22), 0 4px 12px rgba(0,0,0,0.1);
   }
-  #ct-toolbar-quota #ct-peak { align-self: flex-start; }
+  /* Peak/off-peak and cached/not-cached badges: stacked, each full width. */
   #ct-tq-badges {
-  display: flex; align-items: center; gap: 6px; min-width: 0;
+  display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+  flex: 1 1 auto; min-width: 0;
+  }
+  #ct-tq-badges #ct-peak, #ct-tq-badges #ct-cache {
+  display: flex; width: 100%; box-sizing: border-box; justify-content: center;
   }
 
   #ct-tq-header {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: flex-start; justify-content: space-between;
   gap: 8px; width: 100%;
   }
   .ct-hide-btn {
@@ -314,7 +318,7 @@ window.ClaudeTrackerUI = (function () {
   .ct-hide-btn:hover { background: var(--ct-bg-progress); color: var(--ct-text); }
   .ct-hide-btn svg { width: 11px; height: 11px; display: block; }
 
-  .ct-tq-actions { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
+  .ct-tq-actions { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; margin-top: 3px; }
   #ct-toolbar-quota .ct-hide-btn { cursor: pointer; }
 
   /* Hidden by the user: fades out and stops catching clicks. The element
@@ -393,7 +397,6 @@ window.ClaudeTrackerUI = (function () {
       min-width: 0; flex-direction: row; align-items: center; gap: 14px;
       padding: 9px 12px;
       }
-      #ct-toolbar-quota #ct-peak { align-self: center; }
       .ct-tq-block { gap: 6px; }
       .ct-tq-bar { width: 44px; }
       .ct-tq-reset { display: none; }
