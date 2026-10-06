@@ -318,6 +318,38 @@ window.ClaudeTrackerUI = (function () {
   #ct-toolbar-quota.ct-collapsed .ct-collapse-toggle svg { transform: rotate(-90deg); }
   #ct-toolbar-quota.ct-collapsed .ct-tq-block { display: none; }
 
+  .ct-tq-actions { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
+  #ct-toolbar-quota .ct-hide-btn { cursor: pointer; }
+
+  /* Hidden by the user: fades out and stops catching clicks. The element
+   * stays in the DOM so the usage numbers keep updating for when it is
+   * reopened. Declared after .vis (same specificity) so it wins. */
+  #ct-toolbar-quota.ct-widget-hidden {
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transform: translateY(-8px) scale(0.98);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+  }
+
+  /* Reopen button. Sits in claude.ai's top-right icon row (next to the
+   * incognito / files icons); falls back to a small fixed button if that
+   * row can't be found. */
+  #ct-launcher {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; padding: 0; margin: 0 2px; flex-shrink: 0;
+    border: 0; border-radius: 8px; background: transparent;
+    color: inherit; opacity: 0.85; cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+  }
+  #ct-launcher:hover { background: var(--ct-bg-progress); opacity: 1; }
+  #ct-launcher:focus-visible { outline: 2px solid var(--ct-accent); outline-offset: 1px; }
+  #ct-launcher svg { width: 20px; height: 20px; display: block; }
+  #ct-launcher.ct-launcher-fixed {
+    position: fixed; top: 68px; right: 20px; z-index: 9997;
+    background: var(--ct-ghost-bg); border: 1px solid var(--ct-border);
+    color: var(--ct-muted); opacity: 1;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  }
+
   .ct-tq-sep { display: none; }
   .ct-tq-block {
     display: flex; align-items: center; gap: 8px; flex-shrink: 0;
@@ -596,9 +628,96 @@ window.ClaudeTrackerUI = (function () {
 
     // ─── Public API ───────────────────────────────────────────────────────────
 
+    // ─── Hide / reopen the floating widget ────────────────────────────────────
+    // State lives in chrome.storage.local (key cts_widget_hidden) via the
+    // bridge, so it survives claude.ai's logout cleanup. bridge.js stamps the
+    // stored value into dataset.ctsstorage at document_start; after that the
+    // in-memory copy is the source of truth for this tab.
+
+    const HIDDEN_KEY = 'cts_widget_hidden';
+    let _widgetHidden = null;
+
+    function isWidgetHidden() {
+      if (_widgetHidden !== null) return _widgetHidden;
+      const raw = document.documentElement.dataset.ctsstorage;
+      if (raw === undefined) return false; // bridge not ready yet: don't cache
+      try { _widgetHidden = JSON.parse(raw)[HIDDEN_KEY] === true; }
+      catch (_) { _widgetHidden = false; }
+      return _widgetHidden;
+    }
+
+    function setWidgetHidden(hidden) {
+      _widgetHidden = !!hidden;
+      const w = document.getElementById('ct-toolbar-quota');
+      if (w) w.classList.toggle('ct-widget-hidden', _widgetHidden);
+      try { window.CTS_StorageSet({ [HIDDEN_KEY]: _widgetHidden }); } catch (_) {}
+      syncLauncherDom();
+    }
+
+    const LAUNCHER_ICON =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l3.6-4.6"/><circle cx="12" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg>';
+
+    const _inTopBar = el => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && r.top < 100;
+    };
+
+    // Where to put the reopen icon: left of the incognito icon, else left of
+    // the files icon / Share button, else a fixed fallback.
+    function findLauncherRef() {
+      const incog = Array.from(document.querySelectorAll(
+        '[data-testid*="incognito" i], button[aria-label*="incognito" i], a[aria-label*="incognito" i], a[href*="incognito"]'
+      )).find(el => el.id !== 'ct-launcher' && _inTopBar(el));
+      if (incog) return incog;
+
+      const share = Array.from(document.querySelectorAll('button')).find(b =>
+        b.id !== 'ct-launcher' && _inTopBar(b) && /^share$/i.test((b.textContent || '').trim()));
+      if (share) {
+        let node = share;
+        for (let i = 0; i < 3 && node && node !== document.body; i++) {
+          let prev = node.previousElementSibling;
+          if (prev && prev.id === 'ct-launcher') prev = prev.previousElementSibling;
+          if (prev && _inTopBar(prev)) return prev;
+          node = node.parentElement;
+        }
+        return share;
+      }
+      return null;
+    }
+
+    function syncLauncherDom() {
+      let btn = document.getElementById('ct-launcher');
+
+      if (!isWidgetHidden() || !document.body) {
+        if (btn) btn.remove();
+        return;
+      }
+
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'ct-launcher';
+        btn.innerHTML = LAUNCHER_ICON;
+        btn.setAttribute('aria-label', withFallback('showWidgetTip', 'Show usage widget'));
+        btn.setAttribute('data-ct-tip', tipAttr('showWidgetTip', 'Show usage widget'));
+      }
+
+      const ref = findLauncherRef();
+      if (ref && ref.parentElement) {
+        btn.classList.remove('ct-launcher-fixed');
+        if (btn.nextElementSibling !== ref) ref.parentElement.insertBefore(btn, ref);
+      } else if (btn.parentElement !== document.body || !btn.classList.contains('ct-launcher-fixed')) {
+        btn.classList.add('ct-launcher-fixed');
+        document.body.appendChild(btn);
+      }
+    }
+
     let _uiInitDone = false;
 
     return {
+
+      syncLauncher: syncLauncherDom,
 
       init() {
         detectAndApplyTheme();
@@ -954,7 +1073,7 @@ window.ClaudeTrackerUI = (function () {
 
               document.addEventListener('click', e => {
                 const btn = e.target.closest('.ct-collapse-toggle');
-                if (!btn) return;
+                if (!btn || btn.id === 'ct-hide-btn') return;
                 e.preventDefault();
                 e.stopPropagation();
                 const el = document.getElementById(DRAG_ID);
@@ -975,6 +1094,24 @@ window.ClaudeTrackerUI = (function () {
               };
               tryApply();
               new MutationObserver(tryApply).observe(document.documentElement, { childList: true, subtree: true });
+            })();
+
+            // ─── Hide widget ───────────────────────────────────────────────────
+            // The X in the widget header hides it completely; the gauge icon
+            // that appears in the top bar (see syncLauncherDom) brings it back.
+            (function initHide() {
+              document.addEventListener('click', e => {
+                if (e.target.closest('#ct-hide-btn')) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setWidgetHidden(true);
+                } else if (e.target.closest('#ct-launcher')) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setWidgetHidden(false);
+                }
+              }, true);
+              syncLauncherDom();
             })();
 
             // ─── One-time onboarding hint ──────────────────────────────────────
@@ -1280,6 +1417,7 @@ window.ClaudeTrackerUI = (function () {
       buildToolbarQuota() {
         const el = document.createElement('div');
         el.id = 'ct-toolbar-quota';
+        if (isWidgetHidden()) el.classList.add('ct-widget-hidden');
         if (isLoadingFirstReading()) el.setAttribute('data-ct-loading', '1');
         el.innerHTML = `
         <div id="ct-tq-header">
@@ -1287,11 +1425,18 @@ window.ClaudeTrackerUI = (function () {
         <div id="ct-peak" class="offpeak" data-ct-tip="${tipAttr('peakTip')}"><span class="ct-peak-dot"></span><span id="ct-peak-t">${i18n('offPeakText')}</span></div>
         <div id="ct-cache" class="uncached" data-ct-tip="${tipAttr('cacheTip', 'Whether this conversation is using a cached prompt.')}"><span class="ct-peak-dot"></span><span id="ct-cache-t">${withFallback('uncachedText', 'not cached')}</span></div>
         </div>
+        <div class="ct-tq-actions">
         <button type="button" id="ct-collapse-toggle" class="ct-collapse-toggle" aria-expanded="true" data-ct-tip="${tipAttr('collapseWidgetTip', 'Collapse')}">
         <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         </button>
+        <button type="button" id="ct-hide-btn" class="ct-collapse-toggle ct-hide-btn" aria-label="${tipAttr('hideWidgetTip', 'Hide')}" data-ct-tip="${tipAttr('hideWidgetTip', 'Hide (reopen from the gauge icon in the top bar)')}">
+        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        </button>
+        </div>
         </div>
         <span class="ct-tq-sep">\u00b7</span>
         <div class="ct-tq-block" data-ct-tip="${tipAttr('toolbar5hTip')}">

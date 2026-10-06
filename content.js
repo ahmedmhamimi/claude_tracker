@@ -424,6 +424,7 @@
       const strip = window.ClaudeTrackerUI.buildToolbarQuota();
       document.body.appendChild(strip);
       requestAnimationFrame(() => strip.classList.add('vis'));
+      window.ClaudeTrackerUI.syncLauncher();
     }
 
     // First-reading retries. These used to live only inside the sidebar branch

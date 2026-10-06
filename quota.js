@@ -275,6 +275,8 @@
   }
 
   function _tickUIHealthCheck() {
+    // Keep the reopen icon mounted (claude.ai re-renders its top bar).
+    if (window.ClaudeTrackerUI && window.ClaudeTrackerUI.syncLauncher) window.ClaudeTrackerUI.syncLauncher();
     // See matching comment in content.js's mutationObserver: ct-quota's
     // absence only signals a real problem when a sidebar exists to put it
     // in. Checking unconditionally caused the incognito freeze; checking
