@@ -171,5 +171,14 @@
   },
   "closeLabel": {
     "message": "关闭"
+  },
+  "whatsNewBadge": {
+    "message": "新功能"
+  },
+  "whatsNewTitle": {
+    "message": "现在可以隐藏小组件了"
+  },
+  "whatsNewBody": {
+    "message": "点击 ✕ 即可收起。随时可通过顶部栏的仪表图标重新显示。"
   }
 }

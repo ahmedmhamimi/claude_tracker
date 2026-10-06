@@ -171,5 +171,14 @@
   },
   "closeLabel": {
     "message": "Tutup"
+  },
+  "whatsNewBadge": {
+    "message": "Baru"
+  },
+  "whatsNewTitle": {
+    "message": "Kini widget bisa disembunyikan"
+  },
+  "whatsNewBody": {
+    "message": "Ketuk ✕ untuk menyembunyikannya. Tampilkan lagi kapan saja lewat ikon pengukur di bilah atas."
   }
 }

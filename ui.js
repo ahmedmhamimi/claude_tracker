@@ -583,6 +583,71 @@ window.ClaudeTrackerUI = (function () {
       100% { box-shadow: 0 0 0 0 rgba(var(--ct-accent-rgb), 0); }
     }
     #ct-toolbar-quota.ct-hint-pulse { animation: ct-hint-pulse-ring 1.8s ease-out 3; }
+
+    /* One-time "what's new" bubble for existing users: points at the hide (X)
+     * button in the widget header. Same look as the onboarding hint. */
+    #ct-whatsnew {
+    position: fixed; z-index: 9998;
+    max-width: 240px;
+    padding: 11px 28px 12px 13px;
+    border-radius: 12px;
+    background: var(--ct-ghost-bg);
+    border: 1px solid var(--ct-border);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08);
+    font-family: var(--ct-mono); color: var(--ct-muted);
+    font-size: 11px; font-weight: 600; line-height: 1.55;
+    opacity: 0; transform: translateY(6px) scale(0.94);
+    transform-origin: top right;
+    pointer-events: none;
+    transition: opacity 0.5s cubic-bezier(.2,.8,.3,1), transform 0.5s cubic-bezier(.2,.8,.3,1);
+    }
+    #ct-whatsnew.vis { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+    #ct-whatsnew-arrow {
+    position: absolute; top: -7px; right: 12px;
+    width: 13px; height: 13px;
+    background: var(--ct-ghost-bg);
+    border-left: 1px solid var(--ct-border);
+    border-top: 1px solid var(--ct-border);
+    transform: rotate(45deg);
+    border-radius: 2px 0 0 0;
+    }
+    #ct-whatsnew-close {
+    position: absolute; top: 7px; right: 7px;
+    width: 16px; height: 16px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    color: var(--ct-muted); font-size: 11px; line-height: 1;
+    cursor: pointer; background: transparent;
+    transition: background 0.15s ease, color 0.15s ease;
+    }
+    #ct-whatsnew-close:hover { background: var(--ct-bg-progress); color: var(--ct-text); }
+    #ct-whatsnew-title { display: flex; align-items: center; gap: 6px; font-weight: 800; color: var(--ct-text); margin-bottom: 3px; }
+    #ct-whatsnew-badge {
+    font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+    padding: 1px 5px; border-radius: 4px;
+    color: var(--ct-accent); background: rgba(var(--ct-accent-rgb), 0.16);
+    }
+    #ct-whatsnew-body { color: var(--ct-muted); }
+    #ct-whatsnew.ct-whatsnew-above { transform-origin: bottom right; }
+    #ct-whatsnew.ct-whatsnew-above:not(.vis) { transform: translateY(-6px) scale(0.94); }
+    #ct-whatsnew.ct-whatsnew-above #ct-whatsnew-arrow {
+    top: auto; bottom: -7px;
+    border-left: none; border-top: none;
+    border-right: 1px solid var(--ct-border);
+    border-bottom: 1px solid var(--ct-border);
+    border-radius: 0 0 2px 0;
+    }
+    @keyframes ct-whatsnew-pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(var(--ct-accent-rgb), 0.55); background: rgba(var(--ct-accent-rgb), 0.18); }
+      70%  { box-shadow: 0 0 0 7px rgba(var(--ct-accent-rgb), 0); }
+      100% { box-shadow: 0 0 0 0 rgba(var(--ct-accent-rgb), 0); }
+    }
+    .ct-hide-btn.ct-whatsnew-pulse { animation: ct-whatsnew-pulse-ring 1.6s ease-out infinite; color: var(--ct-accent); }
+    @media (prefers-reduced-motion: reduce) {
+      #ct-whatsnew { transition: opacity 0.2s ease; transform: none; }
+      .ct-hide-btn.ct-whatsnew-pulse { animation: none; box-shadow: 0 0 0 2px rgba(var(--ct-accent-rgb), 0.45); }
+    }
     `;
 
     // ─── Theme Detection ──────────────────────────────────────────────────────
@@ -1269,6 +1334,147 @@ window.ClaudeTrackerUI = (function () {
               if (!armed) {
                 observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
               }
+            })();
+
+            // ─── One-time "what's new" notice (existing users only) ────────────
+            // background.js flags cts_whatsnew_hide = 'pending' when an existing
+            // install updates to the version that adds the hide (X) button.
+            // Fresh installs are stamped 'done' and never see this. The bubble
+            // points at the X, explains where the widget goes (the gauge icon
+            // in the top bar), and is marked 'done' as soon as it is dismissed,
+            // the X is used, or it has been on screen long enough to be read.
+            //
+            // QA: in the extension's service-worker console run
+            //   chrome.storage.local.set({ cts_whatsnew_hide: 'pending' })
+            // then reload a claude.ai tab.
+            (async function initWhatsNew() {
+              const KEY = 'cts_whatsnew_hide';
+              const WIDGET_ID = 'ct-toolbar-quota';
+              const SETTLE_DELAY = 600;
+              const VISIBLE_SECONDS = 15; // visible-tab seconds before it fades on its own
+              const GAP = 10;
+
+              const readState = () => {
+                try { return JSON.parse(document.documentElement.dataset.ctsstorage || '{}'); }
+                catch (_) { return {}; }
+              };
+
+              // Wait for the bridge's storage snapshot (it lands asynchronously).
+              const t0 = Date.now();
+              while (document.documentElement.dataset.ctsstorage === undefined) {
+                if (Date.now() - t0 > 2000) return; // fail closed: never nag on a guess
+                await new Promise(r => setTimeout(r, 30));
+              }
+              const st = readState();
+              if (st[KEY] !== 'pending') return;
+
+              // Same courtesy as the hint: stay out of the way of the welcome splash.
+              if (st.cts_show_welcome === true) return;
+
+              const markDone = () => {
+                try { document.dispatchEvent(new CustomEvent('cts:storage:set', { detail: { [KEY]: 'done' } })); } catch (_) {}
+              };
+
+              let shown = false;
+
+              function show(widget) {
+                if (shown) return;
+                shown = true;
+
+                const hideBtn = widget.querySelector('#ct-hide-btn');
+                const bubble = document.createElement('div');
+                bubble.id = 'ct-whatsnew';
+                bubble.setAttribute('role', 'status');
+                bubble.innerHTML = `
+                <div id="ct-whatsnew-arrow"></div>
+                <div id="ct-whatsnew-close" role="button" aria-label="Dismiss">\u2715</div>
+                <div id="ct-whatsnew-title"><span id="ct-whatsnew-badge">${withFallback('whatsNewBadge', 'New')}</span>${withFallback('whatsNewTitle', 'You can now hide the widget')}</div>
+                <div id="ct-whatsnew-body">${withFallback('whatsNewBody', 'Tap \u2715 to tuck it away. Bring it back anytime from the gauge icon in the top bar.')}</div>
+                `;
+                bubble.style.visibility = 'hidden';
+                document.body.appendChild(bubble);
+
+                const arrow = bubble.querySelector('#ct-whatsnew-arrow');
+                function position() {
+                  const r = widget.getBoundingClientRect();
+                  const bw = bubble.offsetWidth || 240;
+                  const bh = bubble.offsetHeight || 80;
+                  const fitsBelow = r.bottom + GAP + bh + 8 <= window.innerHeight;
+                  const top = fitsBelow ? r.bottom + GAP : r.top - GAP - bh;
+                  const left = Math.max(8, Math.min(r.right - bw, window.innerWidth - bw - 8));
+                  bubble.classList.toggle('ct-whatsnew-above', !fitsBelow);
+                  bubble.style.top = top + 'px';
+                  bubble.style.left = left + 'px';
+                  // Aim the arrow at the X button itself.
+                  if (hideBtn) {
+                    const b = hideBtn.getBoundingClientRect();
+                    const ax = Math.max(10, Math.min(bw - 24, (b.left + b.width / 2) - left - 6.5));
+                    arrow.style.right = 'auto';
+                    arrow.style.left = ax + 'px';
+                  }
+                }
+                position();
+                bubble.style.visibility = '';
+                if (hideBtn) hideBtn.classList.add('ct-whatsnew-pulse');
+
+                // Two rAFs so the entrance always animates instead of popping.
+                requestAnimationFrame(() => {
+                  position();
+                  requestAnimationFrame(() => bubble.classList.add('vis'));
+                });
+
+                let gone = false;
+                let visibleFor = 0;
+                const ticker = setInterval(() => {
+                  if (document.visibilityState !== 'visible') return;
+                  position(); // the widget can be dragged or resized while we are up
+                  if (++visibleFor >= VISIBLE_SECONDS) dismiss();
+                }, 1000);
+
+                function dismiss() {
+                  if (gone) return;
+                  gone = true;
+                  clearInterval(ticker);
+                  window.removeEventListener('resize', position);
+                  document.removeEventListener('click', onDocClick, true);
+                  bubble.classList.remove('vis');
+                  if (hideBtn) hideBtn.classList.remove('ct-whatsnew-pulse');
+                  markDone();
+                  setTimeout(() => bubble.remove(), 400);
+                }
+
+                // Using the X is the best possible "got it".
+                function onDocClick(e) {
+                  if (e.target.closest && e.target.closest('#ct-hide-btn')) dismiss();
+                }
+                document.addEventListener('click', onDocClick, true);
+                window.addEventListener('resize', position);
+                bubble.querySelector('#ct-whatsnew-close').addEventListener('click', e => {
+                  e.stopPropagation();
+                  dismiss();
+                });
+              }
+
+              const tryShow = () => {
+                const el = document.getElementById(WIDGET_ID);
+                if (!el || !el.classList.contains('vis')) return;
+                if (document.visibilityState !== 'visible') return;
+                // Welcome splash (if any) is still up: wait.
+                if (document.documentElement.dataset.ctsWelcome === 'active') return;
+                observer.disconnect();
+                clearInterval(poll);
+                // Already hidden (they found the X some other way): nothing to teach.
+                if (isWidgetHidden()) { markDone(); return; }
+                setTimeout(() => {
+                  const w = document.getElementById(WIDGET_ID);
+                  if (w && !isWidgetHidden()) show(w); else if (w) markDone();
+                }, SETTLE_DELAY);
+              };
+              const observer = new MutationObserver(tryShow);
+              observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+              // Visibility / welcome changes don't mutate the widget, so poll lightly too.
+              const poll = setInterval(tryShow, 700);
+              tryShow();
             })();
       },
 

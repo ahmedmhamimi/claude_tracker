@@ -229,5 +229,14 @@
   },
   "closeLabel": {
     "message": "Close"
+  },
+  "whatsNewBadge": {
+    "message": "New"
+  },
+  "whatsNewTitle": {
+    "message": "You can now hide the widget"
+  },
+  "whatsNewBody": {
+    "message": "Tap ✕ to tuck it away. Bring it back anytime from the gauge icon in the top bar."
   }
 }

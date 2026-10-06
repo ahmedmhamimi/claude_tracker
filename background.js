@@ -26,6 +26,10 @@ const TARGET_TAB = 'recent';
 chrome.runtime.setUninstallURL(UNINSTALL_SURVEY_URL);
 
 chrome.runtime.onInstalled.addListener(details => {
+  if (details.reason === 'update') {
+    flagWhatsNew().catch(() => {});
+    return;
+  }
   if (details.reason !== 'install') return;
   onFreshInstall().catch(() => {
     // Never leave the person with nothing: fall back to a plain new tab.
@@ -33,12 +37,31 @@ chrome.runtime.onInstalled.addListener(details => {
   });
 });
 
+// ─── "What's new" for existing users ────────────────────────────────────────
+// cts_whatsnew_hide: 'pending' -> ui.js should show the one-time bubble that
+//                                 explains the new hide (X) button.
+//                    'done'    -> shown, or never meant for this person.
+//
+// Fresh installs are stamped 'done' (see onFreshInstall): they discover the
+// button through the normal welcome + hint flow. Only an *update* of an install
+// that has no stamp yet (i.e. someone who had TokenLens before this feature
+// existed) is flagged 'pending'. Later updates leave an existing stamp alone,
+// so the bubble can never come back.
+async function flagWhatsNew() {
+  const s = await chrome.storage.local.get(['cts_whatsnew_hide', 'cts_show_welcome']);
+  if (s.cts_whatsnew_hide !== undefined) return;
+  // Still hasn't seen the welcome splash: effectively new, so skip the notice.
+  const value = s.cts_show_welcome === true ? 'done' : 'pending';
+  await chrome.storage.local.set({ cts_whatsnew_hide: value });
+}
+
 async function onFreshInstall() {
   // The flag must be in storage before any Claude page (re)loads, so the
   // welcome splash is picked up by the tab the person lands on.
   await chrome.storage.local.set({
     cts_show_welcome: true,
     cts_installed_at: Date.now(),
+    cts_whatsnew_hide: 'done', // new users never get the "what's new" notice
   });
 
   const tabs = await chrome.tabs.query({ url: CLAUDE_MATCH });

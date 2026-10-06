@@ -171,5 +171,14 @@
   },
   "closeLabel": {
     "message": "Fermer"
+  },
+  "whatsNewBadge": {
+    "message": "Nouveau"
+  },
+  "whatsNewTitle": {
+    "message": "Vous pouvez maintenant masquer le widget"
+  },
+  "whatsNewBody": {
+    "message": "Touchez ✕ pour le masquer. Ramenez-le à tout moment avec l’icône de jauge dans la barre supérieure."
   }
 }

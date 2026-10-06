@@ -37,6 +37,7 @@
     'chipOut', 'chipCached', 'chipLimitHit',
     'cacheTip', 'uncachedText', 'chipCachedTip', 'chipLatTip',
     'chipMaxedTip', 'chipOutTip', 'chipSpdTip', 'msgQuotaTip',
+    'whatsNewBadge', 'whatsNewTitle', 'whatsNewBody',
   ];
 
   const msgs = {};
@@ -58,13 +59,17 @@
   // than the page's localStorage because claude.ai clears its own site data
   // on logout, which used to make the hint reappear on every fresh login.
   //
+  // 'cts_whatsnew_hide' is 'pending' for people who updated from a version
+  // without the hide (X) button; ui.js's initWhatsNew shows a one-time bubble
+  // and flips it to 'done'. See background.js flagWhatsNew().
+  //
   // 'cts_show_welcome' is set by background.js on a fresh install. While it is
   // true the first-run splash (welcome.js) has not been shown yet, so the hint
   // bubble holds back until the splash is done.
 
   chrome.storage.local.get(
     ['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d', 'cts_org_id',
-     'cts_hint_seen', 'cts_show_welcome', 'cts_widget_hidden'],
+     'cts_hint_seen', 'cts_show_welcome', 'cts_widget_hidden', 'cts_whatsnew_hide'],
     items => {
       document.documentElement.dataset.ctsstorage = JSON.stringify(items || {});
     }

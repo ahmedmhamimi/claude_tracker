@@ -171,5 +171,14 @@
   },
   "closeLabel": {
     "message": "Cerrar"
+  },
+  "whatsNewBadge": {
+    "message": "Nuevo"
+  },
+  "whatsNewTitle": {
+    "message": "Ahora puedes ocultar el widget"
+  },
+  "whatsNewBody": {
+    "message": "Toca ✕ para ocultarlo. Vuelve a mostrarlo cuando quieras desde el ícono de medidor en la barra superior."
   }
 }

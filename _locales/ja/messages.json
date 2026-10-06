@@ -171,5 +171,14 @@
   },
   "closeLabel": {
     "message": "閉じる"
+  },
+  "whatsNewBadge": {
+    "message": "新機能"
+  },
+  "whatsNewTitle": {
+    "message": "ウィジェットを隠せるようになりました"
+  },
+  "whatsNewBody": {
+    "message": "✕ を押すと非表示になります。トップバーのゲージアイコンからいつでも元に戻せます。"
   }
 }

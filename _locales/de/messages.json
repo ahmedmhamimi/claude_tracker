@@ -171,5 +171,14 @@
   },
   "closeLabel": {
     "message": "Schließen"
+  },
+  "whatsNewBadge": {
+    "message": "Neu"
+  },
+  "whatsNewTitle": {
+    "message": "Das Widget lässt sich jetzt ausblenden"
+  },
+  "whatsNewBody": {
+    "message": "Tippe auf ✕, um es auszublenden. Über das Tachometer-Symbol in der oberen Leiste holst du es jederzeit zurück."
   }
 }
