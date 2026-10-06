@@ -304,20 +304,15 @@ window.ClaudeTrackerUI = (function () {
   display: flex; align-items: center; justify-content: space-between;
   gap: 8px; width: 100%;
   }
-  .ct-collapse-toggle {
+  .ct-hide-btn {
     display: inline-flex; align-items: center; justify-content: center;
     width: 18px; height: 18px; padding: 0; margin: 0; flex-shrink: 0;
     border: none; border-radius: 5px; background: transparent;
     color: var(--ct-muted); cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
   }
-  .ct-collapse-toggle:hover { background: var(--ct-bg-progress); color: var(--ct-text); }
-  .ct-collapse-toggle svg {
-    width: 11px; height: 11px; display: block;
-    transition: transform 0.25s cubic-bezier(.4,0,.2,1);
-  }
-  #ct-toolbar-quota.ct-collapsed .ct-collapse-toggle svg { transform: rotate(-90deg); }
-  #ct-toolbar-quota.ct-collapsed .ct-tq-block { display: none; }
+  .ct-hide-btn:hover { background: var(--ct-bg-progress); color: var(--ct-text); }
+  .ct-hide-btn svg { width: 11px; height: 11px; display: block; }
 
   .ct-tq-actions { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
   #ct-toolbar-quota .ct-hide-btn { cursor: pointer; }
@@ -616,36 +611,6 @@ window.ClaudeTrackerUI = (function () {
       styleTag.textContent = (isDark ? DARK_THEME_CSS : LIGHT_THEME_CSS) + STRUCTURAL_CSS;
     }
 
-    // ─── Storage helper ───────────────────────────────────────────────────────
-    // Prefers chrome.storage.local (extension storage). ui.js appears to run in
-    // the page's MAIN world (see the i18n comment above — that's the whole
-    // reason bridge.js has to stamp data across rather than ui.js calling
-    // chrome.i18n directly), and MAIN-world scripts normally have no access to
-    // chrome.* APIs at all, only page globals like localStorage. This falls
-    // back to localStorage — same mechanism already used for widget
-    // position/scale above — so persistence still works either way; if
-    // chrome.storage turns out to be reachable here after all, it's used.
-    const hasChromeStorage = typeof chrome !== 'undefined' && !!(chrome.storage && chrome.storage.local);
-
-    function storageGet(key) {
-      return new Promise(resolve => {
-        if (hasChromeStorage) {
-          try {
-            chrome.storage.local.get(key, result => resolve(result ? result[key] : undefined));
-            return;
-          } catch (_) { /* fall through to localStorage */ }
-        }
-        try { resolve(localStorage.getItem(key)); } catch (_) { resolve(null); }
-      });
-    }
-
-    function storageSet(key, value) {
-      if (hasChromeStorage) {
-        try { chrome.storage.local.set({ [key]: value }); return; } catch (_) { /* fall through */ }
-      }
-      try { localStorage.setItem(key, value); } catch (_) {}
-    }
-
     // ─── Public API ───────────────────────────────────────────────────────────
 
     // ─── Hide / reopen the floating widget ────────────────────────────────────
@@ -876,7 +841,7 @@ window.ClaudeTrackerUI = (function () {
               document.addEventListener('pointerdown', e => {
                 if (e.button !== 0) return; // left click / primary touch only
                 if (e.target.closest('.ct-resize-handle')) return; // handled by initResizable
-                if (e.target.closest('.ct-collapse-toggle')) return; // handled by initCollapsible
+                if (e.target.closest('.ct-hide-btn')) return; // handled by initHide
                 const el = e.target.closest('#' + DRAG_ID);
                 if (!el) return;
                 dragEl = el;
@@ -1085,55 +1050,12 @@ window.ClaudeTrackerUI = (function () {
                   new MutationObserver(tryApply).observe(document.documentElement, { childList: true, subtree: true });
             })();
 
-            // ─── Collapsible widget metrics ────────────────────────────────────
-            // A toggle in the widget header hides the 5h/7d metric rows down to
-            // just the peak/off-peak pill, and remembers the choice for next
-            // time via storageGet/storageSet (see the Storage helper section
-            // below the theme detector — chrome.storage.local when reachable,
-            // localStorage otherwise).
-            (function initCollapsible() {
-              const STORAGE_KEY = 'ct-widget-collapsed';
-              const DRAG_ID = 'ct-toolbar-quota';
-              const COLLAPSED_CLASS = 'ct-collapsed';
-
-              function applyState(el, collapsed) {
-                el.classList.toggle(COLLAPSED_CLASS, collapsed);
-                const btn = el.querySelector('#ct-collapse-toggle');
-                if (btn) {
-                  btn.setAttribute('aria-expanded', String(!collapsed));
-                  btn.setAttribute('data-ct-tip', tipAttr(collapsed ? 'expandWidgetTip' : 'collapseWidgetTip', collapsed ? 'Expand' : 'Collapse'));
-                }
-              }
-
-              document.addEventListener('click', e => {
-                const btn = e.target.closest('.ct-collapse-toggle');
-                if (!btn || btn.id === 'ct-hide-btn') return;
-                e.preventDefault();
-                e.stopPropagation();
-                const el = document.getElementById(DRAG_ID);
-                if (!el) return;
-                const collapsed = !el.classList.contains(COLLAPSED_CLASS);
-                applyState(el, collapsed);
-                storageSet(STORAGE_KEY, collapsed ? '1' : '0');
-              });
-
-              // The widget is created asynchronously by content.js, so keep
-              // watching until it shows up (and re-apply if it's ever rebuilt).
-              const tryApply = () => {
-                const el = document.getElementById(DRAG_ID);
-                if (el && !el.dataset.ctCollapseInit) {
-                  el.dataset.ctCollapseInit = '1';
-                  storageGet(STORAGE_KEY).then(val => applyState(el, val === '1'));
-                }
-              };
-              tryApply();
-              new MutationObserver(tryApply).observe(document.documentElement, { childList: true, subtree: true });
-            })();
-
             // ─── Hide widget ───────────────────────────────────────────────────
             // The X in the widget header hides it completely; the gauge icon
             // that appears in the top bar (see syncLauncherDom) brings it back.
             (function initHide() {
+              // The old collapse feature is gone; drop its saved preference.
+              try { localStorage.removeItem('ct-widget-collapsed'); } catch (_) {}
               document.addEventListener('click', e => {
                 if (e.target.closest('#ct-hide-btn')) {
                   e.preventDefault();
@@ -1460,12 +1382,7 @@ window.ClaudeTrackerUI = (function () {
         <div id="ct-cache" class="uncached" data-ct-tip="${tipAttr('cacheTip', 'Whether this conversation is using a cached prompt.')}"><span class="ct-peak-dot"></span><span id="ct-cache-t">${withFallback('uncachedText', 'not cached')}</span></div>
         </div>
         <div class="ct-tq-actions">
-        <button type="button" id="ct-collapse-toggle" class="ct-collapse-toggle" aria-expanded="true" data-ct-tip="${tipAttr('collapseWidgetTip', 'Collapse')}">
-        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        </button>
-        <button type="button" id="ct-hide-btn" class="ct-collapse-toggle ct-hide-btn" aria-label="${tipAttr('hideWidgetTip', 'Hide')}" data-ct-tip="${tipAttr('hideWidgetTip', 'Hide (reopen from the gauge icon in the top bar)')}">
+        <button type="button" id="ct-hide-btn" class="ct-hide-btn" aria-label="${tipAttr('hideWidgetTip', 'Hide')}" data-ct-tip="${tipAttr('hideWidgetTip', 'Hide (reopen from the gauge icon in the top bar)')}">
         <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
