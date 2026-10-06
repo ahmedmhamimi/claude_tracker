@@ -41,6 +41,14 @@
 
     window.CTS_Session.resetForConvo(currentCid);
 
+    // The row stays hidden until it has real numbers to show, so the bare
+    // placeholder label ("context") is never displayed on its own.
+    const rowEl = document.getElementById('ct-row');
+    if (rowEl) {
+      const ctxT = document.getElementById('ct-p-ctx-t');
+      rowEl.classList.toggle('ct-has-data', onChatPage && !!ctxT && /\d/.test(ctxT.textContent || ''));
+    }
+
     const show = (id, visible) => {
       const el = document.getElementById(id);
       if (el) el.style.display = (onChatPage && visible) ? '' : 'none';
@@ -297,6 +305,62 @@
     });
   }
 
+  // ─── Composer stats row (guarded insertion) ───────────────────────────────
+  // The row is inserted as a SIBLING right before the composer card, and is
+  // width:100% / display:block. That is only safe when the card's parent lays
+  // children out in a normal block or column flow. If the parent is a flex
+  // ROW (or a grid) the 100%-wide row takes the whole line and squeezes the
+  // composer to about half width: the "half the page is blank and only the
+  // word 'context' shows" report. So: check the parent first, and after
+  // inserting, verify the card did not move; either failure means "skip the
+  // row", never "break the page".
+  function insertComposerRow(composer) {
+    const block = ms => { window.CTS.rowBlockedUntil = Date.now() + ms; };
+
+    const sendBtn =
+      composer.parentElement?.closest('form')?.querySelector('button[aria-label*="send" i], button[type="submit"]') ||
+      document.querySelector('button[aria-label*="send" i]');
+    let card = null;
+    if (sendBtn) {
+      let node = sendBtn.parentElement;
+      while (node && node !== document.body) {
+        if (node.contains(composer)) { card = node; break; }
+        node = node.parentElement;
+      }
+    }
+    // No trustworthy anchor: skip rather than append into the composer's own
+    // tight wrapper (which overlaps or squeezes the text area).
+    if (!card || !card.parentElement) return block(5000);
+
+    const parent = card.parentElement;
+    const cs = getComputedStyle(parent);
+    const parentIsFlexRow = /flex/.test(cs.display) && !/column/.test(cs.flexDirection);
+    const parentIsGrid = /grid/.test(cs.display);
+    const before = card.getBoundingClientRect();
+    const looksLikeWholePage =
+      before.height > window.innerHeight * 0.6 ||
+      card.tagName === 'MAIN' ||
+      !!card.querySelector('[data-testid="transcript-row"]');
+
+    // Cheap, invisible refusal: look again in a few seconds (layout may differ
+    // after an SPA navigation).
+    if (parentIsFlexRow || parentIsGrid || looksLikeWholePage) return block(5000);
+
+    const stats = window.ClaudeTrackerUI.buildComposerRow();
+    parent.insertBefore(stats, card);
+
+    // Safety net: if inserting the row shifted the card sideways or changed
+    // its width, remove it and leave it out for a good while.
+    requestAnimationFrame(() => {
+      if (!stats.isConnected) return;
+      const after = card.getBoundingClientRect();
+      if (Math.abs(after.width - before.width) > 6 || Math.abs(after.left - before.left) > 6) {
+        stats.remove();
+        block(5 * 60 * 1000);
+      }
+    });
+  }
+
   // ─── UI Injection ─────────────────────────────────────────────────────────
 
   // Cheap, cheap-to-maintain guard against the obvious signed-out routes
@@ -321,7 +385,7 @@
   let _confirmedComposer = null;
 
   function tryInjectUI() {
-    if (window.CTS.UIInjected && document.getElementById('ct-row')) return;
+    if (window.CTS.UIInjected && !window.CTS_RowMissing()) return;
 
     if (isAuthOrMarketingPage()) {
       _pendingComposer = null;
@@ -397,24 +461,8 @@
     // PRECEDING SIBLING. That guarantees #ct-row always lands one level
     // outside any row-flex toolbar/card, in the card's own parent's block
     // flow, regardless of how deep or flat the surrounding DOM is.
-    if (!document.getElementById('ct-row')) {
-      const sendBtn =
-      composer.parentElement?.closest('form')?.querySelector('button[aria-label*="send" i], button[type="submit"]') ||
-      document.querySelector('button[aria-label*="send" i]');
-      let card = null;
-      if (sendBtn) {
-        let node = sendBtn.parentElement;
-        while (node && node !== document.body) {
-          if (node.contains(composer)) { card = node; break; }
-          node = node.parentElement;
-        }
-      }
-      const stats = window.ClaudeTrackerUI.buildComposerRow();
-      if (card && card.parentElement) {
-        card.parentElement.insertBefore(stats, card);
-      } else if (composer.parentElement) {
-        composer.parentElement.appendChild(stats);
-      }
+    if (!document.getElementById('ct-row') && Date.now() >= (window.CTS.rowBlockedUntil || 0)) {
+      insertComposerRow(composer);
     }
 
     // Quota card — floats independently of the composer (fixed-position,
@@ -562,7 +610,7 @@
     const sidebarPresent = !!getSidebarRoot();
     const sidebarMissingQuota = sidebarPresent && !document.getElementById('ct-quota');
 
-    if (!document.getElementById('ct-toolbar-quota') || !document.getElementById('ct-row') || sidebarMissingQuota) {
+    if (!document.getElementById('ct-toolbar-quota') || window.CTS_RowMissing() || sidebarMissingQuota) {
       window.CTS.UIInjected = false;
     }
     if (!window.CTS.UIInjected) tryInjectUI();
@@ -587,7 +635,7 @@
 
     let _stableCount  = 0;
     const _injectPoller = setInterval(() => {
-      const rowMissing     = !document.getElementById('ct-row');
+      const rowMissing     = window.CTS_RowMissing();
       const toolbarMissing = !document.getElementById('ct-toolbar-quota');
       const composerReady  = !!(
         document.querySelector('div[contenteditable="true"]') ||

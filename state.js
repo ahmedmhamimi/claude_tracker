@@ -94,6 +94,11 @@ root.CTS = {
  // Analysis scratch
  sessionConvTokens:   0,
 
+ // Composer stats row: set when inserting it next to the composer would
+ // disturb claude.ai's layout. Until this timestamp passes, a missing
+ // #ct-row is expected (not something to retry every tick).
+ rowBlockedUntil:         0,
+
  // Sidebar chat-date badges
  convoDateMap:            {},
  convoListFetchInFlight:  false,
@@ -233,6 +238,11 @@ root.CTS._storageReady = new Promise(resolve => {
 // Usage: window.CTS_StorageSet({ cts_5h_util: 42, ... })
 root.CTS_StorageSet = function (items) {
   document.dispatchEvent(new CustomEvent('cts:storage:set', { detail: items }));
+};
+
+// True when #ct-row is absent AND we are not deliberately holding off on it.
+root.CTS_RowMissing = function () {
+  return !document.getElementById('ct-row') && Date.now() >= (root.CTS.rowBlockedUntil || 0);
 };
 
 })(window);

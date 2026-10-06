@@ -103,6 +103,7 @@ window.ClaudeTrackerUI = (function () {
   display: block; width: 100%; box-sizing: border-box;
   padding: 6px 16px 0; margin-bottom: -2px; overflow: hidden;
   }
+  #ct-row:not(.ct-has-data) { display: none; }
   #ct-row-inner {
   display: flex; flex-direction: row; align-items: center;
   gap: 8px; overflow: hidden; min-width: 0; flex-wrap: nowrap;
@@ -343,6 +344,25 @@ window.ClaudeTrackerUI = (function () {
   #ct-launcher:hover { background: var(--ct-bg-progress); opacity: 1; }
   #ct-launcher:focus-visible { outline: 2px solid var(--ct-accent); outline-offset: 1px; }
   #ct-launcher svg { width: 20px; height: 20px; display: block; }
+
+  /* Attention pulse after the user hides the widget: a wiggle plus an
+   * expanding glow ring, three times, so they see where it went. */
+  @keyframes ct-launcher-attn {
+    0%   { transform: scale(1) rotate(0);        box-shadow: 0 0 0 0 rgba(var(--ct-accent-rgb), 0.55); }
+    15%  { transform: scale(1.22) rotate(-14deg); }
+    30%  { transform: scale(1.22) rotate(11deg); }
+    45%  { transform: scale(1.14) rotate(-7deg); }
+    60%  { transform: scale(1) rotate(0); }
+    100% { transform: scale(1) rotate(0);        box-shadow: 0 0 0 16px rgba(var(--ct-accent-rgb), 0); }
+  }
+  #ct-launcher.ct-launcher-attn {
+    animation: ct-launcher-attn 1.3s ease-out 3;
+    background: rgba(var(--ct-accent-rgb), 0.16);
+    color: var(--ct-accent); opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #ct-launcher.ct-launcher-attn { animation: none; box-shadow: 0 0 0 3px rgba(var(--ct-accent-rgb), 0.45); }
+  }
   #ct-launcher.ct-launcher-fixed {
     position: fixed; top: 68px; right: 20px; z-index: 9997;
     background: var(--ct-ghost-bg); border: 1px solid var(--ct-border);
@@ -652,6 +672,20 @@ window.ClaudeTrackerUI = (function () {
       if (w) w.classList.toggle('ct-widget-hidden', _widgetHidden);
       try { window.CTS_StorageSet({ [HIDDEN_KEY]: _widgetHidden }); } catch (_) {}
       syncLauncherDom();
+      if (_widgetHidden) drawAttentionToLauncher();
+    }
+
+    // Wiggle + glow on the reopen icon so the person notices where the
+    // widget went. Cleans itself up when the animation ends.
+    function drawAttentionToLauncher() {
+      const btn = document.getElementById('ct-launcher');
+      if (!btn) return;
+      btn.classList.remove('ct-launcher-attn');
+      void btn.offsetWidth; // restart the animation if it was already running
+      btn.classList.add('ct-launcher-attn');
+      const stop = () => btn.classList.remove('ct-launcher-attn');
+      btn.addEventListener('animationend', stop, { once: true });
+      setTimeout(stop, 4500); // covers reduced-motion (no animationend)
     }
 
     const LAUNCHER_ICON =

@@ -297,7 +297,7 @@
       : document.querySelector('nav'));
     const sidebarMissingQuota = sidebarPresent && !document.getElementById('ct-quota');
 
-    if (!document.getElementById('ct-toolbar-quota') || !document.getElementById('ct-row') || sidebarMissingQuota) {
+    if (!document.getElementById('ct-toolbar-quota') || window.CTS_RowMissing() || sidebarMissingQuota) {
       window.CTS.UIInjected = false;
       if (window.CTS_Content) window.CTS_Content.tryInjectUI();
     }
