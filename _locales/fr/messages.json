@@ -180,5 +180,38 @@
   },
   "whatsNewBody": {
     "message": "Touchez ✕ pour le masquer. Ramenez-le à tout moment avec l’icône de jauge dans la barre supérieure."
+  },
+  "fbTitle": {
+    "message": "Que devrions-nous construire ensuite ?"
+  },
+  "fbBody": {
+    "message": "TokenLens grandit une idée à la fois, et la plupart viennent de personnes comme vous. Une fonction, un correctif, une petite gêne : une phrase suffit."
+  },
+  "fbPrefix": {
+    "message": "J’aimerais que TokenLens puisse"
+  },
+  "fbEx1": {
+    "message": "faire ce que je souhaite depuis toujours"
+  },
+  "fbEx2": {
+    "message": "arrêter de faire ce truc agaçant"
+  },
+  "fbEx3": {
+    "message": "avoir un bouton pour…"
+  },
+  "fbEx4": {
+    "message": "me surprendre"
+  },
+  "fbLater": {
+    "message": "Plus tard"
+  },
+  "fbNever": {
+    "message": "Ne plus demander"
+  },
+  "fbThanksTitle": {
+    "message": "Idée reçue."
+  },
+  "fbThanksBody": {
+    "message": "Le formulaire s’est ouvert dans un nouvel onglet. Une vraie personne lit chaque réponse."
   }
 }

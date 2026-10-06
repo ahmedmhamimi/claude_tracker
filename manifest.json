@@ -64,7 +64,8 @@
       "js": [
         "theme.js",
         "welcome.js",
-        "review.js"
+        "review.js",
+        "feedback.js"
       ],
       "run_at": "document_idle"
     }

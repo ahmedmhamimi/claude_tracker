@@ -180,5 +180,38 @@
   },
   "whatsNewBody": {
     "message": "✕ を押すと非表示になります。トップバーのゲージアイコンからいつでも元に戻せます。"
+  },
+  "fbTitle": {
+    "message": "次は何を作りましょう？"
+  },
+  "fbBody": {
+    "message": "TokenLens はアイデアを一つずつ形にして育っています。その多くはユーザーの皆さんから。機能、不具合、ちょっとした不満、一言で十分です。"
+  },
+  "fbPrefix": {
+    "message": "TokenLens がこうなったらいいな"
+  },
+  "fbEx1": {
+    "message": "ずっと願っていたあれができる"
+  },
+  "fbEx2": {
+    "message": "あの気になる動きがなくなる"
+  },
+  "fbEx3": {
+    "message": "こんなボタンがほしい…"
+  },
+  "fbEx4": {
+    "message": "びっくりさせてほしい"
+  },
+  "fbLater": {
+    "message": "あとで"
+  },
+  "fbNever": {
+    "message": "今後は表示しない"
+  },
+  "fbThanksTitle": {
+    "message": "アイデア、受け取りました。"
+  },
+  "fbThanksBody": {
+    "message": "フォームを新しいタブで開きました。回答は一件ずつ人が読んでいます。"
   }
 }

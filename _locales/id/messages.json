@@ -180,5 +180,38 @@
   },
   "whatsNewBody": {
     "message": "Ketuk ✕ untuk menyembunyikannya. Tampilkan lagi kapan saja lewat ikon pengukur di bilah atas."
+  },
+  "fbTitle": {
+    "message": "Fitur apa yang sebaiknya kita buat berikutnya?"
+  },
+  "fbBody": {
+    "message": "TokenLens tumbuh satu ide demi satu ide, dan kebanyakan datang dari pengguna seperti Anda. Fitur, perbaikan bug, atau gangguan kecil: satu kalimat saja sudah cukup."
+  },
+  "fbPrefix": {
+    "message": "Saya berharap TokenLens bisa"
+  },
+  "fbEx1": {
+    "message": "melakukan hal yang selalu saya harapkan"
+  },
+  "fbEx2": {
+    "message": "berhenti melakukan satu hal yang mengganggu itu"
+  },
+  "fbEx3": {
+    "message": "punya tombol untuk…"
+  },
+  "fbEx4": {
+    "message": "memberi saya kejutan"
+  },
+  "fbLater": {
+    "message": "Nanti saja"
+  },
+  "fbNever": {
+    "message": "Jangan tanya lagi"
+  },
+  "fbThanksTitle": {
+    "message": "Ide diterima."
+  },
+  "fbThanksBody": {
+    "message": "Formulirnya terbuka di tab baru. Setiap jawaban dibaca oleh orang sungguhan."
   }
 }

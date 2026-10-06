@@ -28,6 +28,7 @@ chrome.runtime.setUninstallURL(UNINSTALL_SURVEY_URL);
 chrome.runtime.onInstalled.addListener(details => {
   if (details.reason === 'update') {
     flagWhatsNew().catch(() => {});
+    flagFeedback().catch(() => {});
     return;
   }
   if (details.reason !== 'install') return;
@@ -101,4 +102,40 @@ async function focusWindow(windowId) {
     if (win.state === 'minimized') patch.state = 'normal';
     await chrome.windows.update(windowId, patch);
   } catch (e) { /* window gone or not focusable: the tab is still active */ }
+}
+
+// ─── Feature-request prompt: who counts as "established" ────────────────────
+// feedback.js asks long-time users "what should we build next?". Chrome gives an
+// extension no install date, so we rely on what we recorded ourselves:
+//   - installs from the welcome-splash era have cts_installed_at,
+//   - everyone who has had review.js has cts_first_seen.
+// People who predate both have neither. For them, evidence that the extension
+// actually ran before (a cached org id / usage reading / the drag hint) marks
+// them as `cts_fb_legacy`: established, pending a few real days of use after
+// this update. Without any such evidence they are treated as brand new.
+//
+// Every updated install also gets `cts_fb_after`: 1 to 3 days from now, random
+// so ~800 people are not all asked at the same moment right after the update.
+// Stamped once, ever: later updates leave it alone.
+const DAY_MS = 864e5;
+
+async function flagFeedback() {
+  const s = await chrome.storage.local.get([
+    'cts_fb_since', 'cts_installed_at', 'cts_first_seen',
+    'cts_org_id', 'cts_5h_util', 'cts_hint_seen',
+  ]);
+  if (s.cts_fb_since) return;
+
+  const now = Date.now();
+  const patch = {
+    cts_fb_since: now,
+    cts_fb_after: now + (1 + Math.random() * 2) * DAY_MS,
+  };
+  const tracked = s.cts_installed_at || s.cts_first_seen;
+  if (!tracked) {
+    const priorUse = !!s.cts_org_id || typeof s.cts_5h_util === 'number' || s.cts_hint_seen === true;
+    if (priorUse) patch.cts_fb_legacy = true;
+    else patch.cts_installed_at = now;          // never really used it: counts from today
+  }
+  await chrome.storage.local.set(patch);
 }

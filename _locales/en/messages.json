@@ -238,5 +238,38 @@
   },
   "whatsNewBody": {
     "message": "Tap ✕ to tuck it away. Bring it back anytime from the gauge icon in the top bar."
+  },
+  "fbTitle": {
+    "message": "What should we build next?"
+  },
+  "fbBody": {
+    "message": "TokenLens grows one idea at a time, and most of them come from people like you. A feature, a bugfix, a tiny annoyance: one sentence is plenty."
+  },
+  "fbPrefix": {
+    "message": "I wish TokenLens could"
+  },
+  "fbEx1": {
+    "message": "do that thing I keep wishing for"
+  },
+  "fbEx2": {
+    "message": "stop doing that one annoying thing"
+  },
+  "fbEx3": {
+    "message": "have a button for…"
+  },
+  "fbEx4": {
+    "message": "surprise me"
+  },
+  "fbLater": {
+    "message": "Maybe later"
+  },
+  "fbNever": {
+    "message": "Don’t ask again"
+  },
+  "fbThanksTitle": {
+    "message": "Idea received."
+  },
+  "fbThanksBody": {
+    "message": "The form is open in a new tab. A real person reads every answer."
   }
 }

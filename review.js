@@ -44,6 +44,7 @@
     dwellSeconds: 4,       // seconds the moment must hold before we show
     idleMs: 3000,          // no typing/clicking for this long
     snoozeDays: 14,
+    gapDays: 4,            // minimum distance from any other TokenLens prompt
     maxShows: 4,
     autoHideMs: 45000,
   };
@@ -84,6 +85,9 @@
     if ((st.shown || 0) >= RULES.maxShows) return false;
     if (st.nextAt && Date.now() < st.nextAt) return false;
     if (st.lastDay === todayKey()) return false;
+    // Never right after another TokenLens prompt (the feature-request card).
+    const pl = s.cts_prompt_last;
+    if (pl && pl.kind !== 'review' && Date.now() - pl.ts < RULES.gapDays * DAY) return false;
     const days = Array.isArray(s.cts_days) ? s.cts_days.length : 0;
     if (days < RULES.minDays) return false;
     if (!s.cts_first_seen || Date.now() - s.cts_first_seen < RULES.minAgeDays * DAY) return false;
@@ -101,7 +105,7 @@
     if (document.visibilityState !== 'visible') return false;
     if (!document.getElementById('ct-toolbar-quota')) return false;       // app UI is up
     if (ROOT.dataset.ctsWelcome === 'active') return false;
-    if (document.getElementById('cts-welcome-host') || document.getElementById('cts-review-host')) return false;
+    if (['cts-welcome-host', 'cts-review-host', 'cts-feedback-host', 'ct-whatsnew'].some(id => document.getElementById(id))) return false;
     if (Date.now() - lastInput < RULES.idleMs) return false;
     const box = document.querySelector('div[contenteditable="true"]') || document.querySelector('textarea');
     if (box && ((box.textContent || box.value || '').trim() !== '')) return false;
@@ -121,7 +125,7 @@
 
     if (!momentIsRight()) { dwell = 0; return; }
 
-    const s = await get(['cts_review', 'cts_days', 'cts_first_seen', 'cts_5h_util', 'cts_ts_5h', 'cts_review_preview']);
+    const s = await get(['cts_review', 'cts_days', 'cts_first_seen', 'cts_5h_util', 'cts_ts_5h', 'cts_review_preview', 'cts_prompt_last']);
     if (s.cts_review_preview === true) {
       dwell++;
       if (dwell >= 2) { await set({ cts_review_preview: false }); present(Math.max(3, (s.cts_days || []).length)); }
@@ -134,10 +138,14 @@
 
     // Claim before showing so two open tabs can't both ask.
     claimed = true;
-    const fresh = await get(['cts_review']);
+    const fresh = await get(['cts_review', 'cts_prompt_last']);
     const st = fresh.cts_review || {};
-    if (st.lastDay === todayKey()) { claimed = false; return; }
-    await set({ cts_review: { ...st, lastDay: todayKey(), shown: (st.shown || 0) + 1 } });
+    const pl = fresh.cts_prompt_last;
+    if (st.lastDay === todayKey() || (pl && pl.kind !== 'review' && Date.now() - pl.ts < RULES.gapDays * DAY)) { claimed = false; return; }
+    await set({
+      cts_review: { ...st, lastDay: todayKey(), shown: (st.shown || 0) + 1 },
+      cts_prompt_last: { ts: Date.now(), kind: 'review' },
+    });
     present((s.cts_days || []).length);
   }
 

@@ -180,5 +180,38 @@
   },
   "whatsNewBody": {
     "message": "点击 ✕ 即可收起。随时可通过顶部栏的仪表图标重新显示。"
+  },
+  "fbTitle": {
+    "message": "接下来该做点什么？"
+  },
+  "fbBody": {
+    "message": "TokenLens 是一个点子一个点子长大的，其中大多数来自像你这样的用户。新功能、修复、小烦恼，一句话就够了。"
+  },
+  "fbPrefix": {
+    "message": "我希望 TokenLens 能"
+  },
+  "fbEx1": {
+    "message": "做到我一直想要的那件事"
+  },
+  "fbEx2": {
+    "message": "别再做那件烦人的事"
+  },
+  "fbEx3": {
+    "message": "多一个按钮用来…"
+  },
+  "fbEx4": {
+    "message": "给我一点惊喜"
+  },
+  "fbLater": {
+    "message": "以后再说"
+  },
+  "fbNever": {
+    "message": "不再询问"
+  },
+  "fbThanksTitle": {
+    "message": "收到你的想法了。"
+  },
+  "fbThanksBody": {
+    "message": "表单已在新标签页打开。每一条回答都有真人阅读。"
   }
 }
