@@ -103,7 +103,6 @@
       _tickPeak();
       _tickCache();
       _tickResetTimers();
-      _tickSpeedPill();
       _tickStreamingAttr();
       _tickUIHealthCheck();
       if (window.CTS_Content) window.CTS_Content.updateInlineStats();
@@ -258,16 +257,6 @@
       if (displayEl) displayEl.textContent = txt;
       if (toolbarEl) toolbarEl.textContent  = txt;
     });
-  }
-
-  function _tickSpeedPill() {
-    const pill = document.getElementById('ct-p-spd');
-    const text = document.getElementById('ct-p-spd-t');
-    if (pill && text && window.CTS.lastSpeedTps) {
-      text.textContent   = `${window.CTS.lastSpeedTps} t/s`;
-      pill.style.display = 'inline-flex';
-      pill.className     = 'ct-pill' + (window.CTS.isStreaming ? ' stream' : '');
-    }
   }
 
   function _tickStreamingAttr() {

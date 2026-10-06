@@ -134,6 +134,30 @@ window.ClaudeTrackerUI = (function () {
   .ct-pill.ok     { color: var(--ct-green); }
   .ct-pill.stream .ct-pill-dot { animation: ct-stream 0.6s infinite alternate; }
 
+  /* Composer usage row: two thin orange bars (same look as the sidebar's),
+   * side by side, spanning the full width of the message box. */
+  #ct-row-left { gap: 22px; }
+  .ct-rq {
+    flex: 1 1 0; min-width: 0;
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--ct-mono); font-size: 10.5px; font-weight: 700;
+    color: var(--ct-muted); white-space: nowrap;
+    cursor: default; user-select: none;
+  }
+  .ct-rq-label { color: var(--ct-text); font-weight: 800; flex-shrink: 0; }
+  .ct-rq-bar {
+    flex: 1 1 auto; min-width: 36px; height: 4px;
+    background: var(--ct-bg-progress); border-radius: 2px; overflow: hidden;
+  }
+  .ct-rq-fill {
+    height: 100%; width: 0%; border-radius: 2px;
+    background-color: var(--ct-accent) !important;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .ct-rq-pct { flex-shrink: 0; min-width: 28px; text-align: right; font-weight: 800; }
+  .ct-rq.danger .ct-rq-pct { color: var(--ct-red); }
+  .ct-rq-reset { flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; }
+
   @keyframes ct-stream { from{opacity:.2} to{opacity:1} }
   @keyframes ct-throb  { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(.6);opacity:.4} }
 
@@ -1550,20 +1574,17 @@ window.ClaudeTrackerUI = (function () {
         row.innerHTML = `
         <div id="ct-row-inner">
         <div id="ct-row-left">
-        <div class="ct-pill" id="ct-p-ctx" data-ct-tip="${tipAttr('ctxPillTip')}">
-        <span class="ct-pill-dot"></span><span id="ct-p-ctx-t">${i18n('ctxPillLabel')}</span>
+        <div class="ct-rq" id="ct-p-5h">
+        <span class="ct-rq-label">5h</span>
+        <div class="ct-rq-bar"><div class="ct-rq-fill" id="ct-p-5h-fill"></div></div>
+        <span class="ct-rq-pct" id="ct-p-5h-pct">\u2014</span>
+        <span class="ct-rq-reset" id="ct-p-5h-t"></span>
         </div>
-        <div class="ct-pill" id="ct-p-spd" style="display:none" data-ct-tip="${tipAttr('spdPillTip')}">
-        <span class="ct-pill-dot"></span><span id="ct-p-spd-t">\u2014</span>
-        </div>
-        <div class="ct-pill ct-stat-pill" id="ct-p-turns" style="display:none" data-ct-tip="${tipAttr('turnsPillTip')}">
-        <span class="ct-pill-dot"></span><span id="ct-p-turns-t">\u2014</span>
-        </div>
-        <div class="ct-pill ct-stat-pill" id="ct-p-cost" style="display:none" data-ct-tip="${tipAttr('costPillTip')}">
-        <span class="ct-pill-dot"></span><span id="ct-p-cost-t">\u2014</span>
-        </div>
-        <div class="ct-pill ct-stat-pill" id="ct-p-lat" style="display:none" data-ct-tip="${tipAttr('latPillTip')}">
-        <span class="ct-pill-dot"></span><span id="ct-p-lat-t">\u2014</span>
+        <div class="ct-rq" id="ct-p-7d">
+        <span class="ct-rq-label">7d</span>
+        <div class="ct-rq-bar"><div class="ct-rq-fill" id="ct-p-7d-fill"></div></div>
+        <span class="ct-rq-pct" id="ct-p-7d-pct">\u2014</span>
+        <span class="ct-rq-reset" id="ct-p-7d-t"></span>
         </div>
         </div>
         <div id="ct-row-right"></div>

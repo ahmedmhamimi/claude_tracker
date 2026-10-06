@@ -4,7 +4,7 @@
  *
  * - CTS_Content.tryInjectUI() -> void: injects all UI components if the composer is present and not yet injected
  * - CTS_Content.applyAnalysis(result, convoId) -> void: processes conversation analysis output, updates context bar, chips
- * - CTS_Content.updateInlineStats() -> void: refreshes turn count, cost, and latency pills in the composer row
+ * - CTS_Content.updateInlineStats() -> void: refreshes the 5h / 7d usage pills in the composer row
  * - CTS_Content.injectSidebarDates() -> void: stamps each sidebar chat-list row with its creation date
  * - startControlTicks() -> void: alias that delegates to CTS_Quota.startCountdownTick
  */
@@ -34,44 +34,61 @@
   }
 
   // ─── Inline Stats ─────────────────────────────────────────────────────────
+  // The composer row shows only figures that come straight from claude.ai's
+  // own usage endpoint (the same data as its Settings > Usage page):
+  //   5h / 7d  — percent of the limit used, and when that window resets.
+  // Nothing here is estimated. Token counts, context-window %, cost, and
+  // speed are NOT available to a browser extension (claude.ai doesn't expose
+  // them), so they are deliberately not shown.
+
+  // Localised strings, stamped onto <html> by bridge.js (same source ui.js reads).
+  let _msgs = null;
+  function tr(key) {
+    if (!_msgs) {
+      try { _msgs = JSON.parse(document.documentElement.dataset.ctsi18n || '{}'); } catch (_) { _msgs = {}; }
+    }
+    return _msgs[key] || key;
+  }
+
+  function formatSpan(secs) {
+    if (secs <= 0) return '';
+    const d = Math.floor(secs / 86400), h = Math.floor((secs % 86400) / 3600), m = Math.floor((secs % 3600) / 60);
+    return d > 0 ? d + 'd ' + h + 'h' : h > 0 ? h + 'h ' + m + 'm' : Math.max(1, m) + 'm';
+  }
+
+  function paintQuotaPill(win, util, ts) {
+    const box  = document.getElementById('ct-p-' + win);
+    const fill = document.getElementById('ct-p-' + win + '-fill');
+    const pctEl = document.getElementById('ct-p-' + win + '-pct');
+    const reset = document.getElementById('ct-p-' + win + '-t');
+    if (!box || !fill || !pctEl || !reset) return;
+    const now = Math.floor(Date.now() / 1000);
+    const expired = ts != null && ts <= now;
+    const pct = expired ? 0 : Math.max(0, Math.min(100, Math.round(util || 0)));
+
+    fill.style.width = pct + '%';
+    pctEl.textContent = pct + '%';
+    reset.textContent = !expired && ts ? tr('quotaResetsIn') + ' ' + formatSpan(ts - now) : '';
+    box.classList.toggle('danger', pct >= 85);
+
+    const title = tr(win === '5h' ? 'quota5hLabel' : 'quota7dLabel');
+    box.setAttribute('data-ct-tip', title + ': ' + pct + '%' + (!expired && ts
+      ? '\n' + tr('quotaResetsIn') + ' ' + formatSpan(ts - now) + ' (' +
+          new Date(ts * 1000).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }) + ')'
+      : ''));
+  }
 
   function updateInlineStats() {
-    const onChatPage  = /\/chat\/[a-f0-9\-]{36}/i.test(window.location.pathname);
-    const currentCid  = window.CTS_Network.getConvoId();
+    const onChatPage = /\/chat\/[a-f0-9\-]{36}/i.test(window.location.pathname);
 
-    window.CTS_Session.resetForConvo(currentCid);
-
-    // The row stays hidden until it has real numbers to show, so the bare
-    // placeholder label ("context") is never displayed on its own.
+    // Show the row only on a chat, and only once a real reading has landed
+    // (never from cached or default numbers).
     const rowEl = document.getElementById('ct-row');
-    if (rowEl) {
-      const ctxT = document.getElementById('ct-p-ctx-t');
-      rowEl.classList.toggle('ct-has-data', onChatPage && !!ctxT && /\d/.test(ctxT.textContent || ''));
-    }
+    if (rowEl) rowEl.classList.toggle('ct-has-data', onChatPage && !!window.CTS.dataReady);
+    if (!window.CTS.dataReady) return;
 
-    const show = (id, visible) => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = (onChatPage && visible) ? '' : 'none';
-    };
-      const setText = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = text;
-      };
-
-        const hasTurns = window.CTS.sessionMsgCount > 0;
-        show('ct-p-turns', hasTurns);
-        if (hasTurns) setText('ct-p-turns-t', window.CTS.sessionMsgCount + (window.CTS.sessionMsgCount === 1 ? ' turn' : ' turns'));
-
-        const costText = window.CTS_Shared.formatCost(window.CTS.sessionCostEst);
-    show('ct-p-cost', !!costText);
-    if (costText) setText('ct-p-cost-t', costText);
-
-    const hasLat = window.CTS.latencies.length > 0;
-    show('ct-p-lat', hasLat);
-    if (hasLat) {
-      const avg = Math.round(window.CTS.latencies.reduce((a, b) => a + b, 0) / window.CTS.latencies.length);
-      setText('ct-p-lat-t', avg + 'ms avg');
-    }
+    paintQuotaPill('5h', window.CTS.current5hUtil, window.CTS.targetTimestamps['5h']);
+    paintQuotaPill('7d', window.CTS.current7dUtil, window.CTS.targetTimestamps['7d']);
   }
 
   // ─── Apply Analysis ───────────────────────────────────────────────────────
@@ -79,31 +96,6 @@
   function applyAnalysis(result, convoId) {
     if (!result) return;
     const { totalTokens, lastInputTokens, lastOutputTokens, assistantCount } = result;
-
-    const meta = window.CTS.lastConfirmedModelMeta
-    || window.CTS.currentModelMeta
-    || detectModelFromDOM()
-    || { ctx: 200000 };
-    const ctx = meta.ctx;
-    const pct = Math.min(100, Math.round((totalTokens / ctx) * 100));
-
-    window.CTS.sessionConvTokens = totalTokens;
-
-    // Context pill
-    const ctxPill = document.getElementById('ct-p-ctx');
-    const ctxText = document.getElementById('ct-p-ctx-t');
-    if (ctxPill) {
-      const ctxK = ctx >= 1000000 ? '1,000,000' : '200,000';
-      ctxPill.setAttribute('data-ct-tip',
-                           'Estimated context window usage.\nTokens counted from message text:\n· Code blocks: chars ÷ 3\n· URLs & numbers: chars ÷ 2\n· Regular words: count × 1.3\nModel limit: ' + ctxK + ' tokens.');
-    }
-    if (ctxText && ctxPill) {
-      ctxText.textContent = `${window.CTS_Shared.formatTokens(totalTokens)}/${Math.round(ctx / 1000)}k · ${pct}%`;
-      ctxPill.className   = 'ct-pill' + (pct > 85 ? ' danger' : pct > 60 ? ' warn' : '');
-    }
-
-    // Cost accumulation
-    window.CTS_Session.recordTurn(lastInputTokens, lastOutputTokens);
 
     // Prompt cache tracking
     const activeCid = convoId || window.CTS_Network.getConvoId();
