@@ -753,6 +753,22 @@ window.ClaudeTrackerUI = (function () {
       return null;
     }
 
+    // The corner fallback is only for layouts that genuinely have no top-bar
+    // icon row. While claude.ai is still loading its top bar simply has not
+    // rendered yet, so showing the fallback then makes the icon appear in the
+    // wrong place and jump later. Hold it back until the page has finished
+    // loading plus a short grace period for the app to paint its header.
+    const FALLBACK_GRACE_MS = 2000;
+    let _fallbackReadyAt = null;
+    const _armFallback = () => {
+      if (_fallbackReadyAt !== null) return;
+      _fallbackReadyAt = Date.now() + FALLBACK_GRACE_MS;
+      setTimeout(syncLauncherDom, FALLBACK_GRACE_MS + 50);
+    };
+    if (document.readyState === 'complete') _armFallback();
+    else window.addEventListener('load', _armFallback, { once: true });
+    const fallbackAllowed = () => _fallbackReadyAt !== null && Date.now() >= _fallbackReadyAt;
+
     function syncLauncherDom() {
       let btn = document.getElementById('ct-launcher');
 
@@ -774,6 +790,10 @@ window.ClaudeTrackerUI = (function () {
       if (ref && ref.parentElement) {
         btn.classList.remove('ct-launcher-fixed');
         if (btn.nextElementSibling !== ref) ref.parentElement.insertBefore(btn, ref);
+      } else if (!fallbackAllowed()) {
+        // Top bar not rendered yet: show nothing rather than a misplaced icon.
+        // The health check / load timer re-syncs once it is.
+        if (btn.parentElement) btn.remove();
       } else if (btn.parentElement !== document.body || !btn.classList.contains('ct-launcher-fixed')) {
         btn.classList.add('ct-launcher-fixed');
         document.body.appendChild(btn);
