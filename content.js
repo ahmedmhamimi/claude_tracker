@@ -219,6 +219,7 @@
     const stack = [a];
     while (stack.length) {
       const el = stack.pop();
+      if (el.classList && el.classList.contains('ct-chat-date')) continue;
       const text = (el.textContent || '').trim();
       if (el.children.length === 0 && text) {
         if (!best || text.length > best.textContent.trim().length) best = el;
@@ -229,35 +230,45 @@
   }
 
   // Must match the .ct-chat-date `right` value in ui.js — the gap that
-  // clears Claude's own row-actions button on hover. Used below to compute
-  // how much space the title actually needs to give up, on top of it.
+  // clears Claude's own row-actions button on hover.
   const DATE_RIGHT_OFFSET = 34;
-  const DATE_TITLE_GAP = 4; // breathing room between title text and date
+  const DATE_TITLE_GAP = 6; // breathing room between title text and date
+
+  // v5.9: Anthropic's latest sidebar update wraps the title in extra
+  // flex/clipping containers, so the old approach (padding-right on the
+  // title leaf) no longer constrained anything — the title kept running
+  // underneath the date badge. Instead of relying on how the row happens to
+  // be laid out, we now measure where the badge actually starts and clamp
+  // the title's max-width to end just before it. A max-width on the title
+  // itself works no matter what the parents are doing (flex, grid, masks,
+  // overflow), and it is re-measured on every pass so sidebar resizes,
+  // renames, and label changes are all handled.
+  function styleTitleEl(titleEl) {
+    if (titleEl.dataset.ctTitle) return;
+    titleEl.dataset.ctTitle = '1';
+    titleEl.style.display = 'block';
+    titleEl.style.overflow = 'hidden';
+    titleEl.style.textOverflow = 'ellipsis';
+    titleEl.style.whiteSpace = 'nowrap';
+    titleEl.style.boxSizing = 'border-box';
+    titleEl.style.minWidth = '0';
+    titleEl.style.flexShrink = '1';
+  }
 
   function injectSidebarDates() {
     const map = window.CTS.convoDateMap;
     if (!map || !Object.keys(map).length) return;
 
+    const pending = [];
+
+    // Phase 1 (writes): make sure every row has a badge + styled title.
     findChatRows().forEach(a => {
       const m = a.getAttribute('href').match(/\/chat\/([a-f0-9-]{36})/i);
       if (!m) return;
       const iso = map[m[1]];
       if (!iso) return;
 
-      const isInit = !a.dataset.ctDateInit;
-      if (isInit) {
-        a.dataset.ctDateInit = '1';
-        if (getComputedStyle(a).position === 'static') a.style.position = 'relative';
-
-        const titleEl = findTitleEl(a);
-        if (titleEl) {
-          titleEl.style.display = 'block';
-          titleEl.style.overflow = 'hidden';
-          titleEl.style.textOverflow = 'ellipsis';
-          titleEl.style.whiteSpace = 'nowrap';
-          titleEl.style.boxSizing = 'border-box';
-        }
-      }
+      if (getComputedStyle(a).position === 'static') a.style.position = 'relative';
 
       let badge = a.querySelector(':scope > .ct-chat-date');
       if (!badge) {
@@ -267,33 +278,45 @@
       }
 
       const label = window.CTS_Shared.formatChatDate(iso);
-      if (badge.textContent !== label) {
-        badge.textContent = label;
-
-        // Reserve exactly as much title space as this label actually needs
-        // (plus the fixed kebab-button clearance and a small gap) — measured
-        // per-row rather than a fixed guess, so short labels like "Aug 24"
-        // don't truncate the title any more than they have to, while longer
-        // ones (older chats grow a year, e.g. "Aug 24, 2025") still get the
-        // room they need automatically.
-        const titleEl = findTitleEl(a);
-        if (titleEl) {
-          titleEl.style.paddingRight =
-            (DATE_RIGHT_OFFSET + badge.offsetWidth + DATE_TITLE_GAP) + 'px';
-        }
-      }
+      if (badge.textContent !== label) badge.textContent = label;
       const full = new Date(iso).toLocaleString();
       if (badge.title !== full) badge.title = full;
+
+      const titleEl = findTitleEl(a);
+      if (titleEl) styleTitleEl(titleEl);
+      pending.push({ badge, titleEl });
+    });
+
+    // Phase 2 (reads, then writes): clamp each title to end before its badge.
+    const widths = pending.map(({ badge, titleEl }) => {
+      if (!titleEl) return null;
+      const b = badge.getBoundingClientRect();
+      const t = titleEl.getBoundingClientRect();
+      if (!b.width || !t.width) return null; // hidden / collapsed row
+      return Math.floor(b.left - t.left - DATE_TITLE_GAP);
+    });
+    pending.forEach(({ titleEl }, i) => {
+      const w = widths[i];
+      if (titleEl && w !== null && w > 24) titleEl.style.maxWidth = w + 'px';
     });
   }
 
   let _sidebarDatesQueued = false;
+  let _datesResizeObs = null;
   function scheduleSidebarDates() {
     if (_sidebarDatesQueued) return;
     _sidebarDatesQueued = true;
     requestAnimationFrame(() => {
       _sidebarDatesQueued = false;
       injectSidebarDates();
+      // Re-clamp titles whenever the sidebar itself changes width.
+      if (!_datesResizeObs && window.ResizeObserver) {
+        const root = getSidebarRoot();
+        if (root) {
+          _datesResizeObs = new ResizeObserver(() => scheduleSidebarDates());
+          _datesResizeObs.observe(root);
+        }
+      }
     });
   }
 

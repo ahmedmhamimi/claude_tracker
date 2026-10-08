@@ -163,8 +163,8 @@ window.ClaudeTrackerUI = (function () {
 
   /* Sidebar chat-list "created on" badge — anchored to the chat link itself
    * (see content.js's injectSidebarDates). The title node gets an inline
-   * padding-right reservation so it truncates with an ellipsis before ever
-   * reaching this badge, which means there's never any text underneath it
+   * max-width clamp (measured against this badge) so it truncates with an
+   * ellipsis before ever reaching this badge, which means there's never any text underneath it
    * that needs masking, so the badge itself carries no background of its
    * own — it just sits on whatever the row is doing (hover, selection, etc.)
    * like any other row element would. Colored with the extension's accent so
