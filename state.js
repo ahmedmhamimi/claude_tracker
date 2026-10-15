@@ -59,6 +59,7 @@ root.CTS = {
   current7dUtil:       0,
   isLimitHit:          false,
   dataReady:           false, // true once a real usage reading (not a default 0) has landed
+  cacheReady:          false, // true when an unexpired snapshot from a previous load is on screen (shown, marked stale, until a live reading lands)
   preMessage5hUtil:    null,  // 5h util % snapshotted at message_start, for per-turn delta
   lastMsgQuotaDelta:   null,  // percentage points of the 5h window used by the last message
 
@@ -132,7 +133,7 @@ try {
   const _5hExpired = !isNaN(_5hTs) && _5hTs <= Math.floor(Date.now() / 1000);
   if (!_5hExpired) {
     const _5h = sessionStorage.getItem('cts_5h_util') || localStorage.getItem('cts_global_5h_util');
-    if (_5h !== null) root.CTS.current5hUtil = parseInt(_5h, 10) || 0;
+    if (_5h !== null) { root.CTS.current5hUtil = parseInt(_5h, 10) || 0; root.CTS.cacheReady = true; }
   }
 } catch (_) {}
 try {
@@ -140,7 +141,7 @@ try {
   const _7dExpired = !isNaN(_7dTs) && _7dTs <= Math.floor(Date.now() / 1000);
   if (!_7dExpired) {
     const _7d = sessionStorage.getItem('cts_7d_util') || localStorage.getItem('cts_global_7d_util');
-    if (_7d !== null) root.CTS.current7dUtil = parseInt(_7d, 10) || 0;
+    if (_7d !== null) { root.CTS.current7dUtil = parseInt(_7d, 10) || 0; root.CTS.cacheReady = true; }
   }
 } catch (_) {}
 
@@ -189,12 +190,12 @@ root.CTS._storageReady = new Promise(resolve => {
         const sevenDExpired = items.cts_ts_7d != null && items.cts_ts_7d <= nowSec;
 
         if (!fiveHExpired) {
-          if (items.cts_5h_util != null) root.CTS.current5hUtil = items.cts_5h_util;
+          if (items.cts_5h_util != null) { root.CTS.current5hUtil = items.cts_5h_util; root.CTS.cacheReady = true; }
           if (items.cts_ts_5h  != null) root.CTS.targetTimestamps['5h'] = items.cts_ts_5h;
         }
         // bridge wins over sessionStorage for 7d since it survives new tabs
         if (!sevenDExpired) {
-          if (items.cts_7d_util != null) root.CTS.current7dUtil = items.cts_7d_util;
+          if (items.cts_7d_util != null) { root.CTS.current7dUtil = items.cts_7d_util; root.CTS.cacheReady = true; }
           if (items.cts_ts_7d  != null) root.CTS.targetTimestamps['7d'] = items.cts_ts_7d;
         }
 
@@ -207,6 +208,20 @@ root.CTS._storageReady = new Promise(resolve => {
         // already cached its usage here).
         root.CTS._restoredOrgId = items.cts_org_id || null;
 
+        // On a weak connection claude.ai's own first /api/organizations/ call
+        // can take a long time (or never land), and until it does we can't
+        // ask for usage at all. Use the remembered org id provisionally so the
+        // very first usage request goes out immediately. network.js replaces
+        // it the moment the real one is seen, and discards cached numbers if
+        // it turns out to be a different account.
+        if (!root.CTS.orgId && items.cts_org_id) {
+          root.CTS.orgId = items.cts_org_id;
+          root.CTS._orgProvisional = true;
+        }
+        setTimeout(() => {
+          if (root.CTS.orgId && root.CTS_Network) root.CTS_Network.triggerUsageFetch({ force: true });
+        }, 0);
+
         // Both caches (this one and the sessionStorage fast-path above) agree
         // the restored snapshot is stale, so the bars are sitting at their
         // fresh defaults (0%) rather than a real confirmed number. Ask for
@@ -215,7 +230,7 @@ root.CTS._storageReady = new Promise(resolve => {
         // exists and only checks current5hUtil === 0, not "we know this is
         // stale"), or on orgId being captured from some unrelated fetch.
         if ((fiveHExpired || sevenDExpired) && root.CTS.orgId && root.CTS_Network) {
-          root.CTS_Network.triggerUsageFetch();
+          root.CTS_Network.triggerUsageFetch({ force: true });
         }
       } catch (_) {}
       root.CTS._storageRestored = true;

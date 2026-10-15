@@ -81,11 +81,15 @@
   function updateInlineStats() {
     const onChatPage = /\/chat\/[a-f0-9\-]{36}/i.test(window.location.pathname);
 
-    // Show the row only on a chat, and only once a real reading has landed
-    // (never from cached or default numbers).
+    // Show the row only on a chat, and only once we have real numbers: a live
+    // reading, or an unexpired snapshot from a previous load (shown dimmed
+    // and marked "~" until confirmed). Never from default zeros. Waiting
+    // for a live reading alone meant that on a weak connection the limit
+    // simply never appeared.
+    const haveNumbers = !!window.CTS.dataReady || !!window.CTS.cacheReady;
     const rowEl = document.getElementById('ct-row');
-    if (rowEl) rowEl.classList.toggle('ct-has-data', onChatPage && !!window.CTS.dataReady);
-    if (!window.CTS.dataReady) return;
+    if (rowEl) rowEl.classList.toggle('ct-has-data', onChatPage && haveNumbers);
+    if (!haveNumbers) return;
 
     paintQuotaPill('5h', window.CTS.current5hUtil, window.CTS.targetTimestamps['5h']);
     paintQuotaPill('7d', window.CTS.current7dUtil, window.CTS.targetTimestamps['7d']);
