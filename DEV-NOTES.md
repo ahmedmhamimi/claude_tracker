@@ -20,3 +20,9 @@ store-core, store-idb and sw-router inside try/catch (see background.js).
 ## Account switching (network.js)
 resetAccountState() wipes numbers, headers, timers and backoff when the org changes or the
 user signs out. Usage requests started under an older "epoch" are discarded when they finish.
+
+## Where features live (placement.js)
+- Save this chat (PDF / Markdown / Text / JSON): top bar, left of Share, chat pages only.
+- Continue in a new chat: composer stats row (#ct-row-right), plus the long-chat toast.
+- Search chats / Save all / History / Settings + "at this pace" line: strip under the usage bars in the sidebar.
+- The toolbar popup is unchanged from the original build.

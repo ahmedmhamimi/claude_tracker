@@ -5,7 +5,7 @@
  *
  * - (no exports)
  *
- * @requires safe.js, features.js, bridge2.js, recorder.js, indexer.js, handoff-ui.js, panel.js
+ * @requires safe.js, features.js, bridge2.js, recorder.js, indexer.js, handoff-ui.js, panel.js, placement.js
  */
 
 (function () {

@@ -10,10 +10,11 @@
  *   save     -> this chat as Markdown / PDF / Text, or all chats
  *   settings -> 3 switches + delete my data
  *
- * Openers: top-bar buttons (#ct-panel-launcher = menu, #ct-save-launcher = save),
- * the 'cts2:open-panel' event, the toolbar popup, and alert toasts.
+ * Openers (see placement.js): the top-bar Save button (next to Share), the sidebar
+ * tools strip (Search / Save all / History / Settings), the 'cts2:open-panel'
+ * event (detail.screen optional), and alert toasts.
  *
- * - CTS_Panel.open(screen?) / close() / isOpen()
+ * - CTS_Panel.open(screen?, anchorEl?) / toggle(screen, anchorEl) / close() / isOpen()
  *
  * @requires safe.js, features.js, ui-kit.js, client.js, exporter.js, indexer.js, history.js, charts.js, recorder.js, bridge2.js
  */
@@ -26,9 +27,9 @@
   // New wording: uses a locale string if one exists, otherwise the English default.
   const L = (k, fb) => { const v = T('ix_' + k); return v === 'ix_' + k ? fb : v; };
   const DAY = 864e5;
-  const ALIAS = { usage: 'usage', library: 'find', find: 'find', export: 'save', save: 'save', settings: 'settings', menu: 'menu' };
+  const ALIAS = { usage: 'usage', history: 'usage', library: 'find', find: 'find', export: 'save', save: 'save', bulk: 'bulk', settings: 'settings', menu: 'menu' };
 
-  let ui = null, prevFocus = null, current = 'menu', job = null;
+  let ui = null, prevFocus = null, current = 'menu', job = null, anchorEl = null;
 
   const CSS = `
     .pop { position: fixed; z-index: 2147483000; width: min(340px, calc(100vw - 24px)); max-height: calc(100vh - 80px); display: flex; flex-direction: column;
@@ -64,7 +65,7 @@
     if (!ui) return;
     document.removeEventListener('keydown', ui.onKey, true);
     window.removeEventListener('resize', ui.place);
-    ui.host.remove(); ui = null;
+    ui.host.remove(); ui = null; anchorEl = null;
     if (prevFocus && prevFocus.focus) Safe.run('panel', () => prevFocus.focus());
   }
 
@@ -85,7 +86,7 @@
     const Exp = W('CTS_Exporter'), id = Exp.currentChatId();
     if (!id) return h('p', { class: 'muted', text: L('openChatFirst', 'Open a chat to save just that one.') });
     const row = h('div', { class: 'row' });
-    [['pdf', 'PDF'], ['md', L('fMd', 'Markdown')], ['txt', L('fTxt', 'Text')]].forEach(([f, name]) =>
+    [['pdf', 'PDF'], ['md', L('fMd', 'Markdown')], ['txt', L('fTxt', 'Text')], ['json', 'JSON']].forEach(([f, name]) =>
       row.appendChild(h('button', { class: 'btn grow', type: 'button', text: name, on: { click: async e => {
         const b = e.currentTarget; b.disabled = true; msg.textContent = T('expWorking');
         const r = await Exp.exportOne(id, f);
@@ -290,9 +291,10 @@
     Safe.run('panel', () => { const r = s.render(ui.body, go); if (r && r.catch) r.catch(() => {}); });
   }
 
-  function open(screen) {
+  function open(screen, anchor) {
     const name = ALIAS[screen] || 'menu';
-    if (ui) { go(name); return; }
+    if (anchor) anchorEl = anchor;
+    if (ui) { ui.anchor = anchorEl; go(name); ui.place(); return; }
     prevFocus = document.activeElement;
     const m = UI.mount('cts-panel-host', CSS);
     const back = h('button', { class: 'ib', type: 'button', 'aria-label': L('back', 'Back'), text: '←', hidden: true });
@@ -301,31 +303,53 @@
     const body = h('main', { 'aria-live': 'polite' });
     const pop = h('div', { class: 'pop fade', role: 'dialog', 'aria-modal': 'false', 'aria-label': 'TokenLens' }, h('header', { class: 'top' }, back, title, closeBtn), body);
     m.root.appendChild(pop);
-    // Sit right under the top-bar button when we can find it.
+    // Sit next to whatever opened us: under a top-bar button, or to the right of the sidebar strip.
     const place = () => {
-      const a = document.getElementById('ct-panel-launcher');
+      const a = anchorEl && anchorEl.isConnected ? anchorEl : document.getElementById('ct-panel-launcher');
       const r = a && a.getBoundingClientRect();
-      pop.style.top = (r && r.height ? Math.round(r.bottom + 8) : 56) + 'px';
-      pop.style.right = (r && r.height ? Math.max(12, Math.round(window.innerWidth - r.right - 24)) : 12) + 'px';
+      pop.style.top = pop.style.right = pop.style.left = pop.style.maxHeight = '';
+      if (r && r.height && r.left < window.innerWidth / 2) {
+        const top = Math.max(12, Math.min(Math.round(r.top), window.innerHeight - 200));
+        pop.style.top = top + 'px';
+        pop.style.left = Math.min(Math.round(r.right + 12), Math.max(12, window.innerWidth - 352)) + 'px';
+        pop.style.maxHeight = (window.innerHeight - top - 12) + 'px';
+      } else {
+        pop.style.top = (r && r.height ? Math.round(r.bottom + 8) : 56) + 'px';
+        pop.style.right = (r && r.height ? Math.max(12, Math.round(window.innerWidth - r.right - 24)) : 12) + 'px';
+      }
     };
     const onKey = e => { if (e.key === 'Escape' && m.root.activeElement) { e.preventDefault(); e.stopPropagation(); close(); } };
     document.addEventListener('keydown', onKey, true);
     window.addEventListener('resize', place);
-    ui = { host: m.host, root: m.root, body, title, back, onKey, place };
+    ui = { host: m.host, root: m.root, body, title, back, onKey, place, anchor: anchorEl };
     document.documentElement.appendChild(m.host);
     place(); go(name);
   }
 
+  // Open on `screen` from `anchor`; a second press of the same opener closes it again.
+  function toggle(screen, anchor) {
+    const name = ALIAS[screen] || 'menu';
+    if (ui && current === name && ui.anchor === anchor) close(); else open(screen, anchor);
+  }
+
   // ─── openers ──────────────────────────────────────────────────────────────
-  document.addEventListener('cts2:open-panel', () => Safe.run('panel', () => open('usage')));
+  document.addEventListener('cts2:open-panel', e => Safe.run('panel', () => {
+    let screen = 'usage';
+    try { const d = e && e.detail; const o = typeof d === 'string' ? JSON.parse(d) : d; if (o && typeof o.screen === 'string') screen = o.screen; } catch (_) {}
+    open(screen);
+  }));
+  // Legacy top-bar launchers (ids on the host element; the root is closed, so only the host id is visible here).
+  const LAUNCHERS = { 'ct-panel-launcher': 'menu', 'ct-save-launcher': 'save' };
   document.addEventListener('click', e => Safe.run('panel', () => {
     const ids = (e.composedPath ? e.composedPath() : []).map(n => n && n.id);
-    if (ids.includes('ct-panel-launcher')) { e.preventDefault(); e.stopPropagation(); ui ? close() : open('menu'); }
-    else if (ids.includes('ct-save-launcher')) { e.preventDefault(); e.stopPropagation(); (ui && current === 'save') ? close() : open('save'); }
+    const id = Object.keys(LAUNCHERS).find(k => ids.includes(k));
+    if (!id) return;
+    e.preventDefault(); e.stopPropagation();
+    toggle(LAUNCHERS[id], document.getElementById(id));
   }), true);
   Safe.chromeCall('panel', () => chrome.runtime.onMessage.addListener((msg, sender) => {
     if (sender && sender.id === chrome.runtime.id && msg && msg.cts === 'open-panel') Safe.run('panel', () => open('menu'));
   }));
 
-  window.CTS_Panel = { open, close, isOpen, registerTab: () => {}, SHORTCUTS: [] };
+  window.CTS_Panel = { open, toggle, close, isOpen, registerTab: () => {}, SHORTCUTS: [] };
 })();

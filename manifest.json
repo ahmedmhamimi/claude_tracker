@@ -98,6 +98,7 @@
         "indexer.js",
         "handoff-ui.js",
         "panel.js",
+        "placement.js",
         "welcome.js",
         "review.js",
         "feedback.js",
