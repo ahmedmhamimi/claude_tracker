@@ -176,4 +176,5 @@
     getPeakStatus,
   };
 
-})(window);
+  if (typeof module !== 'undefined') module.exports = root.CTS_Shared;
+})(typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : globalThis));

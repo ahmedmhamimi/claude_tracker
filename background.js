@@ -10,6 +10,17 @@
  * Always register the uninstall survey, so we learn why people leave.
  */
 
+// TokenLens 6.0 store + message router (history, search, export index).
+// Wrapped so a failure here can never break install/uninstall handling below.
+try {
+  importScripts(
+    'shared.js', 'conversation.js', 'history.js', 'search-index.js',
+    'folders.js', 'store-core.js', 'store-idb.js', 'sw-router.js'
+  );
+} catch (e) {
+  console.warn('TokenLens: 6.0 store failed to load', e);
+}
+
 const UNINSTALL_SURVEY_URL =
   'https://docs.google.com/forms/d/e/1FAIpQLSebfiCqmt3fijuJQe60k0HmC7HwpdWN2ruyx0AmpOckBHWg8g/viewform?usp=publish-editor';
 

@@ -151,7 +151,12 @@
     window.CTS.cacheReady = false;
     setStale(false);
     window.ClaudeTrackerUI.markReady();
+    if (window.CTS_Hooks) window.CTS_Hooks.emit('usage');
   }
+
+  // Forget the last persisted snapshot so the next reading is always written
+  // (used after an account switch, when storage was just zeroed).
+  function resetSnapshot() { _lastSnapKey = ''; }
 
   // ─── Countdown Tick ───────────────────────────────────────────────────────
 
@@ -364,6 +369,7 @@
     syncQuotaUI,
     startCountdownTick,
     setStale,
+    resetSnapshot,
   };
 
 })();

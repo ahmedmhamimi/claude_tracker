@@ -271,5 +271,364 @@
   },
   "fbThanksBody": {
     "message": "The form is open in a new tab. A real person reads every answer."
+  },
+  "openPanel": {
+    "message": "Open panel"
+  },
+  "chartPeaks": {
+    "message": "Daily peak usage"
+  },
+  "win5h": {
+    "message": "5-hour limit"
+  },
+  "win7d": {
+    "message": "7-day limit"
+  },
+  "alertText": {
+    "message": "$P1$ is at $P2$%. Pace yourself or plan a break.",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      },
+      "P2": {
+        "content": "$2"
+      }
+    }
+  },
+  "dMin": {
+    "message": "$P1$ min",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "dHrMin": {
+    "message": "$P1$ h $P2$ min",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      },
+      "P2": {
+        "content": "$2"
+      }
+    }
+  },
+  "dismiss": {
+    "message": "Dismiss"
+  },
+  "cancel": {
+    "message": "Cancel"
+  },
+  "close": {
+    "message": "Close"
+  },
+  "expWorking": {
+    "message": "Saving…"
+  },
+  "expDone": {
+    "message": "Saved: $P1$",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "expRate": {
+    "message": "Claude.ai asked us to slow down. Please try again in a minute."
+  },
+  "expGone": {
+    "message": "That chat could not be found."
+  },
+  "expFailed": {
+    "message": "Could not save this chat. Please try again."
+  },
+  "expListing": {
+    "message": "Listing your chats…"
+  },
+  "expProgress": {
+    "message": "Saved $P1$ of $P2$ chats ($P3$ failed)",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      },
+      "P2": {
+        "content": "$2"
+      },
+      "P3": {
+        "content": "$3"
+      }
+    }
+  },
+  "expBulkDone": {
+    "message": "Done: $P1$ chats saved, $P2$ failed. See _export-report.txt inside the ZIP.",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      },
+      "P2": {
+        "content": "$2"
+      }
+    }
+  },
+  "expCancelled": {
+    "message": "Stopped. $P1$ chats were saved into the ZIP.",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "expStoppedRate": {
+    "message": "Stopped because claude.ai asked us to slow down. Your progress is kept; you can resume later."
+  },
+  "expStoppedErrors": {
+    "message": "Stopped after repeated errors. Your progress is kept; you can resume later."
+  },
+  "expResume": {
+    "message": "Resume"
+  },
+  "expResumeText": {
+    "message": "An earlier export saved $P1$ of $P2$ chats. Resume where it stopped?",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      },
+      "P2": {
+        "content": "$2"
+      }
+    }
+  },
+  "lblAttachment": {
+    "message": "Attachment"
+  },
+  "lblArtifact": {
+    "message": "Artifact"
+  },
+  "lblNotExported": {
+    "message": "not exported"
+  },
+  "roleYou": {
+    "message": "You"
+  },
+  "roleClaude": {
+    "message": "Claude"
+  },
+  "usageResets": {
+    "message": "Resets $P1$",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "usageNoReading": {
+    "message": "No reading yet. Send a message and it will appear here."
+  },
+  "paceLine": {
+    "message": "At this pace you may reach your limit about $P1$ before it resets.",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "historyEmpty": {
+    "message": "No history yet. It builds up as you use Claude."
+  },
+  "rangeDays": {
+    "message": "$P1$ days",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "limitHitsCount": {
+    "message": "You reached your limit $P1$ time(s) in this period.",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "limitHitsNone": {
+    "message": "You did not reach your limit in this period."
+  },
+  "untitled": {
+    "message": "Untitled chat"
+  },
+  "libUnavailable": {
+    "message": "Search is not available right now. Try again in a moment."
+  },
+  "libResultCount": {
+    "message": "$P1$ chats found",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "libNoResults": {
+    "message": "No chats found."
+  },
+  "libIndexProgress": {
+    "message": "Indexed $P1$ of $P2$ chats",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      },
+      "P2": {
+        "content": "$2"
+      }
+    }
+  },
+  "libIndexDone": {
+    "message": "Done: $P1$ chats indexed.",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "libStoppedRate": {
+    "message": "Stopped because claude.ai asked us to slow down. You can continue later."
+  },
+  "libStoppedErrors": {
+    "message": "Stopped after repeated errors. You can continue later."
+  },
+  "libStoppedCancel": {
+    "message": "Stopped. $P1$ chats were indexed.",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "setDeleted": {
+    "message": "Everything TokenLens saved has been deleted."
+  },
+  "handoffBtn": {
+    "message": "Continue in a new chat"
+  },
+  "handoffBtnTip": {
+    "message": "Carry this chat into a fresh one with a lighter context"
+  },
+  "handoffTitle": {
+    "message": "Continue in a new chat"
+  },
+  "handoffLoading": {
+    "message": "Reading this chat…"
+  },
+  "handoffFailed": {
+    "message": "Could not read this chat. Open a conversation and try again."
+  },
+  "handoffEmpty": {
+    "message": "There is nothing to carry over yet."
+  },
+  "handoffNoteQuota": {
+    "message": "This helps with the length of one chat. It does not reset your 5-hour or 7-day limit."
+  },
+  "handoffSlider": {
+    "message": "How much of the chat to carry"
+  },
+  "handoffPreview": {
+    "message": "About $P1$ tokens will be carried over ($P2$ in the full chat). $P3$ of $P4$ messages.",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      },
+      "P2": {
+        "content": "$2"
+      },
+      "P3": {
+        "content": "$3"
+      },
+      "P4": {
+        "content": "$4"
+      }
+    }
+  },
+  "handoffOverBudget": {
+    "message": "This is more than the carry budget of $P1$ tokens. Carry less.",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "handoffOpen": {
+    "message": "Open new chat"
+  },
+  "handoffStartNew": {
+    "message": "Open new chat"
+  },
+  "handoffInsert": {
+    "message": "Insert"
+  },
+  "handoffInsertQ": {
+    "message": "Insert the carried context into this new chat?"
+  },
+  "handoffInsertFailed": {
+    "message": "Could not insert the text. Please paste it yourself."
+  },
+  "handoffPasteManually": {
+    "message": "Copied to your clipboard. Press Ctrl+V (or Cmd+V) to paste it."
+  },
+  "handoffHint": {
+    "message": "This chat is about $P1$% full. Consider continuing in a new chat.",
+    "placeholders": {
+      "P1": {
+        "content": "$1"
+      }
+    }
+  },
+  "handoffSummaryNote": {
+    "message": "Ask Claude for a short summary here, then carry only that summary into a new chat."
+  },
+  "handoffSummaryPrompt": {
+    "message": "Please write a concise summary of this conversation that I can paste into a new chat to continue from here. Include key decisions, facts, and open questions."
+  },
+  "handoffSummaryInsert": {
+    "message": "Insert summary request"
+  },
+  "handoffSummaryLabel": {
+    "message": "Summary"
+  },
+  "handoffSummaryReady": {
+    "message": "Summary ready. Start a new chat with it?"
+  },
+  "handoffHdrTitle": {
+    "message": "Carried context from a previous chat"
+  },
+  "handoffHdrLine": {
+    "message": "This is carried context from an earlier chat, not a new request. Continue the conversation from it."
+  },
+  "handoffHdrPrev": {
+    "message": "Previous chat"
+  },
+  "handoffHdrEnd": {
+    "message": "End of carried context"
+  },
+  "featHistory": {
+    "message": "Usage history"
+  },
+  "featAlerts": {
+    "message": "Limit alerts"
+  },
+  "featExport": {
+    "message": "Export"
+  },
+  "featHandoff": {
+    "message": "Continue in a new chat"
+  },
+  "featLibrary": {
+    "message": "Search my chats"
+  },
+  "featThemes": {
+    "message": "Themes"
+  },
+  "featSnippets": {
+    "message": "Snippets"
   }
 }

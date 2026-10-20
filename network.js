@@ -122,6 +122,81 @@
     startedAt: 0,
     rerun:     false, // a forced fetch arrived while one was in flight
   };
+  // Bumped whenever the signed-in account (or session) changes. A request that
+  // started under an older epoch must not touch any state when it finishes: its
+  // numbers belong to the previous account, and its failure (a 401 from the old
+  // session) says nothing about the new one.
+  let epoch = 0;
+  let lastWakeAt = 0;
+  const QUOTA_KEYS = ['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d'];
+
+  // Forget every in-flight / backoff detail of the usage poller. Used when the
+  // org it was talking to is no longer the one that matters.
+  function softResetUsage() {
+    epoch++;
+    if (US.timer) { clearTimeout(US.timer); US.timer = null; }
+    US.failures = 0; US.authFails = 0; US.lastTry = 0; US.lastOk = 0; US.startedAt = 0; US.rerun = false;
+    window.CTS.probeInFlight = false;
+  }
+
+  // Full account switch (different org) or sign-out: drop everything that
+  // belonged to the previous account, on screen and in storage, and start the
+  // poller from a clean slate so it can never stay stuck in the old account's
+  // failure/backoff state. newOrg is the org we are moving to (null on logout).
+  function resetAccountState(newOrg) {
+    const c = window.CTS;
+    softResetUsage();
+    reconcileTimers.forEach(clearTimeout); reconcileTimers = [];
+    c.convFetchInFlight = false;
+    c.convoListFetchInFlight = false;
+    c.authHeaders       = {};
+    c.fetchedUpfront    = false;
+    c.sessionCostEst    = 0;
+    c.sessionMsgCount   = 0;
+    c.sessionSpeeds     = [];
+    c.latencies         = [];
+    c.stopReasonHistory = [];
+    c.lastLatencyMs     = null;
+    c.lastSpeedTps      = null;
+    c.convoCacheMap     = {};
+    c.cachedUntilTs     = null;
+    c.isLimitHit        = false;
+    c.lastMsgQuotaDelta = null;
+    c.preMessage5hUtil  = null;
+    c._pendingSync      = false;
+    c._stale            = false;
+    c.current5hUtil     = 0;
+    c.current7dUtil     = 0;
+    c.targetTimestamps  = { '5h': null, '7d': null };
+    c.activeResetTriggers = { '5h': false, '7d': false };
+    c.cacheReady        = false;
+    c.convoDateMap      = {};
+    c.lastConvoListFetch = 0;
+    QUOTA_KEYS.forEach(k => {
+      try { sessionStorage.removeItem(k); } catch (_) {}
+      try { localStorage.removeItem('cts_global_' + k.slice(4)); } catch (_) {}
+    });
+    try { localStorage.removeItem(PENDING_KEY); } catch (_) {}
+    if (window.CTS_Quota && window.CTS_Quota.resetSnapshot) window.CTS_Quota.resetSnapshot();
+    window.CTS_StorageSet({ cts_5h_util: 0, cts_7d_util: 0, cts_ts_5h: null, cts_ts_7d: null, cts_org_id: newOrg || null });
+    if (window.ClaudeTrackerUI) {
+      window.ClaudeTrackerUI.updateQuotaBars('5h', 0, null);
+      window.ClaudeTrackerUI.updateQuotaBars('7d', 0, null);
+    }
+  }
+
+  // Signed out: forget the org so nothing polls (and fails) against the old
+  // account. The next /api/organizations/<id> request is then treated as a
+  // fresh first capture for whoever signs in next.
+  function onSignedOut() {
+    const c = window.CTS;
+    if (!c.orgId && !c._orgProvisional) return;
+    resetAccountState(null);
+    c.orgId = null;
+    c._orgProvisional = false;
+    c._restoredOrgId = null;
+  }
+
   let lastStreamEndAt = 0;
   let reqInFlight     = 0;
   let reconcileTimers = [];
@@ -150,7 +225,7 @@
   function armRetry(minMs) {
     if (US.timer) clearTimeout(US.timer);
     const base = US.authFails >= 3
-      ? 300000
+      ? 60000
       : Math.min(60000, 1500 * Math.pow(2, Math.min(US.failures, 6)));
     const delay = Math.max(minMs || 0, base) * (0.8 + Math.random() * 0.4);
     US.timer = setTimeout(() => { US.timer = null; triggerUsageFetch({ force: true }); }, delay);
@@ -422,10 +497,15 @@
 
     c.probeInFlight = true;
     US.startedAt = US.lastTry = now;
+    const myEpoch = epoch;
     let r;
     try {
       r = await getJSON(`https://claude.ai/api/organizations/${c.orgId}/usage`, 12000);
     } catch (_) { r = { ok: false, status: 0 }; }
+    // The account changed while this request was out: its result (or its 401)
+    // belongs to the previous account. The reset already cleaned up and a fresh
+    // fetch for the new account is scheduled, so touch nothing here.
+    if (myEpoch !== epoch) return false;
     c.probeInFlight = false;
 
     let ok = false;
@@ -498,6 +578,7 @@
     if (lite && Date.now() - (_convFetchedAt[cid] || 0) < 15000) return;
 
     c.convFetchInFlight = true;
+    const myEpoch = epoch;
     try {
       _convFetchedAt[cid] = Date.now();
       const r = await getJSON(
@@ -505,8 +586,9 @@
         20000,
         lite ? 4000000 : 0
       );
-      if (r.ok && r.data) {
+      if (r.ok && r.data && myEpoch === epoch) {
         window.CTS_Content.applyAnalysis(window.CTS_Shared.analyseConversation(r.data), cid);
+        if (window.CTS_Hooks) window.CTS_Hooks.emit('convraw', r.data, cid);
       }
     } catch (_) {}
     finally { c.convFetchInFlight = false; }
@@ -522,10 +604,12 @@
     if (isLite() && Date.now() - (c.lastConvoListFetch || 0) < 300000) return;
     if (US.failures > 0) return;
     c.convoListFetchInFlight = true;
+    const myEpoch = epoch;
     try {
       const r = await getJSON(`https://claude.ai/api/organizations/${c.orgId}/chat_conversations`, 20000, isLite() ? 4000000 : 0);
-      if (!r.ok) return;
+      if (!r.ok || myEpoch !== epoch) return;
       const data = r.data;
+      if (window.CTS_Hooks && Array.isArray(data)) window.CTS_Hooks.emit('convlist', data);
       if (Array.isArray(data)) {
         const map = {};
         data.forEach(x => {
@@ -544,6 +628,12 @@
 
   // ─── Fetch Hook ──────────────────────────────────────────────────────────
 
+  function adoptHeaders(resource, options) {
+    let h = headersToObject(options && options.headers);
+    if (!Object.keys(h).length && resource && typeof resource === 'object') h = headersToObject(resource.headers);
+    if (Object.keys(h).length) window.CTS.authHeaders = h;
+  }
+
   function captureOrg(url, resource, options) {
     const c = window.CTS;
     const m = url.match(/\/api\/organizations\/([a-f0-9\-]{36})/i);
@@ -555,54 +645,38 @@
     const isFirstCapture = !c.orgId || wasProvisional;
     const orgChanged     = !isFirstCapture && c.orgId !== m[1];
 
-    if (orgChanged) {
-      c.authHeaders       = {};
-      c.fetchedUpfront    = false;
-      c.sessionCostEst    = 0;
-      c.sessionMsgCount   = 0;
-      c.sessionSpeeds     = [];
-      c.latencies         = [];
-      c.stopReasonHistory = [];
-      c.lastLatencyMs     = null;
-      c.lastSpeedTps      = null;
-      c.convoCacheMap     = {};
-      c.cachedUntilTs     = null;
-      c.isLimitHit        = false;
-    }
+    // Signed in as someone else without a page reload: wipe the old account's
+    // numbers, headers, timers and backoff state in one go.
+    if (orgChanged) resetAccountState(m[1]);
+
     if (isFirstCapture || orgChanged) {
+      // The provisional org came from storage and belonged to a different
+      // account: anything still in flight for it is meaningless now.
+      if (wasProvisional && c.orgId && c.orgId !== m[1]) softResetUsage();
       c.orgId = m[1];
       c._orgProvisional = false;
       if (wasProvisional) { US.failures = 0; US.authFails = 0; }
     }
 
     if (!Object.keys(c.authHeaders).length) {
-      let h = headersToObject(options && options.headers);
-      if (!Object.keys(h).length && resource && typeof resource === 'object') h = headersToObject(resource.headers);
-      if (Object.keys(h).length) c.authHeaders = h;
+      adoptHeaders(resource, options);
+    } else if (US.authFails > 0) {
+      // We have been getting 401/403s, so the headers we captured earlier may
+      // belong to a session that no longer exists (signed out and back in as
+      // the same account, expired session, ...). The page's own request is
+      // the freshest example of what works: adopt it and retry right away.
+      adoptHeaders(resource, options);
+      const now = Date.now();
+      if (now - lastWakeAt > 10000) {
+        lastWakeAt = now;
+        US.failures = 0; US.authFails = 0;
+        if (US.timer) { clearTimeout(US.timer); US.timer = null; }
+        setTimeout(() => triggerUsageFetch({ force: true }), 400);
+      }
     }
     if (!c.fetchedUpfront && c.orgId) {
       c.fetchedUpfront = true;
       setTimeout(() => triggerUsageFetch({ force: true }), 600);
-    }
-
-    if (orgChanged) {
-      c.current5hUtil = 0;
-      c.current7dUtil = 0;
-      c.targetTimestamps = { '5h': null, '7d': null };
-      c.cacheReady = false;
-      ['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d'].forEach(k => {
-        try { sessionStorage.removeItem(k); } catch (_) {}
-        try { localStorage.removeItem('cts_global_' + k.slice(4)); } catch (_) {}
-      });
-      window.CTS_StorageSet({
-        cts_5h_util: 0, cts_7d_util: 0,
-        cts_ts_5h: null, cts_ts_7d: null,
-        cts_org_id: c.orgId,
-      });
-      if (window.ClaudeTrackerUI) {
-        window.ClaudeTrackerUI.updateQuotaBars('5h', 0, null);
-        window.ClaudeTrackerUI.updateQuotaBars('7d', 0, null);
-      }
     }
 
     // The 5h/7d numbers on screen may have been painted speculatively from
@@ -612,15 +686,19 @@
       (c._storageReady || Promise.resolve()).then(() => {
         const restoredOrgId = c._restoredOrgId;
         if (restoredOrgId && restoredOrgId !== c.orgId) {
+          c._restoredOrgId = null;
           c.current5hUtil = 0;
           c.current7dUtil = 0;
           c.targetTimestamps = { '5h': null, '7d': null };
           c.isLimitHit = false;
           c.cacheReady = false;
-          ['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d'].forEach(k => {
+          QUOTA_KEYS.forEach(k => {
             try { sessionStorage.removeItem(k); } catch (_) {}
             try { localStorage.removeItem('cts_global_' + k.slice(4)); } catch (_) {}
           });
+          // Without this the quota writer thinks the (about to be re-fetched)
+          // numbers are unchanged and never overwrites the zeros left here.
+          if (window.CTS_Quota && window.CTS_Quota.resetSnapshot) window.CTS_Quota.resetSnapshot();
           window.CTS_StorageSet({
             cts_5h_util: 0, cts_7d_util: 0,
             cts_ts_5h: null, cts_ts_7d: null,
@@ -652,6 +730,12 @@
         url = (typeof resource === 'string') ? resource : (resource && resource.url) || String(resource || '');
 
         if (url.includes('/api/organizations/')) captureOrg(url, resource, options);
+
+        // Signing out: stop polling the old account right away.
+        if (/\/api\/auth\/logout|\/logout(\?|$)/.test(url)) {
+          const lm = String((options && options.method) || (resource && resource.method) || 'GET').toUpperCase();
+          if (lm !== 'GET') onSignedOut();
+        }
 
         if (url.includes('/completion')) {
           const method = String((options && options.method) || (resource && resource.method) || 'GET').toUpperCase();
@@ -699,6 +783,14 @@
   // Self-install on parse
   initNetworkInterceptor();
 
+  // Backstop for sign-outs that never show up as a fetch (a plain navigation to
+  // the login page): holding on to the old org there only produces 401s.
+  setInterval(() => {
+    try {
+      if (/^\/(login|logout)(\/|$)/.test(location.pathname)) onSignedOut();
+    } catch (_) {}
+  }, 2000);
+
   // A previous tab died mid-request (crash / OOM / closed) or a sync never
   // finished: pay that debt as soon as we can, without waiting for a poll.
   if (window.CTS._pendingSync) {
@@ -715,6 +807,7 @@
     fetchConversationList,
     getConvoId,
     isLite,
+    resetAccountState,
   };
 
 })();

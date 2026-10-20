@@ -46,12 +46,29 @@
         "https://claude.ai/*"
       ],
       "js": [
+        "iso-safe.js",
+        "iso-features.js",
+        "bridge2.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://claude.ai/*"
+      ],
+      "js": [
+        "safe.js",
+        "features.js",
+        "endpoints.js",
+        "messages.js",
         "shared.js",
         "state.js",
+        "hooks.js",
         "ui.js",
         "session.js",
         "quota.js",
         "network.js",
+        "rpc-main.js",
         "content.js"
       ],
       "run_at": "document_start",
@@ -62,10 +79,29 @@
         "https://claude.ai/*"
       ],
       "js": [
+        "iso-messages.js",
+        "iso-endpoints.js",
+        "iso-shared.js",
+        "conversation.js",
+        "exporters.js",
+        "zip.js",
+        "pdf.js",
+        "history.js",
+        "charts.js",
+        "handoff.js",
+        "composer.js",
         "theme.js",
+        "ui-kit.js",
+        "client.js",
+        "exporter.js",
+        "recorder.js",
+        "indexer.js",
+        "handoff-ui.js",
+        "panel.js",
         "welcome.js",
         "review.js",
-        "feedback.js"
+        "feedback.js",
+        "boot.js"
       ],
       "run_at": "document_idle"
     }

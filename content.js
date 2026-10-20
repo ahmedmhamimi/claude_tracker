@@ -100,6 +100,7 @@
   function applyAnalysis(result, convoId) {
     if (!result) return;
     const { totalTokens, lastInputTokens, lastOutputTokens, assistantCount } = result;
+    if (window.CTS_Hooks) window.CTS_Hooks.emit('analysis', result, convoId || null);
 
     // Prompt cache tracking
     const activeCid = convoId || window.CTS_Network.getConvoId();
