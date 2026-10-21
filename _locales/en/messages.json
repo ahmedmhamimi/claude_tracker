@@ -145,7 +145,7 @@
     "message": "Start chatting"
   },
   "privacyLine": {
-    "message": "Runs only on claude.ai. Nothing leaves your browser."
+    "message": "Runs only on claude.ai. Your chats never leave your browser."
   },
   "welcomeLeft": {
     "message": "of your 5-hour limit left"

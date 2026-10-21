@@ -8,15 +8,23 @@
  *   usage    -> 5h / 7d bars, pace, long-chat helper, "show last days" chart
  *   find     -> one-time "read my chats" step, then a search box
  *   save     -> this chat as Markdown / PDF / Text, or all chats
- *   settings -> 3 switches + delete my data
+ *   settings -> plan status + license, color theme (Pro), 3 switches + delete my data
+ *
+ * TokenLens Pro: every gated action asks CTS_License first. During the 7-day trial and
+ * with a license everything works; on the free plan single-chat save is Markdown only,
+ * search shows the top 3 results, history shows 2 days, Save all shows only the chat
+ * count, the pace estimate and color themes are locked. Locked controls stay visible,
+ * carry a lock mark, and open the unlock dialog (CTS_Paywall) when clicked.
  *
  * Openers (see placement.js): the top-bar Save button (next to Share), the sidebar
  * tools strip (Search / Save all / History / Settings), the 'cts2:open-panel'
  * event (detail.screen optional), and alert toasts.
  *
  * - CTS_Panel.open(screen?, anchorEl?) / toggle(screen, anchorEl) / close() / isOpen()
+ * - allows(featureId) -> boolean / gate(featureId, ctx?) -> boolean: thin fail-open wrappers over CTS_License (everything unlocked if the license module is missing).
+ * - saveRow(msg) -> Element: Markdown / PDF / Text / JSON buttons; locked formats open the unlock dialog.
  *
- * @requires safe.js, features.js, ui-kit.js, client.js, exporter.js, indexer.js, history.js, charts.js, recorder.js, bridge2.js
+ * @requires safe.js, features.js, ui-kit.js, client.js, exporter.js, indexer.js, history.js, charts.js, recorder.js, bridge2.js, license.js, paywall.js
  */
 
 (function () {
@@ -27,6 +35,10 @@
   // New wording: uses a locale string if one exists, otherwise the English default.
   const L = (k, fb) => { const v = T('ix_' + k); return v === 'ix_' + k ? fb : v; };
   const DAY = 864e5;
+  // License gate (fail-open: if license.js ever failed to load, nothing is locked rather than everything breaking).
+  const allows = id => { const l = W('CTS_License'); return l ? l.allows(id) : true; };
+  const gate = (id, ctx) => { const l = W('CTS_License'); return l ? l.gate(id, ctx) : true; };
+  const freeLimits = () => (W('CTS_License') && W('CTS_License').free) || { searchResults: 3, historyDays: 2 };
   const ALIAS = { usage: 'usage', history: 'usage', library: 'find', find: 'find', export: 'save', save: 'save', bulk: 'bulk', settings: 'settings', menu: 'menu' };
 
   let ui = null, prevFocus = null, current = 'menu', job = null, anchorEl = null;
@@ -81,18 +93,21 @@
     return el;
   };
 
-  // Row of three buttons: one click saves the current chat as a file.
+  // Row of buttons: one click saves the current chat as a file. Markdown is always free; the other formats need Pro.
   function saveRow(msg) {
     const Exp = W('CTS_Exporter'), id = Exp.currentChatId();
     if (!id) return h('p', { class: 'muted', text: L('openChatFirst', 'Open a chat to save just that one.') });
     const row = h('div', { class: 'row' });
-    [['pdf', 'PDF'], ['md', L('fMd', 'Markdown')], ['txt', L('fTxt', 'Text')], ['json', 'JSON']].forEach(([f, name]) =>
-      row.appendChild(h('button', { class: 'btn grow', type: 'button', text: name, on: { click: async e => {
+    [['md', L('fMd', 'Markdown')], ['pdf', 'PDF'], ['txt', L('fTxt', 'Text')], ['json', 'JSON']].forEach(([f, name]) => {
+      const locked = !allows('export.' + f);
+      row.appendChild(h('button', { class: 'btn grow' + (locked ? ' ghost' : ''), type: 'button', text: name + (locked ? ' 🔒' : ''), on: { click: async e => {
+        if (!gate('export.' + f)) return;
         const b = e.currentTarget; b.disabled = true; msg.textContent = T('expWorking');
         const r = await Exp.exportOne(id, f);
-        msg.textContent = r.ok ? T('expDone', [r.name]) : T(r.error === 'rate' ? 'expRate' : r.error === 'not-found' ? 'expGone' : 'expFailed');
+        msg.textContent = r.ok ? T('expDone', [r.name]) : r.error === 'locked' ? '' : T(r.error === 'rate' ? 'expRate' : r.error === 'not-found' ? 'expGone' : 'expFailed');
         b.disabled = false;
-      } } })));
+      } } }));
+    });
     return row;
   }
 
@@ -107,7 +122,8 @@
       h('div', { class: 'card' }, h('b', { text: '💾 ' + L('saveThis', 'Save this chat as:') }), h('div', { class: 'step' }, saveRow(msg)), msg),
       h('div', { class: 'row' },
         h('button', { class: 'btn ghost small grow', type: 'button', text: L('saveAll', 'Save all my chats'), on: { click: () => go('bulk') } }),
-        h('button', { class: 'btn ghost small grow', type: 'button', text: '⚙️ ' + L('mSettings', 'Settings'), on: { click: () => go('settings') } })));
+        h('button', { class: 'btn ghost small grow', type: 'button', text: '⚙️ ' + L('mSettings', 'Settings'), on: { click: () => go('settings') } })),
+      W('CTS_Paywall') ? W('CTS_Paywall').status() : null);
   } };
 
   screens.usage = { title: () => L('mUsage', 'My usage'), async render(c) {
@@ -117,7 +133,12 @@
       c.append(bar(T('win5h'), u.u5h, rs(u.r5h)), bar(T('win7d'), u.u7d, rs(u.r7d)));
     } else c.appendChild(h('p', { class: 'muted', text: T('usageNoReading') }));
     const pace = h('p', { class: 'muted', 'aria-live': 'polite' }); c.appendChild(pace);
-    W('CTS_Recorder').getPace().then(p => { if (p && p.willReach) pace.textContent = T('paceLine', [W('CTS_Recorder').fmtMinutes(p.minutesBeforeReset)]); }).catch(() => {});
+    W('CTS_Recorder').getPace().then(p => {
+      if (!p || !p.willReach) return;
+      if (allows('pace')) { pace.textContent = T('paceLine', [W('CTS_Recorder').fmtMinutes(p.minutesBeforeReset)]); return; }
+      pace.textContent = L('paceLocked', 'At this pace you may reach your limit before it resets. ');
+      pace.appendChild(h('button', { class: 'btn ghost small', type: 'button', text: L('paceSee', 'See when') + ' 🔒', on: { click: () => gate('pace') } }));
+    }).catch(() => {});
 
     const info = F.isEnabled('handoff') && W('CTS_HandoffUI') && W('CTS_HandoffUI').contextInfo();
     if (info) c.appendChild(h('div', { class: 'card' }, h('p', { text: L('longChat', 'This chat is ') + info.pct + L('longChat2', '% full (about ') + UI.fmt.num(info.tokens) + L('longChat3', ' tokens). Long chats get slower and forget things.') }),
@@ -131,15 +152,27 @@
       const snaps = (await W('CTS_Client').data('snap.list')) || [];
       if (!snaps.length) { more.appendChild(h('p', { class: 'muted', text: T('historyEmpty') })); return; }
       const H = W('CTS_History'), Ch = W('CTS_Charts'), now = Date.now();
-      let range = 7;
+      const freeDays = freeLimits().historyDays;
+      let range = allows('history.range') ? 7 : freeDays;
       const box = h('div', {});
       const draw = () => {
         box.textContent = '';
-        box.appendChild(h('div', { class: 'row' }, [7, 30].map(n => h('button', { class: 'btn small' + (n === range ? '' : ' ghost'), type: 'button', 'aria-pressed': String(n === range), text: T('rangeDays', [String(n)]), on: { click: () => { range = n; draw(); } } }))));
+        const pro = allows('history.range');
+        if (!pro) range = freeDays; else if (range < 7) range = 7;
+        const ranges = pro ? [7, 30] : [freeDays, 7, 30];
+        box.appendChild(h('div', { class: 'row' }, ranges.map(n => {
+          const locked = !pro && n !== freeDays;
+          return h('button', { class: 'btn small' + (n === range ? '' : ' ghost'), type: 'button', 'aria-pressed': String(n === range), text: T('rangeDays', [String(n)]) + (locked ? ' 🔒' : ''),
+            on: { click: () => { if (locked && !gate('history.range')) return; range = n; draw(); } } });
+        })));
         const dl = d => UI.fmt.date(d * DAY + 12 * 36e5);
         box.appendChild(UI.svg(Ch.dailyPeakChart(H.dailyPeaks(snaps, range, now), { label: T('chartPeaks'), fmtTitle: d => `${dl(d.day)}: ${T('win5h')} ${d.peak5h}% · ${T('win7d')} ${d.peak7d}%` })));
-        const hits = H.limitHits(snaps).filter(x => now - x.t < 90 * DAY).length;
-        box.appendChild(h('p', { class: 'muted', text: hits ? T('limitHitsCount', [String(hits)]) : T('limitHitsNone') }));
+        if (pro) {
+          const hits = H.limitHits(snaps).filter(x => now - x.t < 90 * DAY).length;
+          box.appendChild(h('p', { class: 'muted', text: hits ? T('limitHitsCount', [String(hits)]) : T('limitHitsNone') }));
+        } else if (W('CTS_Paywall')) {
+          box.appendChild(W('CTS_Paywall').card('history.range', L('historyLocked', 'Your history is saved. Pro shows 7 and 30 days and every time you hit your limit.')));
+        }
       };
       draw(); more.appendChild(box);
     }));
@@ -174,7 +207,8 @@
     const status = h('p', { class: 'muted', 'aria-live': 'polite' });
     const list = h('div', {});
     const moreBtn = h('button', { class: 'btn ghost big', type: 'button', hidden: true, text: L('showMore', 'Show more') });
-    c.append(q, status, list, moreBtn);
+    const lockHost = h('div', {});                       // "N more results" card on the free plan
+    c.append(q, status, list, lockHost, moreBtn);
     if (cov.total > cov.indexed) {
       const b = h('button', { class: 'btn ghost small', type: 'button', text: L('readMore', 'Read ') + (cov.total - cov.indexed) + L('readMore2', ' newer chats') });
       b.addEventListener('click', Safe.wrap('panel', () => runIndex(b)));
@@ -199,7 +233,7 @@
     };
     moreBtn.addEventListener('click', paint);
     const run = async () => {
-      const my = ++seq, text = q.value.trim(); list.textContent = ''; shown = 0;
+      const my = ++seq, text = q.value.trim(); list.textContent = ''; lockHost.textContent = ''; shown = 0;
       if (!text) {
         rows = convs.filter(x => x.status !== 'missing').sort((a, b) => (b.updatedMs || 0) - (a.updatedMs || 0)).map(x => ({ id: x.id, title: x.title, updatedAt: x.updatedAt }));
         status.textContent = L('recent', 'Your most recent chats'); paint(); return;
@@ -207,7 +241,10 @@
       const res = await Client.data('search', { q: text, filters: { folderId: null, role: null, from: 0, to: 0 } });
       if (my !== seq) return;
       if (!res) { status.textContent = T('libUnavailable'); return; }
-      rows = res.results; status.textContent = rows.length ? T('libResultCount', [String(rows.length)]) : T('libNoResults'); paint();
+      // Free plan: the best results show in full, the rest are counted but hidden (the count is the hook).
+      const total = res.results.length, cap = allows('search.full') ? Infinity : freeLimits().searchResults, hidden = Math.max(0, total - cap);
+      rows = res.results.slice(0, cap); status.textContent = total ? T('libResultCount', [String(total)]) : T('libNoResults'); paint();
+      if (hidden && W('CTS_Paywall')) lockHost.appendChild(W('CTS_Paywall').card('search.full', hidden + L('moreHidden', ' more results are hidden on the free plan. Pro shows them all.')));
     };
     q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => Safe.run('panel', run), 200); });
     q.addEventListener('keydown', e => { if (e.key === 'Enter') { const b = list.querySelector('button.title'); if (b) b.click(); } });
@@ -227,7 +264,7 @@
     const start = h('button', { class: 'btn', type: 'button', hidden: true });
     const setProg = p => { const pct = p.total ? Math.round((p.done + p.failed) / p.total * 100) : 0; barEl.hidden = false; barEl.setAttribute('aria-valuenow', String(pct)); barEl.firstChild.style.width = pct + '%'; prog.textContent = T('expProgress', [String(p.done + p.failed), String(p.total), String(p.failed)]); };
     const go2 = async (ids, resume) => {
-      if (job) return;
+      if (job || !allows('bulk')) return;
       start.disabled = true; cancel.hidden = false;
       job = Exp.startBulk({ ids, formats: ['md'], resume, onProgress: setProg });
       cancel.onclick = () => job && job.cancel();
@@ -239,10 +276,18 @@
       const list = await Client.fetchList();
       if (list.status === 200 && Array.isArray(list.json)) await Client.call('conv.meta', { items: list.json.map(x => ({ uuid: x.uuid, name: x.name || x.title || null, created_at: x.created_at, updated_at: x.updated_at })) });
       const convs = (await Client.data('conv.list')) || [];
-      go2(convs.filter(x => x.status !== 'missing').map(x => x.id), false);
+      const ids = convs.filter(x => x.status !== 'missing').map(x => x.id);
+      if (!allows('bulk')) {                             // free plan: show how many chats are waiting, never start the download
+        prog.textContent = ''; intro.hidden = true;
+        if (W('CTS_Paywall')) c.appendChild(W('CTS_Paywall').card('bulk', ids.length + L('bulkFound', ' chats found. Downloading them all in one ZIP is part of Pro.'), { count: ids.length }));
+        return;
+      }
+      go2(ids, false);
     }));
-    c.append(h('p', { text: L('bulkIntro', 'Saving every chat as a Markdown file. It runs slowly on purpose so claude.ai is not overloaded. You can stop any time.') }), cancel, barEl, prog);
-    const pending = await Exp.pendingJob();
+    const locked = !allows('bulk');
+    const intro = h('p', { text: locked ? L('bulkCounting', 'Counting your chats…') : L('bulkIntro', 'Saving every chat as a Markdown file. It runs slowly on purpose so claude.ai is not overloaded. You can stop any time.') });
+    c.append(intro, cancel, barEl, prog);
+    const pending = locked ? null : await Exp.pendingJob();
     if (pending) {
       c.appendChild(h('div', { class: 'card' }, h('p', { text: T('expResumeText', [String(pending.done.length + pending.failed.length), String(pending.ids.length)]) }),
         h('button', { class: 'btn big', type: 'button', text: T('expResume'), on: { click: () => go2(pending.ids, true) } }),
@@ -257,6 +302,20 @@
     const set = (path, value) => Bus.saveSettings(s => { const p = path.split('.'); let o = s; p.slice(0, -1).forEach(k => { o = o[k] = o[k] && typeof o[k] === 'object' ? o[k] : {}; }); o[p[p.length - 1]] = value; });
     const sw = (feat, title, desc) => h('label', { class: 'sw' }, h('input', { type: 'checkbox', checked: F.isEnabled(feat), on: { change: e => set('features.' + feat, e.target.checked) } }),
       h('span', {}, h('b', { text: title }), h('span', { class: 'd', text: desc })));
+    const Pw = W('CTS_Paywall'), Lic = W('CTS_License');
+    if (Pw) c.appendChild(h('div', { class: 'card' }, Pw.status(),
+      Lic ? h('button', { class: 'btn ghost small', type: 'button', style: 'margin-top: 8px', text: L('licenseBtn', 'License and purchase'), on: { click: () => Lic.openUnlock() } }) : null));
+    // Color theme and density: a Pro setting. Locked options stay visible and open the unlock dialog.
+    const PALETTE_NAMES = { warm: L('palWarm', 'Warm'), ocean: L('palOcean', 'Ocean'), forest: L('palForest', 'Forest'), mono: L('palMono', 'Mono') };
+    const curPal = (p => (PALETTE_NAMES[p] ? p : 'warm'))(F.getSetting('theme.palette', 'auto')), curDen = F.getSetting('theme.density', 'regular');
+    const pick = (path, value, isCurrent, label) => {
+      const locked = !allows('themes') && !isCurrent;
+      return h('button', { class: 'btn small' + (isCurrent ? '' : ' ghost'), type: 'button', 'aria-pressed': String(isCurrent), text: label + (locked ? ' 🔒' : ''),
+        on: { click: () => { if (!gate('themes')) return; set(path, value).then(() => go('settings')); } } });
+    };
+    c.appendChild(h('div', { class: 'step' }, h('b', { text: L('sTheme', 'Color theme') }),
+      h('div', { class: 'row', style: 'margin-top: 6px' }, Object.keys(PALETTE_NAMES).map(k => pick('theme.palette', k, k === curPal, PALETTE_NAMES[k]))),
+      h('div', { class: 'row', style: 'margin-top: 6px' }, [['regular', L('denRegular', 'Regular')], ['compact', L('denCompact', 'Compact')]].map(([k, name]) => pick('theme.density', k, k === curDen, name)))));
     c.append(
       sw('alerts', L('sAlerts', 'Warn me near my limit'), L('sAlertsD', 'A small message at 80% and 95%')),
       sw('handoff', L('sLong', 'Tell me when a chat is too long'), L('sLongD', 'Suggests continuing in a new chat')),
@@ -350,6 +409,9 @@
   Safe.chromeCall('panel', () => chrome.runtime.onMessage.addListener((msg, sender) => {
     if (sender && sender.id === chrome.runtime.id && msg && msg.cts === 'open-panel') Safe.run('panel', () => open('menu'));
   }));
+
+  // The plan changed (trial ended, license activated): redraw screens that show locks. Never redraw Save all / search mid-job.
+  if (W('CTS_License')) W('CTS_License').onChange(() => { if (ui && !job && ['menu', 'usage', 'save', 'settings'].includes(current)) go(current); });
 
   window.CTS_Panel = { open, toggle, close, isOpen, registerTab: () => {}, SHORTCUTS: [] };
 })();

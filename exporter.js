@@ -7,14 +7,14 @@
  * Attachments/images are not exported in this version (names only).
  *
  * - CTS_Exporter.currentChatId() -> string|null
- * - CTS_Exporter.exportOne(id, format) -> Promise<{ok, name?, error?}>: format 'txt'|'md'|'json'|'pdf'
- * - CTS_Exporter.startBulk({ids, formats, resume}) -> {cancel(), done: Promise<summary>}
+ * - CTS_Exporter.exportOne(id, format) -> Promise<{ok, name?, error?}>: format 'txt'|'md'|'json'|'pdf'; error 'locked' when the format needs Pro and the plan does not allow it
+ * - CTS_Exporter.startBulk({ids, formats, resume}) -> {cancel(), done: Promise<summary>}; summary.stopped === 'locked' (nothing fetched) when Save all needs Pro
  * - CTS_Exporter.pendingJob() -> Promise<job|null>: an unfinished bulk job that can be resumed
- * - CTS_Exporter.finishJob(jobId) -> Promise<{ok}>: build the ZIP from whatever was fetched so far
+ * - CTS_Exporter.finishJob(jobId) -> Promise<{ok, error?}>: build the ZIP from whatever was fetched so far (error 'locked' without Pro)
  * - CTS_Exporter.discardJob(jobId) -> Promise
  * - CTS_Exporter.labels() -> object: localized role/attachment labels
  *
- * @requires safe.js, features.js, conversation.js, exporters.js, zip.js, client.js, ui-kit.js
+ * @requires safe.js, features.js, conversation.js, exporters.js, zip.js, client.js, ui-kit.js, license.js
  */
 
 (function () {
@@ -24,6 +24,9 @@
   const MIN_GAP_MS = 800;
   const MIME = { txt: 'text/plain', md: 'text/markdown', json: 'application/json', zip: 'application/zip', pdf: 'application/pdf' };
   const EXT_FN = { txt: E.toTxt, md: E.toMarkdown };
+
+  // TokenLens Pro gate (fail-open if license.js is missing). The UI also checks first; this is the backstop.
+  const allowed = id => !window.CTS_License || window.CTS_License.allows(id);
 
   const labels = () => ({ user: UI.T('roleYou'), assistant: UI.T('roleClaude'), attachment: UI.T('lblAttachment'), artifact: UI.T('lblArtifact'), notExported: UI.T('lblNotExported') });
   const currentChatId = () => { const m = /^\/chat\/([A-Za-z0-9-]{8,64})/.exec(location.pathname); return m ? m[1] : null; };
@@ -49,6 +52,7 @@
   }
 
   async function exportOne(id, format) {
+    if (!allowed('export.' + format)) return { ok: false, error: 'locked' };
     const f = await fetchNormalized(id);
     if (f.error) return { ok: false, error: f.error };
     const conv = f.conv;
@@ -82,6 +86,7 @@
   }
 
   async function finishJob(jobId) {
+    if (!allowed('bulk')) return { ok: false, error: 'locked' };
     const job = await Client.data('job.get', { jobId });
     if (!job) return { ok: false };
     const entries = (await Client.data('job.entries', { jobId })) || [];
@@ -95,6 +100,7 @@
   const pendingJob = async () => { const j = await Client.data('job.latest'); return j && j.done.length + j.failed.length < j.ids.length ? j : null; };
 
   function startBulk(opts) {
+    if (!allowed('bulk')) return { cancel: () => {}, done: Promise.resolve({ stopped: 'locked', jobId: null, count: 0, failed: 0 }) };
     let cancelled = false;
     const onProgress = opts.onProgress || (() => {});
     const done = (async () => {

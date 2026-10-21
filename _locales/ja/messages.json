@@ -87,7 +87,7 @@
     "message": "チャットを始める"
   },
   "privacyLine": {
-    "message": "claude.aiでのみ動作します。データがブラウザの外に出ることはありません。"
+    "message": "claude.aiでのみ動作します。チャットの内容がブラウザの外に出ることはありません。"
   },
   "welcomeLeft": {
     "message": "5時間の上限の残り"

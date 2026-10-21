@@ -2,7 +2,9 @@
  * Group A runtime (ISOLATED): records usage snapshots and per-message cost
  * records, shows threshold alerts, and serves the pace estimate.
  *
- * - CTS_Recorder.getPace() -> Promise<null|{...}>: current pace projection (null = stay silent)
+ * - CTS_Recorder.getPace() -> Promise<null|{...}>: current pace projection (null = stay silent). Callers decide whether the plan may show it (feature 'pace').
+ * - alertConfig() -> object: alert thresholds for the current plan. Pro (trial or license): 80% and 95% on the 5-hour and 7-day windows. Free: one alert, 95% of the 5-hour window.
+ * - store.get(keys) -> Promise<object>: chrome.storage.local read that resolves with the stored values (it used to resolve {} immediately, so fired alerts were forgotten on every page load).
  * - CTS_Recorder.latest() -> {usage}: most recent reading seen by this tab
  * - CTS_Recorder.fmtMinutes(n) -> string: localized "40 min" / "1 h 20 min"
  *
@@ -10,7 +12,7 @@
  * check again in the store). Alerts fire once per window per threshold, one
  * at a time, only in a calm moment, as an in-page toast (no notifications permission).
  *
- * @requires safe.js, features.js, history.js, client.js, ui-kit.js, bridge2.js
+ * @requires safe.js, features.js, history.js, client.js, ui-kit.js, bridge2.js, license.js
  */
 
 (function () {
@@ -24,7 +26,7 @@
   let paceCache = { at: 0, snaps: null };
 
   const store = {
-    get: keys => new Promise(res => Safe.chromeCall('history', () => chrome.storage.local.get(keys, res)) || res({})),
+    get: keys => new Promise(res => { const ran = Safe.chromeCall('history', () => { chrome.storage.local.get(keys, v => { void chrome.runtime.lastError; res(v || {}); }); return true; }); if (ran !== true) res({}); }),
     set: obj => Safe.chromeCall('history', () => chrome.storage.local.set(obj)),
   };
 
@@ -42,10 +44,18 @@
   // ─── alerts ───────────────────────────────────────────────────────────────
   async function loadFired() { if (!firedCache) firedCache = (await store.get(['cts_alerts_fired'])).cts_alerts_fired || {}; return firedCache; }
 
+  // Free plan keeps ONE alert (95% of the 5-hour window); Pro adds 80% and the 7-day window. Thresholds stay user-configurable via settings.
+  function alertConfig() {
+    const cfg = F.getSetting('alerts');
+    if (!window.CTS_License || window.CTS_License.allows('alerts.full')) return cfg;
+    return { w5h: Object.assign({}, cfg && cfg.w5h, { t80: false }), w7d: Object.assign({}, cfg && cfg.w7d, { t80: false, t95: false }) };
+  }
+
   async function evaluateAlerts() {
     if (!F.isEnabled('alerts') || !usage) return;
+    if (window.CTS_License) await window.CTS_License.ready;       // never judge a Pro buyer by the free rules just because storage was still loading
     const fired = await loadFired();
-    const { alert, newFired } = H.nextAlert(usage, F.getSetting('alerts'), fired, Date.now());
+    const { alert, newFired } = H.nextAlert(usage, alertConfig(), fired, Date.now());
     if (!alert) return;
     const tryShow = () => {
       if (!F.isEnabled('alerts')) { alertTimer = 0; return; }
@@ -85,5 +95,5 @@
     await Client.call('cost.add', { t: d.t || Date.now(), convId: d.convId, convTokensEst: d.totalTokens, quotaDelta5h: d.quotaDelta5h });
   }));
 
-  window.CTS_Recorder = { getPace, fmtMinutes, latest: () => ({ usage }) };
+  window.CTS_Recorder = { getPace, fmtMinutes, latest: () => ({ usage }), alertConfig };
 })();

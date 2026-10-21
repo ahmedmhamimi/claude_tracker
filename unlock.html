@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TokenLens Pro</title>
+  <link rel="stylesheet" href="unlock.css">
+</head>
+<body>
+  <main>
+    <header>
+      <img src="icons/icon48.png" width="40" height="40" alt="">
+      <div>
+        <h1>TokenLens Pro</h1>
+        <p class="sub" id="plan"></p>
+      </div>
+    </header>
+
+    <section class="card" id="active" hidden>
+      <h2>Pro is active on this browser</h2>
+      <p class="muted">License <code id="masked"></code>. Thank you for supporting TokenLens.</p>
+      <button class="btn ghost" id="remove" type="button">Remove license from this browser</button>
+    </section>
+
+    <section class="card" id="buy">
+      <h2>Unlock everything for <span id="price"></span></h2>
+      <ul class="feats">
+        <li>Search every chat you have ever had</li>
+        <li>Save all your chats in one ZIP, and any chat as PDF, Text or JSON</li>
+        <li>Limit alerts on both windows and a live "at this pace" estimate</li>
+        <li>Your full usage history and limit hits</li>
+        <li>Continue a long chat in a new one</li>
+        <li>Color themes</li>
+      </ul>
+      <p class="muted">One-time payment. Yours forever, all updates included. 7-day refund, no questions asked.</p>
+      <button class="btn" id="buy-btn" type="button">Buy TokenLens Pro</button>
+    </section>
+
+    <section class="card" id="key-card">
+      <h2>Already bought it?</h2>
+      <p class="muted">Paste the license key from your Gumroad receipt email.</p>
+      <div class="row">
+        <input id="key" type="text" spellcheck="false" autocomplete="off" placeholder="XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX" aria-label="License key">
+        <button class="btn" id="activate" type="button">Activate</button>
+      </div>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+      <div id="restore-box" hidden>
+        <p class="muted">A license was found from another browser you are signed in to.</p>
+        <button class="btn ghost" id="restore" type="button">Use it on this browser</button>
+      </div>
+    </section>
+
+    <p class="privacy">Activating sends only your license key to Gumroad (api.gumroad.com) to confirm your purchase, and TokenLens re-checks it about once a week so refunded purchases stop unlocking. Your chats never leave your browser. Chrome asks your permission once for api.gumroad.com the first time you activate.</p>
+  </main>
+  <script src="license-core.js"></script>
+  <script src="unlock.js"></script>
+</body>
+</html>

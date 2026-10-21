@@ -11,9 +11,13 @@
  * Both surfaces are drawn in closed shadow roots, re-attached whenever claude.ai
  * re-renders around them, and hidden when their feature is switched off.
  *
+ * TokenLens Pro: the "at this pace" line is a Pro feature. On the free plan it appears
+ * only when the person is heading for their limit, as a clickable teaser ("See when 🔒")
+ * that opens the unlock dialog; it never shows the actual time.
+ *
  * - (no exports)
  *
- * @requires safe.js, features.js, ui-kit.js, panel.js, recorder.js
+ * @requires safe.js, features.js, ui-kit.js, panel.js, recorder.js, license.js, paywall.js
  */
 
 (function () {
@@ -89,6 +93,7 @@
   const TOOLS_CSS = `
     :host { display: block; margin: 4px 12px 10px; }
     .pace { margin: 0 2px 6px; font-size: 11.5px; color: var(--muted); }
+    .pace[data-locked="1"] { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .t { display: flex; align-items: center; gap: 6px; min-width: 0; background: transparent; color: var(--text); border: 1px solid var(--line);
          border-radius: 8px; padding: 6px 8px; cursor: pointer; font-size: 12px; text-align: start; }
@@ -101,6 +106,7 @@
   function makeTools() {
     const m = UI.mount('cts-sidebar-tools', TOOLS_CSS);
     const pace = h('p', { class: 'pace', 'aria-live': 'polite', hidden: true });
+    pace.addEventListener('click', Safe.wrap('placement', () => { if (pace.dataset.locked === '1' && W('CTS_License')) W('CTS_License').gate('pace'); }));
     const grid = h('div', { class: 'grid' });
     const defs = [
       ['find', 'library', L('tFind', 'Search chats'), L('tFindD', 'Search everything in all your chats')],
@@ -125,8 +131,11 @@
     const refreshPace = async () => {
       if (!F.isEnabled('history') || !W('CTS_Recorder')) return;
       const p = await W('CTS_Recorder').getPace().catch(() => null);
-      const text = p && p.willReach ? T('paceLine', [W('CTS_Recorder').fmtMinutes(p.minutesBeforeReset)]) : '';
+      const Lic = W('CTS_License'), locked = !!(p && p.willReach && Lic && !Lic.allows('pace'));
+      const text = !(p && p.willReach) ? '' : locked ? L('paceLocked2', 'At this pace you may reach your limit before it resets. See when') + ' 🔒'
+        : T('paceLine', [W('CTS_Recorder').fmtMinutes(p.minutesBeforeReset)]);
       if (pace.textContent !== text) pace.textContent = text;
+      pace.dataset.locked = locked ? '1' : '0';
       pace.hidden = !text;
     };
     refresh(); refreshPace();
@@ -149,5 +158,6 @@
   setInterval(() => Safe.run('placement', () => tools && tools.refreshPace()), 30000);
   window.addEventListener('popstate', tick);
   F.onChange(tick);
+  if (W('CTS_License')) W('CTS_License').onChange(() => Safe.run('placement', () => tools && tools.refreshPace()));
   tick();
 })();

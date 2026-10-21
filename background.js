@@ -8,6 +8,16 @@
  *          no TokenLens in them until they reload) and jump straight to one.
  *        - None:  open Claude and jump straight to it.
  * Always register the uninstall survey, so we learn why people leave.
+ *
+ * Also loads the TokenLens Pro license worker (license-core.js, license-sw.js:
+ * Gumroad activation, restore and weekly re-check). It is imported in its own
+ * try/catch, so a failure there can never affect onboarding or the 6.0 store.
+ *
+ * - flagWhatsNew() -> Promise<void>: marks the one-time "what's new" bubble for updated installs.
+ * - onFreshInstall() -> Promise<void>: sets first-run flags, then reloads or opens a claude.ai tab.
+ * - pickTarget(tabs) -> tab: the claude.ai tab to land on.
+ * - focusTab(tab) / focusWindow(windowId) -> Promise<void>: bring a tab / window to the front.
+ * - flagFeedback() -> Promise<void>: stamps when the feature-request prompt may first appear.
  */
 
 // TokenLens 6.0 store + message router (history, search, export index).
@@ -19,6 +29,13 @@ try {
   );
 } catch (e) {
   console.warn('TokenLens: 6.0 store failed to load', e);
+}
+
+// TokenLens Pro (Gumroad license worker). Separate try/catch: independent of everything above and below.
+try {
+  importScripts('license-core.js', 'license-sw.js');
+} catch (e) {
+  console.warn('TokenLens: license worker failed to load', e);
 }
 
 const UNINSTALL_SURVEY_URL =

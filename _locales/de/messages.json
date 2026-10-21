@@ -87,7 +87,7 @@
     "message": "Chat starten"
   },
   "privacyLine": {
-    "message": "Läuft nur auf claude.ai. Nichts verlässt deinen Browser."
+    "message": "Läuft nur auf claude.ai. Deine Chats verlassen nie deinen Browser."
   },
   "welcomeLeft": {
     "message": "deines 5-Stunden-Limits übrig"

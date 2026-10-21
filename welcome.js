@@ -311,7 +311,7 @@
     setHeadline($('#ttl'), t('welcomeTitle', 'Stay in your flow. We\u2019ll watch the clock.'));
     $('.body').textContent = t('welcomeBody', 'TokenLens shows how much of your 5-hour limit is left, right where you chat, so a limit never catches you off guard.');
     $('.go').textContent = t('welcomeCta', 'Start chatting');
-    $('#fine').textContent = t('privacyLine', 'Runs only on claude.ai. Nothing leaves your browser.');
+    $('#fine').textContent = t('privacyLine', 'Runs only on claude.ai. Your chats never leave your browser.');
     $('#cap').textContent = t('welcomeWindow', 'your 5-hour window');
     $('.x').setAttribute('aria-label', t('closeLabel', 'Close'));
 

@@ -8,7 +8,7 @@
  * - CTS_UI.h(tag, props, ...children) -> Element: props {class, text, on:{evt:fn}, any attribute}
  * - CTS_UI.svg(string) -> Element: parses chart SVG with DOMParser (no innerHTML)
  * - CTS_UI.mount(id, extraCss) -> {host, root}: closed shadow root on documentElement with tokens, palette, density
- * - CTS_UI.applyLook(host) -> void: palette/density/reduced-motion from settings
+ * - CTS_UI.applyLook(host) -> void: palette/density/reduced-motion from settings; custom palette/density only while the plan includes 'themes' (Pro)
  * - CTS_UI.PALETTES, CTS_UI.contrast(fg, bg) -> number (WCAG ratio)
  * - CTS_UI.toast({text, actions:[{label,onClick}], timeoutMs, id}) -> boolean: never stacks; false if another toast is showing
  * - CTS_UI.isCalm() -> boolean: not typing in the composer and no reply streaming
@@ -96,7 +96,8 @@
   function applyLook(host) {
     const f = window.CTS_Features;
     const p = f.getSetting('theme.palette', 'auto'), d = f.getSetting('theme.density', 'regular');
-    const on = f.isEnabled('themes');
+    const lic = window.CTS_License;
+    const on = f.isEnabled('themes') && (!lic || lic.allows('themes'));
     host.setAttribute('data-palette', on && PALETTES[p] ? p : 'warm');
     host.setAttribute('data-density', on && d === 'compact' ? 'compact' : 'regular');
   }

@@ -64,3 +64,9 @@ footer { margin-top: 18px; padding-top: 13px; border-top: 1px solid var(--line);
 .wish { margin-top: 8px; font-family: var(--serif); font-style: italic; font-size: 16px; color: var(--accent); }
 
 @media (prefers-reduced-motion: reduce) { .fill, .action { transition: none; } }
+
+.pro { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding: 10px 12px; background: var(--surface); border-radius: 11px; font-size: 12.5px; }
+.pro-text { color: var(--muted); }
+.pro-btn { appearance: none; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 8px; padding: 5px 10px; font: 600 12px var(--sans); white-space: nowrap; }
+.pro-btn:hover { background: var(--bg); }
+.pro-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

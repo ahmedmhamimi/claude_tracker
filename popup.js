@@ -6,6 +6,12 @@
  *  - Shows the last known 5-hour / 7-day usage from chrome.storage.local.
  *  - Offers the one action that fixes the current state: reload the tab, or
  *    open Claude.
+ *  - Shows the plan (free trial day, Pro active, or free) with a button that
+ *    opens the unlock page (unlock.html) where the license key is entered.
+ *
+ * - renderPlan() -> Promise<void>: reads cts_license / cts_trial and draws the plan row.
+ *
+ * @requires license-core.js
  *
  * External script on purpose: MV3 extension pages block inline scripts, so the
  * old inline localisation code in popup.html never ran.
@@ -116,5 +122,26 @@
   });
   setInterval(renderUsage, 30000);
 
+  // ─── Plan row (TokenLens Pro) ───────────────────────────────────────────────
+  async function renderPlan() {
+    const Core = window.CTS_LicenseCore;
+    if (!Core) return;
+    const [local, sync] = await Promise.all([
+      chrome.storage.local.get(['cts_license', 'cts_trial']),
+      chrome.storage.sync.get(['cts_trial']).catch(() => ({})),
+    ]);
+    const s = Core.summarize(local.cts_license || null, Core.mergeTrial(local.cts_trial, sync.cts_trial), Date.now());
+    const price = Core.CONFIG.PRICE_LABEL;
+    $('pro-text').textContent = s.licensed ? msg('popupProActive', 'TokenLens Pro is active')
+      : s.tier === 'trial' ? msg('popupProTrial', 'Pro trial: day ') + s.trial.day + ' / ' + Core.CONFIG.TRIAL_DAYS
+      : msg('popupFree', 'Free plan');
+    const btn = $('pro-btn');
+    btn.hidden = s.licensed;
+    btn.textContent = (s.tier === 'trial' ? msg('popupKeepPro', 'Keep Pro') : msg('popupUnlockPro', 'Unlock Pro')) + ' · ' + price;
+    btn.onclick = () => { chrome.tabs.create({ url: chrome.runtime.getURL('unlock.html') }); window.close(); };
+    $('pro').hidden = false;
+  }
+
   init();
+  renderPlan();
 })();

@@ -11,10 +11,11 @@
  *   new chat payload in chrome.storage.local, 10 min expiry, one-time use, confirmation bar, then composer.js
  *   link     new chat id -> previous chat id stored locally for "continued from"
  *
- * - CTS_HandoffUI.open() -> Promise<void>: opens the dialog for the current chat
+ * - CTS_HandoffUI.open() -> Promise<void>: opens the dialog for the current chat (opens the Pro unlock dialog instead when the plan does not include it)
+ * - store.get/set/remove(...) -> Promise: chrome.storage.local helpers that now resolve AFTER the storage callback (get() used to resolve {} immediately, so the new chat never offered the carried text; set() could race the navigation to /new).
  * - CTS_HandoffUI.contextInfo() -> {tokens, window, pct}|null
  *
- * @requires safe.js, features.js, conversation.js, handoff.js, composer.js, exporter.js, client.js, ui-kit.js, bridge2.js
+ * @requires safe.js, features.js, conversation.js, handoff.js, composer.js, exporter.js, client.js, ui-kit.js, bridge2.js, license.js
  */
 
 (function () {
@@ -25,9 +26,9 @@
   let lastRaw = null, last = null, awaiting = null, dialogOpen = false;
 
   const store = {
-    get: keys => new Promise(res => Safe.chromeCall('handoff', () => chrome.storage.local.get(keys, res)) || res({})),
-    set: o => new Promise(res => Safe.chromeCall('handoff', () => chrome.storage.local.set(o, res)) || res()),
-    remove: k => new Promise(res => Safe.chromeCall('handoff', () => chrome.storage.local.remove(k, res)) || res()),
+    get: keys => new Promise(res => { const ran = Safe.chromeCall('handoff', () => { chrome.storage.local.get(keys, v => { void chrome.runtime.lastError; res(v || {}); }); return true; }); if (ran !== true) res({}); }),
+    set: o => new Promise(res => { const ran = Safe.chromeCall('handoff', () => { chrome.storage.local.set(o, () => { void chrome.runtime.lastError; res(); }); return true; }); if (ran !== true) res(); }),
+    remove: k => new Promise(res => { const ran = Safe.chromeCall('handoff', () => { chrome.storage.local.remove(k, () => { void chrome.runtime.lastError; res(); }); return true; }); if (ran !== true) res(); }),
   };
 
   const labels = () => ({ user: T('roleYou'), assistant: T('roleClaude'), headerTitle: T('handoffHdrTitle'), headerLine: T('handoffHdrLine'), previousChat: T('handoffHdrPrev'), end: T('handoffHdrEnd') });
@@ -51,6 +52,7 @@
   // ─── dialog ───────────────────────────────────────────────────────────────
   async function open() {
     if (!F.isEnabled('handoff') || dialogOpen) return;
+    if (window.CTS_License && !window.CTS_License.gate('handoff')) return;   // free plan: show the unlock dialog instead
     dialogOpen = true;
     const m = UI.mount('cts-handoff-host', `
       .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 2147483001; display: grid; place-items: center; }

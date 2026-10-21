@@ -87,7 +87,7 @@
     "message": "开始聊天"
   },
   "privacyLine": {
-    "message": "仅在 claude.ai 上运行，数据不会离开你的浏览器。"
+    "message": "仅在 claude.ai 上运行，你的对话不会离开你的浏览器。"
   },
   "welcomeLeft": {
     "message": "的 5 小时额度剩余"
