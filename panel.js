@@ -5,7 +5,7 @@
  * close it with the X, Escape, or the top-bar button.
  *
  *   menu     -> My usage | Find an old chat | Save chats | Settings
- *   usage    -> 5h / 7d bars, pace, long-chat helper, "show last days" chart
+ *   usage    -> 5h / 7d bars, long-chat helper, "show last days" chart
  *   find     -> one-time "read my chats" step, then a search box
  *   save     -> this chat as Markdown / PDF / Text, or all chats
  *   settings -> plan status + license, color theme (Pro), 3 switches + delete my data
@@ -132,14 +132,6 @@
       const rs = ts => (ts ? T('usageResets', [UI.fmt.dateTime(ts * 1000)]) : '');
       c.append(bar(T('win5h'), u.u5h, rs(u.r5h)), bar(T('win7d'), u.u7d, rs(u.r7d)));
     } else c.appendChild(h('p', { class: 'muted', text: T('usageNoReading') }));
-    const pace = h('p', { class: 'muted', 'aria-live': 'polite' }); c.appendChild(pace);
-    W('CTS_Recorder').getPace().then(p => {
-      if (!p || !p.willReach) return;
-      if (allows('pace')) { pace.textContent = T('paceLine', [W('CTS_Recorder').fmtMinutes(p.minutesBeforeReset)]); return; }
-      pace.textContent = L('paceLocked', 'At this pace you may reach your limit before it resets. ');
-      pace.appendChild(h('button', { class: 'btn ghost small', type: 'button', text: L('paceSee', 'See when') + ' 🔒', on: { click: () => gate('pace') } }));
-    }).catch(() => {});
-
     const info = F.isEnabled('handoff') && W('CTS_HandoffUI') && W('CTS_HandoffUI').contextInfo();
     if (info) c.appendChild(h('div', { class: 'card' }, h('p', { text: L('longChat', 'This chat is ') + info.pct + L('longChat2', '% full (about ') + UI.fmt.num(info.tokens) + L('longChat3', ' tokens). Long chats get slower and forget things.') }),
       h('button', { class: 'btn big', type: 'button', text: T('handoffBtn'), on: { click: () => { close(); W('CTS_HandoffUI').open(); } } })));

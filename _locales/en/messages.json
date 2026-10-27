@@ -425,14 +425,6 @@
   "usageNoReading": {
     "message": "No reading yet. Send a message and it will appear here."
   },
-  "paceLine": {
-    "message": "At this pace you may reach your limit about $P1$ before it resets.",
-    "placeholders": {
-      "P1": {
-        "content": "$1"
-      }
-    }
-  },
   "historyEmpty": {
     "message": "No history yet. It builds up as you use Claude."
   },

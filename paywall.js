@@ -36,7 +36,6 @@
     'search.full':   ['Every search result', 'The free plan shows the top {free} results. Pro shows all of them.'],
     'history.range': ['Your full usage history', 'The free plan shows the last {freeDays} days. Pro shows 7 and 30 days, plus every time you hit your limit.'],
     'alerts.full':   ['Alerts on both limits', 'Pro warns you at 80% and 95% on your 5-hour and 7-day limits. Free warns once, at 95% of the 5-hour limit.'],
-    'pace':          ['See when you will hit your limit', 'Pro tells you how long until you reach your limit at your current pace.'],
     'handoff':       ['Continue in a new chat', 'Long chats get slow and forget things. Pro carries the important part into a fresh chat in one click.'],
     'themes':        ['Color themes', 'Pick a color theme and a compact layout for all TokenLens surfaces.'],
     'generic':       ['TokenLens Pro', 'Search every chat, save them all, see your usage history, and never get caught by a limit.'],

@@ -138,7 +138,7 @@ window.ClaudeTrackerUI = (function () {
    * side by side, spanning the full width of the message box. */
   #ct-row-left { gap: 22px; }
   .ct-rq {
-    flex: 1 1 0; min-width: 0;
+    flex: 1 1 0; min-width: max-content;
     display: flex; align-items: center; gap: 8px;
     font-family: var(--ct-mono); font-size: 10.5px; font-weight: 700;
     color: var(--ct-muted); white-space: nowrap;
@@ -146,7 +146,7 @@ window.ClaudeTrackerUI = (function () {
   }
   .ct-rq-label { color: var(--ct-text); font-weight: 800; flex-shrink: 0; }
   .ct-rq-bar {
-    flex: 1 1 auto; min-width: 36px; height: 4px;
+    flex: 1 1 0; min-width: 36px; height: 4px;
     background: var(--ct-bg-progress); border-radius: 2px; overflow: hidden;
   }
   .ct-rq-fill {
@@ -156,7 +156,7 @@ window.ClaudeTrackerUI = (function () {
   }
   .ct-rq-pct { flex-shrink: 0; min-width: 28px; text-align: right; font-weight: 800; }
   .ct-rq.danger .ct-rq-pct { color: var(--ct-red); }
-  .ct-rq-reset { flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; }
+  .ct-rq-reset { flex-shrink: 0; white-space: nowrap; }
 
   @keyframes ct-stream { from{opacity:.2} to{opacity:1} }
   @keyframes ct-throb  { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(.6);opacity:.4} }
@@ -249,6 +249,21 @@ window.ClaudeTrackerUI = (function () {
     font-family: var(--ct-mono); font-size: 10px; font-weight: 700; color: var(--ct-muted);
     white-space: nowrap;
   }
+
+  /* Layout guard: when claude.ai opens an artifact or code panel it narrows
+     the layout around these widgets. The usage bars and their labels must keep
+     their own size instead of being squeezed, so the flex children below may
+     not shrink, and the bar tracks keep a minimum width. */
+  #ct-quota { min-width: 178px; }
+  #ct-quota .ct-quota-row, #ct-quota .ct-quota-header, #ct-quota .ct-quota-footer,
+  #ct-quota .ct-quota-header span, #ct-quota .ct-quota-footer span,
+  #ct-quota .ct-progress-wrap, #ct-quota .ct-bar-pct { flex-shrink: 0; }
+  #ct-quota .ct-progress-bg { flex: 1 0 96px; min-width: 96px; }
+  #ct-quota .ct-bar-pct { min-width: 34px; }
+  #ct-toolbar-quota .ct-tq-block, #ct-toolbar-quota .ct-tq-label,
+  #ct-toolbar-quota .ct-tq-bar, #ct-toolbar-quota .ct-tq-pct,
+  #ct-toolbar-quota .ct-tq-reset, #ct-toolbar-quota .ct-tq-actions,
+  #ct-toolbar-quota #ct-tq-header { flex-shrink: 0; }
 
   #ct-peak, #ct-cache {
   display: inline-flex; align-items: center; gap: 6px;

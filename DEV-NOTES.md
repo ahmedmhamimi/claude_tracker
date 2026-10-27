@@ -24,7 +24,7 @@ user signs out. Usage requests started under an older "epoch" are discarded when
 ## Where features live (placement.js)
 - Save this chat (PDF / Markdown / Text / JSON): top bar, left of Share, chat pages only.
 - Continue in a new chat: composer stats row (#ct-row-right), plus the long-chat toast.
-- Search chats / Save all / History / Settings + "at this pace" line: strip under the usage bars in the sidebar.
+- Search chats / Save all / History / Settings: strip under the usage bars in the sidebar. (The "at this pace" line was removed.)
 - The toolbar popup is unchanged from the original build.
 
 ## TokenLens Pro (6.1): licensing and paywall
@@ -34,7 +34,7 @@ One-time $29 license sold on Gumroad. No server: the service worker talks to Gum
 **Plan model**
 - Every install gets a full-feature trial: 7 *active* days (days claude.ai is open and visible), ending after 14 calendar days at the latest. Trial state lives in `chrome.storage.local` and `chrome.storage.sync` (merged), so a reinstall does not restart it.
 - After the trial the free plan keeps: usage bars and the rest of 5.x, single-chat save as Markdown, indexing + the top 3 search results, 2 days of history (all days are still recorded), one alert (5h at 95%), the settings panel.
-- Locked on the free plan (all open the unlock dialog on click): PDF/Text/JSON save, Save all (shows the chat count only), full search results, 7/30-day history and limit hits, the 7d alert and the 80% alerts, the "at this pace" estimate, Continue in a new chat, color themes.
+- Locked on the free plan (all open the unlock dialog on click): PDF/Text/JSON save, Save all (shows the chat count only), full search results, 7/30-day history and limit hits, the 7d alert and the 80% alerts, Continue in a new chat, color themes.
 
 **Files**
 - `license-core.js`: constants (product id, checkout URL, price, trial/recheck/grace/activation limits) and pure trial/license logic. Loaded in every context. Change the price label or checkout URL here.
@@ -48,3 +48,6 @@ One-time $29 license sold on Gumroad. No server: the service worker talks to Gum
 
 **Testing a purchase**: make a $0 purchase with a 100%-off Gumroad code, activate the key on the unlock page, then refund it in Gumroad and confirm Pro turns off after the next re-check (force it by setting `cts_license.lastOk` to 8+ days ago in `chrome.storage.local`).
 **Resetting the trial while testing**: remove `cts_trial` from both `chrome.storage.local` and `chrome.storage.sync` and `cts_pw` from local.
+
+## Layout guard (ui.js)
+The usage widgets carry a flex-shrink/min-width guard so that opening an artifact or code panel (which narrows the claude.ai layout) cannot squeeze the bars or labels.
