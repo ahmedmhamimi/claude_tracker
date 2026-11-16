@@ -9,7 +9,6 @@
  * - CTS_History.cleanSnap(raw) -> snapshot|null: validates and rounds a reading
  * - CTS_History.compact(snaps, now) -> {keep, dropTs}: 90-day retention, hourly buckets (peak kept) after 14 days
  * - CTS_History.pace(snaps, now) -> null | {willReach, rate, hitAt, resetAt, minutesBeforeReset}: burn-rate projection for the current 5h window
- * - CTS_History.nextAlert(cur, cfg, fired, now) -> {alert, newFired}: at most ONE alert, once per window per threshold
  * - CTS_History.dailyPeaks / calendarHeat / weekdayHour / limitHits / costBuckets / topConversations: view data
  * - CTS_History.toCsv(snaps) -> string
  */
@@ -87,27 +86,6 @@
     const minutesBeforeReset = Math.round((resetAt - hitAt) / MIN / 5) * 5;
     if (minutesBeforeReset < 5) return { willReach: false, rate, hitAt, resetAt, minutesBeforeReset: 0 };
     return { willReach: true, rate, hitAt, resetAt, minutesBeforeReset };
-  }
-
-  // ─── Alerts ───────────────────────────────────────────────────────────────
-  function nextAlert(cur, cfg, fired, now) {
-    const newFired = {};
-    Object.keys(fired || {}).forEach(k => { const ts = Number(k.split(':')[1]); if (!ts || ts * 1000 > now - 2 * DAY) newFired[k] = true; });
-    const crossed = [];
-    [['5h', 'w5h', cur && cur.u5h, cur && cur.r5h], ['7d', 'w7d', cur && cur.u7d, cur && cur.r7d]].forEach(([win, ck, util, reset]) => {
-      const c = cfg && cfg[ck]; if (!c || !fin(util)) return;
-      [['t80', 'v80'], ['t95', 'v95']].forEach(([on, val]) => {
-        const v = c[val];
-        if (c[on] && fin(v) && util >= v) {
-          const key = win + ':' + (reset || 'x') + ':' + v;
-          if (!newFired[key]) crossed.push({ win, threshold: v, key, util });
-        }
-      });
-    });
-    if (!crossed.length) return { alert: null, newFired };
-    crossed.sort((a, b) => b.threshold - a.threshold || (a.win === '5h' ? -1 : 1));
-    crossed.forEach(c => { newFired[c.key] = true; });   // lower thresholds crossed at the same time never stack later
-    return { alert: crossed[0], newFired };
   }
 
   // ─── Views ────────────────────────────────────────────────────────────────
@@ -189,7 +167,7 @@
     return rows.join('\n') + '\n';
   }
 
-  const api = { shouldRecord, cleanSnap, compact, pace, nextAlert, dailyPeaks, calendarHeat, weekdayHour, limitHits, costBuckets, topConversations, toCsv, BUCKETS, MIN_GAP_MS };
+  const api = { shouldRecord, cleanSnap, compact, pace, dailyPeaks, calendarHeat, weekdayHour, limitHits, costBuckets, topConversations, toCsv, BUCKETS, MIN_GAP_MS };
   root.CTS_History = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : globalThis));

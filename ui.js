@@ -73,8 +73,8 @@ window.ClaudeTrackerUI = (function () {
   const LIGHT_THEME_CSS = `
   :root {
     --ct-border: rgba(0, 0, 0, 0.10);
-    --ct-text: #000000;
-    --ct-muted: #555555;
+    --ct-text: #1F1E1D;
+    --ct-muted: #66645C;
     --ct-accent: #d97706;
     --ct-green: #15803d;
     --ct-orange: #d97706;
@@ -87,6 +87,76 @@ window.ClaudeTrackerUI = (function () {
     --ct-ghost-bg: rgba(255, 255, 255, 0.92);
     --ct-accent-rgb: 217, 119, 6;
   }
+  `;
+
+
+  // ─── Premium layer (6.3) ─────────────────────────────────────────────────
+  // Appended after STRUCTURAL_CSS so it refines rather than rewrites it:
+  //  - bars change colour with the level (data-ct-level, set in
+  //    updateQuotaBars / content.js paintQuotaPill): calm accent, amber from
+  //    75%, red from 90%, each a soft gradient with a light top edge;
+  //  - numbers use tabular figures so they never jitter while counting;
+  //  - 1px hairline badges and chips instead of 2px outlines;
+  //  - a quieter, deeper shadow on the floating card.
+  const PREMIUM_CSS = `
+  :root { --ct-warn: #E0A030; --ct-crit: #E5484D; }
+  #ct-quota, #ct-toolbar-quota, #ct-row, .ct-chips { font-variant-numeric: tabular-nums; }
+
+  .ct-progress-bg, .ct-tq-bar, .ct-rq-bar {
+    background: var(--ct-bg-progress);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.08);
+  }
+  .ct-progress-fill, .ct-tq-fill, .ct-rq-fill {
+    position: relative;
+    background-color: var(--ct-accent) !important;
+    background-image: linear-gradient(90deg, rgba(255,255,255,.0), rgba(255,255,255,.22)),
+                      linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 60%) !important;
+    transition: width .6s cubic-bezier(.22,.8,.24,1), background-color .4s ease !important;
+  }
+  [data-ct-level="warn"] { background-color: var(--ct-warn) !important; }
+  [data-ct-level="crit"] { background-color: var(--ct-crit) !important; }
+  .ct-progress-fill[data-ct-level="crit"], .ct-tq-fill[data-ct-level="crit"], .ct-rq-fill[data-ct-level="crit"] {
+    box-shadow: 0 0 10px rgba(229,72,77,.45);
+  }
+  .ct-progress-bg { height: 7px; border-radius: 99px; }
+  .ct-progress-fill, .ct-tq-fill, .ct-rq-fill { border-radius: 99px; }
+  .ct-bar-pct { color: var(--ct-text); }
+
+  #ct-quota .ct-quota-header { letter-spacing: .01em; }
+  #ct-quota { gap: 13px; }
+
+  #ct-peak, #ct-cache { border-width: 1px; padding: 4px 10px; letter-spacing: .06em; }
+  #ct-peak.peak    { background: rgba(229,72,77,.10); border-color: rgba(229,72,77,.45); }
+  #ct-peak.offpeak { background: rgba(74,222,128,.09); border-color: rgba(74,222,128,.40); }
+  #ct-cache.cached { background: rgba(192,132,252,.10); border-color: rgba(192,132,252,.45); }
+
+  .ct-chip { border-width: 1px; border-radius: 999px; }
+
+  #ct-toolbar-quota {
+    border-radius: 16px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 16px 40px -14px rgba(0,0,0,.30), 0 2px 6px rgba(0,0,0,.06);
+  }
+  #ct-toolbar-quota:hover {
+    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 22px 50px -16px rgba(0,0,0,.36), 0 3px 8px rgba(0,0,0,.08);
+  }
+  .ct-tq-pct { min-width: 30px; }
+  @media (prefers-reduced-motion: reduce) {
+    .ct-progress-fill, .ct-tq-fill, .ct-rq-fill { transition: none !important; }
+  }
+
+  /* User switches (applyPrefs). */
+  html[data-ct-off~="sidebar"] #ct-quota,
+  html[data-ct-off~="floating"] #ct-toolbar-quota,
+  html[data-ct-off~="floating"] #ct-launcher,
+  html[data-ct-off~="floating"] #ct-hint,
+  html[data-ct-off~="floating"] #ct-whatsnew,
+  html[data-ct-off~="composer"] #ct-row,
+  html[data-ct-off~="badges"] #ct-tq-badges > *,
+  html[data-ct-off~="chips"] .ct-chips,
+  html[data-ct-off~="dates"] .ct-chat-date,
+  html[data-ct-off~="tools"] #cts-sidebar-tools,
+  html[data-ct-off~="vmLink"] #cts-vm-link { display: none !important; }
+  html[data-ct-nolevel] [data-ct-level] { background-color: var(--ct-accent) !important; box-shadow: none !important; }
   `;
 
   const STRUCTURAL_CSS = `
@@ -715,8 +785,70 @@ window.ClaudeTrackerUI = (function () {
       }
 
       const isDark = hasDarkClass || isDarkByColor;
-      styleTag.textContent = (isDark ? DARK_THEME_CSS : LIGHT_THEME_CSS) + STRUCTURAL_CSS;
+      // This runs every second (and on every class change). Rewriting ~600
+      // lines of CSS each time forced a full style recalc of claude.ai every
+      // second, so only write when the mode actually flips.
+      const key = isDark ? 'dark' : 'light';
+      if (styleTag.getAttribute('data-ct-mode') !== key || !styleTag.textContent) {
+        styleTag.textContent = (isDark ? DARK_THEME_CSS : LIGHT_THEME_CSS) + STRUCTURAL_CSS + PREMIUM_CSS;
+        styleTag.setAttribute('data-ct-mode', key);
+      }
+      _isDark = isDark;
+      applyPrefs();
     }
+
+    // ─── User preferences (6.4) ───────────────────────────────────────────────
+    // Every surface can be switched off and the accent colour changed from the
+    // TokenLens menu > Settings. Settings arrive in this world through
+    // CTS_Features (bridge dataset stamp + rpc-main pushes). Applied as
+    //   <html data-ct-off="sidebar floating ...">   -> CSS hides those surfaces
+    //   <html data-ct-nolevel>                      -> bars keep the accent colour
+    //   <style id="ct-accent-style">                -> accent override
+    // Hiding is done with CSS rather than by removing nodes, so the self-healing
+    // re-injection logic (content.js / quota.js) never fights the setting.
+    let _isDark = false;
+    const ACCENTS = {
+      ocean:  { light: '#2B6595', dark: '#7DB1DE' },
+      forest: { light: '#3B7248', dark: '#86C595' },
+      violet: { light: '#6D4BD8', dark: '#A78BFA' },
+      rose:   { light: '#C2416E', dark: '#F27BA4' },
+      mono:   { light: '#3A3A38', dark: '#D8D6CF' },
+    };
+    const SURFACES = ['sidebar', 'floating', 'composer', 'badges', 'chips', 'dates', 'tools', 'vmLink'];
+    let _prefsKey = '';
+
+    function accentFor(dark) {
+      const F = window.CTS_Features;
+      if (!F) return null;
+      const pal = F.getSetting('theme.palette', 'auto');
+      if (pal === 'custom') {
+        const hex = String(F.getSetting('theme.accent', '') || '');
+        return /^#[0-9a-f]{6}$/i.test(hex) ? hex : null;
+      }
+      if (!F.isEnabled('themes')) return null;
+      return ACCENTS[pal] ? ACCENTS[pal][dark ? 'dark' : 'light'] : null;
+    }
+
+    function applyPrefs() {
+      const F = window.CTS_Features;
+      if (!F || !F.ui) return;
+      const off = SURFACES.filter(k => !F.ui(k)).join(' ');
+      const noLevel = !F.ui('levelColors');
+      const accent = accentFor(_isDark);
+      const key = off + '|' + noLevel + '|' + accent;
+      if (key === _prefsKey) return;
+      _prefsKey = key;
+      const root = document.documentElement;
+      if (off) root.setAttribute('data-ct-off', off); else root.removeAttribute('data-ct-off');
+      if (noLevel) root.setAttribute('data-ct-nolevel', ''); else root.removeAttribute('data-ct-nolevel');
+      let st = document.getElementById('ct-accent-style');
+      if (accent) {
+        if (!st) { st = document.createElement('style'); st.id = 'ct-accent-style'; (document.head || root).appendChild(st); }
+        const n = parseInt(accent.slice(1), 16);
+        st.textContent = `html:root { --ct-accent: ${accent}; --ct-orange: ${accent}; --ct-blue: ${accent}; --ct-accent-rgb: ${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}; }`;
+      } else if (st) st.remove();
+    }
+    if (window.CTS_Features && window.CTS_Features.onChange) window.CTS_Features.onChange(() => { _prefsKey = ''; applyPrefs(); });
 
     // ─── Public API ───────────────────────────────────────────────────────────
 
@@ -1621,17 +1753,21 @@ window.ClaudeTrackerUI = (function () {
       },
 
       updateQuotaBars(win, pct, ts) {
+        // Claude isn't sharing numbers with this account: quota.js owns the
+        // dashes; never paint a 0% over them.
+        if (window.CTS.quotaMode === 'none') { if (window.CTS_Quota && window.CTS_Quota.applyUnavailable) window.CTS_Quota.applyUnavailable(); return; }
         // While the first real reading is pending, a 0 is just a default, not data.
         if (pct === 0 && document.querySelector('[data-ct-loading]')) return;
         if (pct > 0) document.querySelectorAll('[data-ct-loading]').forEach(el => el.removeAttribute('data-ct-loading'));
         const fillEl = document.getElementById(`ct-fill-${win}`);
         const barPct = document.getElementById(`ct-bar-pct-${win}`);
-        if (fillEl) fillEl.style.width = pct + '%';
+        const level = pct >= 90 ? 'crit' : pct >= 75 ? 'warn' : 'ok';
+        if (fillEl) { fillEl.style.width = pct + '%'; fillEl.setAttribute('data-ct-level', level); }
         if (barPct) barPct.textContent  = pct + '%';
 
         const tFill = document.getElementById(`ct-tq-fill-${win}`);
         const tPct  = document.getElementById(`ct-tq-pct-${win}`);
-        if (tFill) tFill.style.width = pct + '%';
+        if (tFill) { tFill.style.width = pct + '%'; tFill.setAttribute('data-ct-level', level); }
         if (tPct)  tPct.textContent  = pct + '%';
       },
 

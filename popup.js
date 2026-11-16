@@ -57,6 +57,12 @@
   }
 
   function renderUsage() {
+    if (usage && usage.cts_quota_none && usage.cts_quota_none.org && usage.cts_quota_none.org === usage.cts_org_id) {
+      $('usage').hidden = true;
+      $('loading').hidden = false;
+      $('loading').textContent = msg('vm_unavailShort', 'Claude isn\u2019t sharing usage numbers for this account') + '. ' + msg('vm_unavailPopup', 'TokenLens shows them again as soon as Claude does.');
+      return;
+    }
     if (!usage || typeof usage.cts_5h_util !== 'number') {
       $('usage').hidden = true;
       return;
@@ -76,7 +82,7 @@
   }
 
   async function init() {
-    usage = await chrome.storage.local.get(['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d']);
+    usage = await chrome.storage.local.get(['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d', 'cts_quota_none', 'cts_org_id']);
 
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     const onClaude = !!(tab && tab.url && /^https:\/\/claude\.ai(\/|$)/.test(tab.url));
@@ -118,7 +124,7 @@
   // Live updates while the popup is open: new readings, and a ticking countdown.
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
-    chrome.storage.local.get(['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d']).then(v => { usage = v; renderUsage(); });
+    chrome.storage.local.get(['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d', 'cts_quota_none', 'cts_org_id']).then(v => { usage = v; renderUsage(); });
   });
   setInterval(renderUsage, 30000);
 
@@ -127,20 +133,38 @@
     const Core = window.CTS_LicenseCore;
     if (!Core) return;
     const [local, sync] = await Promise.all([
-      chrome.storage.local.get(['cts_license', 'cts_trial']),
-      chrome.storage.sync.get(['cts_trial']).catch(() => ({})),
+      chrome.storage.local.get(['cts_license', 'cts_trial', 'cts_vm_unlock']),
+      chrome.storage.sync.get(['cts_trial', 'cts_vm_unlock']).catch(() => ({})),
     ]);
-    const s = Core.summarize(local.cts_license || null, Core.mergeTrial(local.cts_trial, sync.cts_trial), Date.now());
-    const price = Core.CONFIG.PRICE_LABEL;
-    $('pro-text').textContent = s.licensed ? msg('popupProActive', 'TokenLens Pro is active')
+    const vm = Core.vmUnlocked(local.cts_vm_unlock) ? local.cts_vm_unlock : sync.cts_vm_unlock;
+    const s = Core.summarize(local.cts_license || null, Core.mergeTrial(local.cts_trial, sync.cts_trial), Date.now(), vm);
+    $('pro-text').textContent = s.licensed || s.vamimi ? msg('popupProActive', 'TokenLens Pro is active')
       : s.tier === 'trial' ? msg('popupProTrial', 'Pro trial: day ') + s.trial.day + ' / ' + Core.CONFIG.TRIAL_DAYS
       : msg('popupFree', 'Free plan');
     const btn = $('pro-btn');
-    btn.hidden = s.licensed;
-    btn.textContent = (s.tier === 'trial' ? msg('popupKeepPro', 'Keep Pro') : msg('popupUnlockPro', 'Unlock Pro')) + ' · ' + price;
-    btn.onclick = () => { chrome.tabs.create({ url: chrome.runtime.getURL('unlock.html') }); window.close(); };
+    btn.hidden = s.licensed || s.vamimi;
+    // Pro is free (6.4): one visit to VamimiAI unlocks it for good.
+    btn.textContent = msg('vm_unlockFree', 'Unlock Pro free');
+    btn.title = msg('vm_unlockFreeTip', 'Opens VamimiAI. Pro unlocks for good once it loads.');
+    btn.onclick = () => {
+      chrome.runtime.sendMessage({ cts: 'vamimi', op: 'unlock', campaign: 'unlock_popup' }, () => { void chrome.runtime.lastError; });
+    };
     $('pro').hidden = false;
   }
+
+  // Settings live in the TokenLens menu on claude.ai; open it there.
+  const settingsBtn = $('settings-btn');
+  if (settingsBtn) settingsBtn.onclick = async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab && tab.url && /^https:\/\/claude\.ai(\/|$)/.test(tab.url)) {
+      try { await chrome.tabs.sendMessage(tab.id, { cts: 'open-panel', screen: 'settings' }); } catch (_) {}
+    } else {
+      await chrome.tabs.create({ url: CLAUDE_URL });
+    }
+    window.close();
+  };
+
+  chrome.storage.onChanged.addListener((ch, area) => { if (ch.cts_vm_unlock || ch.cts_license || ch.cts_trial) renderPlan(); });
 
   init();
   renderPlan();

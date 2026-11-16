@@ -114,7 +114,7 @@
   ['keydown', 'pointerdown'].forEach(ev =>
     document.addEventListener(ev, () => { lastInput = Date.now(); }, { capture: true, passive: true }));
 
-  const OTHER_SURFACES = ['cts-welcome-host', 'cts-review-host', 'cts-feedback-host', 'ct-whatsnew', 'ct-hint'];
+  const OTHER_SURFACES = ['cts-welcome-host', 'cts-review-host', 'cts-feedback-host', 'ct-whatsnew', 'cts-vamimi-host', 'ct-hint'];
 
   function momentIsRight() {
     if (!/^\/(new)?\/?$/.test(location.pathname)) return false;           // a fresh chat only

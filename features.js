@@ -9,7 +9,8 @@
  * - CTS_Features.disable(id, reason) -> void: session-only disable (used by safe.js)
  * - CTS_Features.setSettings(obj) -> void: replaces the cts_settings object
  * - CTS_Features.getSetting(path, fallback) -> any: reads settings.a.b with a default from DEFAULTS
- * - CTS_Features.DEFAULTS -> object: every default setting (thresholds etc.)
+ * - CTS_Features.DEFAULTS -> object: every default setting (ui switches, theme, handoff ...)
+ * - CTS_Features.ui(key) -> boolean: settings.ui[key] with its default (a surface switch)
  * - CTS_Features.onChange(cb) -> void: called after setSettings()
  *
  * Every entry point, hook and UI surface must call isEnabled() first.
@@ -20,22 +21,30 @@
 
   const LIST = [
     { id: 'history',  labelKey: 'featHistory',  defaultEnabled: true  },
-    { id: 'alerts',   labelKey: 'featAlerts',   defaultEnabled: true  },
     { id: 'export',   labelKey: 'featExport',   defaultEnabled: true  },
     { id: 'handoff',  labelKey: 'featHandoff',  defaultEnabled: true  },
     { id: 'library',  labelKey: 'featLibrary',  defaultEnabled: true  },
     { id: 'themes',   labelKey: 'featThemes',   defaultEnabled: true  },
+    { id: 'vamimi',   labelKey: 'featVamimi',   defaultEnabled: true  },
     { id: 'snippets', labelKey: 'featSnippets', defaultEnabled: false },
   ];
 
   const DEFAULTS = {
     features: {},                 // id -> boolean overrides
-    alerts: {
-      w5h: { t80: true, t95: true, v80: 80, v95: 95 },
-      w7d: { t80: true, t95: true, v80: 80, v95: 95 },
-    },
     handoff: { hintAt: 80, budgetPct: 30, windowOverride: 0 }, // windowOverride 0 = auto
-    theme: { palette: 'auto', density: 'regular' },
+    theme: { palette: 'auto', density: 'regular', accent: '' },   // palette: auto|warm|ocean|forest|violet|rose|mono|custom; accent: '#rrggbb' for custom
+    // What TokenLens shows (6.4). Every surface can be switched off on its own.
+    ui: {
+      sidebar: true,      // usage box at the top of the sidebar (#ct-quota)
+      floating: true,     // floating usage card (#ct-toolbar-quota) and its reopen icon
+      composer: true,     // 5h / 7d row above the message box (#ct-row)
+      badges: true,       // peak / cache badges in the floating card
+      chips: true,        // per-reply stats (latency, speed, % of limit, tokens)
+      dates: true,        // "created on" dates next to sidebar chat titles
+      tools: true,        // Search / Save all / History / Settings strip in the sidebar
+      vmLink: true,       // VamimiAI shortcut in the sidebar
+      levelColors: true,  // bars turn amber at 75% and red at 90%
+    },
     shortcut: { enabled: false, combo: 'Alt+Shift+L' },
     indexing: { autoUpsert: true },
   };
@@ -68,8 +77,10 @@
     listeners.forEach(cb => { try { cb(); } catch (_) {} });
   }
 
+  const ui = key => getSetting('ui.' + key, true) !== false;
+
   const api = {
-    LIST, DEFAULTS, isEnabled, getSetting, setSettings,
+    LIST, DEFAULTS, isEnabled, getSetting, setSettings, ui,
     disable: (id, reason) => { sessionOff[id] = reason || true; },
     onChange: cb => listeners.push(cb),
     getSessionDisabled: () => Object.assign({}, sessionOff),

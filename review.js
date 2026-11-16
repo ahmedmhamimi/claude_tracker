@@ -105,7 +105,7 @@
     if (document.visibilityState !== 'visible') return false;
     if (!document.getElementById('ct-toolbar-quota')) return false;       // app UI is up
     if (ROOT.dataset.ctsWelcome === 'active') return false;
-    if (['cts-welcome-host', 'cts-review-host', 'cts-feedback-host', 'ct-whatsnew'].some(id => document.getElementById(id))) return false;
+    if (['cts-welcome-host', 'cts-review-host', 'cts-feedback-host', 'ct-whatsnew', 'cts-vamimi-host'].some(id => document.getElementById(id))) return false;
     if (Date.now() - lastInput < RULES.idleMs) return false;
     const box = document.querySelector('div[contenteditable="true"]') || document.querySelector('textarea');
     if (box && ((box.textContent || box.value || '').trim() !== '')) return false;

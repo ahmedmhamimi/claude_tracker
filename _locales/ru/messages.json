@@ -213,5 +213,164 @@
   },
   "fbThanksBody": {
     "message": "Форма открыта в новой вкладке. Каждый ответ читает живой человек."
+  },
+  "vm_label": {
+    "message": "Диаграмма"
+  },
+  "vm_title": {
+    "message": "Превратить ответ в диаграмму (откроет VamimiAI в новой вкладке)"
+  },
+  "vm_opened": {
+    "message": "Открыто в VamimiAI"
+  },
+  "vm_failed": {
+    "message": "Не удалось открыть VamimiAI. Попробуйте ещё раз"
+  },
+  "vm_prompt": {
+    "message": "Преврати это в понятную диаграмму. Выбери наиболее подходящий тип (блок-схема, временная шкала, ментальная карта, таблица, сравнение и т. д.)."
+  },
+  "vm_question": {
+    "message": "Вопрос:"
+  },
+  "vm_answer": {
+    "message": "Ответ:"
+  },
+  "vm_trimmed": {
+    "message": "[Остаток ответа обрезан, чтобы поместиться.]"
+  },
+  "vm_coach": {
+    "message": "Новое: превратите этот ответ в диаграмму"
+  },
+  "vm_dismiss": {
+    "message": "Закрыть"
+  },
+  "vm_hint": {
+    "message": "Спросите что-нибудь у Claude. Кнопка «{label}» появится под ответом."
+  },
+  "vm_close": {
+    "message": "Закрыть"
+  },
+  "vm_cta": {
+    "message": "Покажите кнопку"
+  },
+  "vm_visit": {
+    "message": "Или откройте vamimi.com"
+  },
+  "vm_badge": {
+    "message": "Новое от создателя TokenLens"
+  },
+  "vm_annTitle": {
+    "message": "Знакомьтесь: VamimiAI"
+  },
+  "vm_annSub": {
+    "message": "Сайт, который превращает текст в диаграммы."
+  },
+  "vm_annBody": {
+    "message": "Блок-схемы, временные шкалы, ментальные карты и таблицы из любого ответа Claude в один клик."
+  },
+  "vm_step1": {
+    "message": "Спросите Claude о чём угодно"
+  },
+  "vm_step2": {
+    "message": "Нажмите «{label}» под ответом"
+  },
+  "vm_step3": {
+    "message": "VamimiAI откроется с готовым ответом. Нажмите «Отправить», чтобы получить диаграмму."
+  },
+  "vm_privacy": {
+    "message": "Ничего не отправляется, пока вы не нажмёте «Отправить» в VamimiAI."
+  },
+  "vm_demo1": {
+    "message": "Ответ"
+  },
+  "vm_demo2": {
+    "message": "Шаг"
+  },
+  "vm_demo3": {
+    "message": "Диаграмма"
+  },
+  "vm_linkTip": {
+    "message": "Открыть VamimiAI, который превращает текст в диаграммы (новая вкладка)"
+  },
+  "vm_linkSub": {
+    "message": "Текст в диаграммы"
+  },
+  "vm_popupSub": {
+    "message": "Любой ответ Claude в виде диаграммы"
+  },
+  "featVamimi": {
+    "message": "Кнопка «Диаграмма» (VamimiAI)"
+  },
+  "vm_unavailShort": {
+    "message": "Claude не передаёт данные об использовании для этого аккаунта"
+  },
+  "vm_unavailTip": {
+    "message": "Сейчас Claude не присылает данные об использовании для этого аккаунта, поэтому TokenLens не может показать ваши лимиты. Всё остальное работает, а цифры вернутся сами, когда Claude снова начнёт их присылать."
+  },
+  "vm_unavailToast": {
+    "message": "Сейчас Claude не присылает данные об использовании для этого аккаунта, поэтому TokenLens не может показать лимиты на 5 часов и 7 дней (поэтому там прочерк, а не 0%). Всё остальное работает, а цифры вернутся сами."
+  },
+  "vm_unavailPopup": {
+    "message": "TokenLens снова покажет их, как только Claude начнёт их присылать."
+  },
+  "vm_unlockFree": {
+    "message": "Открыть Pro бесплатно"
+  },
+  "vm_unlockFreeTip": {
+    "message": "Откроет VamimiAI. Pro откроется навсегда, как только страница загрузится."
+  },
+  "vm_popupSettings": {
+    "message": "Настройки: что показывает TokenLens"
+  },
+  "vm_visitUnlock": {
+    "message": "Или откройте vamimi.com и получите TokenLens Pro бесплатно"
+  },
+  "vm_you": {
+    "message": "Вы"
+  },
+  "vm_chatPrompt": {
+    "message": "Преврати этот разговор в понятную диаграмму. Выбери наиболее подходящий тип (блок-схема, временная шкала, ментальная карта, таблица, сравнение и т. д.)."
+  },
+  "ix_vmUnlockBtn": {
+    "message": "Открыть Pro бесплатно с VamimiAI"
+  },
+  "ix_vmUnlockFine": {
+    "message": "Откроет VamimiAI — сайт, который превращает текст в диаграммы, от создателя TokenLens. Pro откроется навсегда, как только страница загрузится."
+  },
+  "ix_freeWord": {
+    "message": "Бесплатно"
+  },
+  "ix_freeNote": {
+    "message": "навсегда. Без аккаунта и оплаты."
+  },
+  "ix_unlockFreeBtn": {
+    "message": "Открыть Pro бесплатно"
+  },
+  "ix_endedToastFree": {
+    "message": "Пробный период Pro закончился.{saved} Оставьте Pro бесплатно навсегда — достаточно один раз открыть VamimiAI."
+  },
+  "ix_freeNowToast": {
+    "message": "Хорошая новость: TokenLens Pro теперь бесплатный. Откройте его навсегда, один раз зайдя на VamimiAI."
+  },
+  "ix_introToastFree": {
+    "message": "TokenLens Pro включён на {t} дн.: поиск по всем чатам, сохранение всех чатов и полная история использования. Потом он останется бесплатным — достаточно один раз зайти на VamimiAI."
+  },
+  "ix_vmUnlockedTitle": {
+    "message": "TokenLens Pro открыт"
+  },
+  "ix_vmUnlockedBody": {
+    "message": "Спасибо, что заглянули на VamimiAI. Теперь весь TokenLens ваш — навсегда."
+  },
+  "ix_stVamimi": {
+    "message": "TokenLens Pro активен, открыт через VamimiAI."
+  },
+  "ix_stKeepFree": {
+    "message": "Оставить Pro бесплатно"
+  },
+  "ix_mDiagram": {
+    "message": "Превратить этот чат в диаграмму"
+  },
+  "ix_mDiagramD": {
+    "message": "С VamimiAI, от создателя TokenLens"
   }
 }

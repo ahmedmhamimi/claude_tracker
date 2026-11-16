@@ -213,5 +213,164 @@
   },
   "fbThanksBody": {
     "message": "表单已在新标签页打开。每一条回答都有真人阅读。"
+  },
+  "vm_label": {
+    "message": "图表"
+  },
+  "vm_title": {
+    "message": "把这条回复变成图表（在新标签页中打开 VamimiAI）"
+  },
+  "vm_opened": {
+    "message": "已在 VamimiAI 中打开"
+  },
+  "vm_failed": {
+    "message": "无法打开 VamimiAI，请重试"
+  },
+  "vm_prompt": {
+    "message": "把这些内容变成清晰的图表。请为内容选择最合适的类型（流程图、时间线、思维导图、表格、对比图等）。"
+  },
+  "vm_question": {
+    "message": "问题："
+  },
+  "vm_answer": {
+    "message": "回答："
+  },
+  "vm_trimmed": {
+    "message": "[此回复的其余部分过长，已截断。]"
+  },
+  "vm_coach": {
+    "message": "新功能：把这条回复变成图表"
+  },
+  "vm_dismiss": {
+    "message": "关闭"
+  },
+  "vm_hint": {
+    "message": "先向 Claude 提个问题，回复下方就会出现“{label}”按钮。"
+  },
+  "vm_close": {
+    "message": "关闭"
+  },
+  "vm_cta": {
+    "message": "带我看看按钮"
+  },
+  "vm_visit": {
+    "message": "或访问 vamimi.com"
+  },
+  "vm_badge": {
+    "message": "TokenLens 作者的新作品"
+  },
+  "vm_annTitle": {
+    "message": "认识 VamimiAI"
+  },
+  "vm_annSub": {
+    "message": "一个把文字变成图表的网站。"
+  },
+  "vm_annBody": {
+    "message": "流程图、时间线、思维导图和表格，一键从任意 Claude 回复生成。"
+  },
+  "vm_step1": {
+    "message": "向 Claude 提任何问题"
+  },
+  "vm_step2": {
+    "message": "点击回复下方的“{label}”"
+  },
+  "vm_step3": {
+    "message": "VamimiAI 会打开并填好回复，点击发送即可得到图表。"
+  },
+  "vm_privacy": {
+    "message": "在你于 VamimiAI 点击发送之前，不会发送任何内容。"
+  },
+  "vm_demo1": {
+    "message": "回复"
+  },
+  "vm_demo2": {
+    "message": "步骤"
+  },
+  "vm_demo3": {
+    "message": "图表"
+  },
+  "vm_linkTip": {
+    "message": "打开 VamimiAI，把文字变成图表（新标签页）"
+  },
+  "vm_linkSub": {
+    "message": "把文字变成图表"
+  },
+  "vm_popupSub": {
+    "message": "把任意 Claude 回复变成图表"
+  },
+  "featVamimi": {
+    "message": "图表按钮（VamimiAI）"
+  },
+  "vm_unavailShort": {
+    "message": "Claude 未提供此账号的用量数据"
+  },
+  "vm_unavailTip": {
+    "message": "Claude 目前没有发送此账号的用量数据，所以 TokenLens 无法显示你的限额。其他功能照常可用；一旦 Claude 重新发送，数据会自动恢复显示。"
+  },
+  "vm_unavailToast": {
+    "message": "Claude 目前没有发送此账号的用量数据，所以 TokenLens 无法显示 5 小时和 7 天限额（因此显示的是短横线而不是 0%）。其他功能照常可用，数据会自动恢复。"
+  },
+  "vm_unavailPopup": {
+    "message": "一旦 Claude 提供，TokenLens 会立即重新显示。"
+  },
+  "vm_unlockFree": {
+    "message": "免费解锁 Pro"
+  },
+  "vm_unlockFreeTip": {
+    "message": "打开 VamimiAI，页面加载后即可永久解锁 Pro。"
+  },
+  "vm_popupSettings": {
+    "message": "设置：选择 TokenLens 显示的内容"
+  },
+  "vm_visitUnlock": {
+    "message": "或访问 vamimi.com，免费解锁 TokenLens Pro"
+  },
+  "vm_you": {
+    "message": "你"
+  },
+  "vm_chatPrompt": {
+    "message": "把这段对话变成清晰的图表。请选择最合适的类型（流程图、时间线、思维导图、表格、对比图等）。"
+  },
+  "ix_vmUnlockBtn": {
+    "message": "通过 VamimiAI 免费解锁 Pro"
+  },
+  "ix_vmUnlockFine": {
+    "message": "打开 VamimiAI——TokenLens 作者做的一个把文字变成图表的网站。页面加载后即永久解锁 Pro。"
+  },
+  "ix_freeWord": {
+    "message": "免费"
+  },
+  "ix_freeNote": {
+    "message": "永久。无需账号，无需付款。"
+  },
+  "ix_unlockFreeBtn": {
+    "message": "免费解锁 Pro"
+  },
+  "ix_endedToastFree": {
+    "message": "你的 Pro 试用已结束。{saved}访问一次 VamimiAI，即可永久免费保留 Pro。"
+  },
+  "ix_freeNowToast": {
+    "message": "好消息：TokenLens Pro 现在免费了。访问一次 VamimiAI 即可永久解锁。"
+  },
+  "ix_introToastFree": {
+    "message": "TokenLens Pro 已开启 {t} 天：搜索所有聊天、全部保存，并查看完整的用量历史。之后访问一次 VamimiAI 即可继续免费使用。"
+  },
+  "ix_vmUnlockedTitle": {
+    "message": "TokenLens Pro 已解锁"
+  },
+  "ix_vmUnlockedBody": {
+    "message": "感谢你看看 VamimiAI。现在 TokenLens 的全部功能都永久属于你。"
+  },
+  "ix_stVamimi": {
+    "message": "TokenLens Pro 已启用（通过 VamimiAI 解锁）。"
+  },
+  "ix_stKeepFree": {
+    "message": "免费保留 Pro"
+  },
+  "ix_mDiagram": {
+    "message": "把这个聊天变成图表"
+  },
+  "ix_mDiagramD": {
+    "message": "使用 TokenLens 作者的 VamimiAI"
   }
 }

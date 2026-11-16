@@ -19,7 +19,7 @@
 
   const MAX_QUEUE = 100;
   const MAX_JSON_CHARS = 8 * 1024 * 1024;
-  const FEATURES_FOR = { usage: ['history', 'alerts'], analysis: ['history', 'handoff', 'library'], convraw: ['library'], convlist: ['library'] };
+  const FEATURES_FOR = { usage: ['history'], analysis: ['history', 'handoff', 'library'], convraw: ['library'], convlist: ['library'] };
 
   let ready = false;
   const queue = [];
@@ -45,6 +45,8 @@
     const now = Date.now();
     switch (type) {
       case 'usage':
+        // No numbers from Claude for this account: nothing true to record.
+        if (S.quotaMode === 'none') return null;
         return { t: now, u5h: S.current5hUtil, u7d: S.current7dUtil, r5h: S.targetTimestamps['5h'], r7d: S.targetTimestamps['7d'], limitHit: !!S.isLimitHit };
       case 'analysis': {
         if (!a) return null;

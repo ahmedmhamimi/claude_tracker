@@ -51,3 +51,73 @@ One-time $29 license sold on Gumroad. No server: the service worker talks to Gum
 
 ## Layout guard (ui.js)
 The usage widgets carry a flex-shrink/min-width guard so that opening an artifact or code panel (which narrows the claude.ai layout) cannot squeeze the bars or labels.
+
+## 6.3: usage-scale fix, VamimiAI, premium bars
+
+**The "new session shows 100%" bug (fixed).** `/api/organizations/<id>/usage` reports `utilization` as a
+percentage (0-100), but every reading was scale-guessed (`>1` = percent, `<=1` = fraction). The first
+message of a fresh 5h window reads `1.0` (= 1%), which became 100% and also set `isLimitHit`, so the bar sat
+at 100% until usage reached 2-3%. The same misreading was behind the old "7d exactly-1 artifact" filter,
+which silently dropped real 1% readings. Now (`quota.js toFraction`):
+- `/usage` readings are always percent (`scale: 'pct'`) and are authoritative: they set and clear `isLimitHit`.
+- The SSE `message_limit` event is `scale: 'auto'`; an exactly-1 value there is ambiguous and is skipped,
+  and every SSE reading schedules a `/usage` reconcile. `isLimitHit` from the stream needs an explicit
+  `exceeded*` status.
+
+**VamimiAI (`vamimi.js`, ISOLATED, before boot.js).** Diagram button in assistant action bars (feature id
+`vamimi`, on by default), one-time "Meet VamimiAI" announcement (claimed in background.js `vmClaim`:
+updates from < 6.3 at the next calm moment, fresh installs after 3 days of use, never within a day of
+another prompt), spotlight on the button for up to 3 page loads, a permanent sidebar link and a popup link.
+All links carry `utm_source=tokenlens&utm_medium=extension&utm_campaign=<surface>`. Text travels in the URL
+fragment as `#prefill=z.<base64url(deflate-raw)>` (or `t.<uri>`), the format VamimiAI's prefill.js reads.
+background.js opens only `https://www.vamimi.com` URLs.
+QA: `chrome.storage.local.set({ cts_vm_preview: true })` shows the announcement on the next page load;
+reset with `chrome.storage.local.remove(['cts_vm_ann', 'cts_vm_spot'])`.
+
+**Premium layer (`ui.js PREMIUM_CSS`).** Bars carry `data-ct-level` (ok / warn >= 75% / crit >= 90%) and
+change colour; tabular figures; hairline badges and chips; warmer light-mode text colours.
+
+## 6.4: monitor not watchtower, "not shared" accounts, customization, Pro free via VamimiAI
+
+**Alerts removed.** The 80% / 95% toasts on both windows are gone (recorder.js, history.js `nextAlert`,
+the `alerts` feature, its setting and strings). Leftover `cts_alerts_fired` is removed on load. The
+history panel still lists limit hits: that is data, not an interruption.
+
+**Accounts Claude sends no numbers for (`CTS.quotaMode`, network.js).** `unknown` until evidence,
+`live` once any real number arrives from the stream or `/usage`, `none` when a reply finished cleanly and,
+6 s later, a forced `/usage` answer also had no numbers (a failed request is not evidence; 404 counts).
+`none` is persisted per org as `cts_quota_none`, restored on load (no 0% flash), shows dashes and a
+one-line note (quota.js `applyUnavailable`), skips history snapshots, polls every 5 min, and tells the
+person once a week per account (recorder.js). Any number flips it back to `live` at once.
+
+**Customization (`settings.ui.*`, `theme.*`, features.js `F.ui(key)`).** One switch per surface:
+sidebar box, floating card, composer row, badges, per-reply chips, chat dates, sidebar tools, Diagram
+button (`features.vamimi`), VamimiAI sidebar link, level colours. MAIN world applies them in ui.js
+`applyPrefs()` as `<html data-ct-off="...">` + CSS (never by removing nodes, so self-healing injection
+does not fight the setting); chat dates also undo their title clamping. Colours are free: six presets or
+any colour (`theme.palette = 'custom'`, `theme.accent`), applied to both worlds.
+
+**Pro is free with VamimiAI.** `cts_vm_unlock` (local + sync) makes `summarize()` return tier `vamimi`.
+`CTS_License.unlockWithVamimi(campaign)` -> background `vmUnlock`: opens VamimiAI
+(`utm_campaign=unlock_<feature>` etc.) and unlocks once that tab reports `complete` (or after 6 s still
+open). Every locked control, the trial-ended toast, a one-time "Pro is free now" toast for people whose
+trial ended earlier, the popup, the unlock page and the announcement lead there. Gumroad keys keep working.
+New VamimiAI entries: "Turn this chat into a diagram" in the menu and a Diagram button in the save row.
+
+**Robustness / performance.**
+- `/usage` background poll 5 s -> 30 s (60 s lite, 5 min "not shared"); a reading is shared with every
+  other claude.ai tab of the same account over `BroadcastChannel('cts-usage-v1')`.
+- ui.js rewrote its ~600-line stylesheet every second (full style recalc of claude.ai); now only when the
+  light/dark mode flips.
+- Sidebar dates ran a full measure pass on every animation frame with any DOM mutation (constant while a
+  reply streams); now only for mutations inside the sidebar, at most every 700 ms.
+- Diagram scan re-walks a reply only when its text changed.
+- Clock skew: reset countdowns use server time from the `Date` header (`CTS.clockSkewMs`), so a fast or
+  slow computer clock no longer zeroes bars or sticks on "refreshing…".
+- Reset timestamps in ms or as numeric strings are normalised; implausible ones ignored.
+- Sidebar dates no longer wait 60 s on a cold load (chat list fetched once the org id is known).
+- Bounded per-tab bookkeeping (recorder cost keys).
+
+QA: `chrome.storage.local.set({ cts_quota_none: { org: '<org id>', at: Date.now() } })` + reload shows the
+"not shared" state; `chrome.storage.local.remove('cts_vm_unlock'); chrome.storage.sync.remove('cts_vm_unlock')`
+resets the free unlock.

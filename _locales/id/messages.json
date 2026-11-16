@@ -213,5 +213,164 @@
   },
   "fbThanksBody": {
     "message": "Formulirnya terbuka di tab baru. Setiap jawaban dibaca oleh orang sungguhan."
+  },
+  "vm_label": {
+    "message": "Diagram"
+  },
+  "vm_title": {
+    "message": "Ubah balasan ini menjadi diagram (membuka VamimiAI di tab baru)"
+  },
+  "vm_opened": {
+    "message": "Dibuka di VamimiAI"
+  },
+  "vm_failed": {
+    "message": "Tidak bisa membuka VamimiAI. Coba lagi"
+  },
+  "vm_prompt": {
+    "message": "Ubah ini menjadi diagram yang jelas. Pilih jenis yang paling cocok (diagram alir, linimasa, peta pikiran, tabel, perbandingan, dan lainnya)."
+  },
+  "vm_question": {
+    "message": "Pertanyaannya:"
+  },
+  "vm_answer": {
+    "message": "Jawabannya:"
+  },
+  "vm_trimmed": {
+    "message": "[Sisa balasan ini dipotong agar muat.]"
+  },
+  "vm_coach": {
+    "message": "Baru: ubah balasan ini menjadi diagram"
+  },
+  "vm_dismiss": {
+    "message": "Tutup"
+  },
+  "vm_hint": {
+    "message": "Tanyakan sesuatu ke Claude. Tombol {label} akan muncul di bawah balasannya."
+  },
+  "vm_close": {
+    "message": "Tutup"
+  },
+  "vm_cta": {
+    "message": "Tunjukkan tombolnya"
+  },
+  "vm_visit": {
+    "message": "Atau kunjungi vamimi.com"
+  },
+  "vm_badge": {
+    "message": "Baru dari pembuat TokenLens"
+  },
+  "vm_annTitle": {
+    "message": "Kenalan dengan VamimiAI"
+  },
+  "vm_annSub": {
+    "message": "Situs web yang mengubah teks menjadi diagram."
+  },
+  "vm_annBody": {
+    "message": "Diagram alir, linimasa, peta pikiran, dan tabel dari balasan Claude mana pun, dengan satu klik."
+  },
+  "vm_step1": {
+    "message": "Tanyakan apa saja ke Claude"
+  },
+  "vm_step2": {
+    "message": "Klik {label} di bawah balasan"
+  },
+  "vm_step3": {
+    "message": "VamimiAI terbuka dengan balasan siap. Tekan Kirim untuk mendapatkan diagram."
+  },
+  "vm_privacy": {
+    "message": "Tidak ada yang dikirim sampai Anda menekan Kirim di VamimiAI."
+  },
+  "vm_demo1": {
+    "message": "Balasan"
+  },
+  "vm_demo2": {
+    "message": "Langkah"
+  },
+  "vm_demo3": {
+    "message": "Diagram"
+  },
+  "vm_linkTip": {
+    "message": "Buka VamimiAI, yang mengubah teks menjadi diagram (tab baru)"
+  },
+  "vm_linkSub": {
+    "message": "Teks ke diagram"
+  },
+  "vm_popupSub": {
+    "message": "Ubah balasan Claude mana pun menjadi diagram"
+  },
+  "featVamimi": {
+    "message": "Tombol Diagram (VamimiAI)"
+  },
+  "vm_unavailShort": {
+    "message": "Claude tidak membagikan angka pemakaian untuk akun ini"
+  },
+  "vm_unavailTip": {
+    "message": "Claude sedang tidak mengirim angka pemakaian untuk akun ini, jadi TokenLens tidak bisa menampilkan batas Anda. Fitur lain tetap berjalan, dan angkanya kembali sendiri jika Claude mengirimnya lagi."
+  },
+  "vm_unavailToast": {
+    "message": "Claude sedang tidak mengirim angka pemakaian untuk akun ini, jadi TokenLens tidak bisa menampilkan batas 5 jam dan 7 hari Anda (karena itu tampil tanda strip, bukan 0%). Fitur lain tetap berjalan, dan angkanya kembali sendiri."
+  },
+  "vm_unavailPopup": {
+    "message": "TokenLens akan menampilkannya lagi begitu Claude mengirimnya."
+  },
+  "vm_unlockFree": {
+    "message": "Buka Pro gratis"
+  },
+  "vm_unlockFreeTip": {
+    "message": "Membuka VamimiAI. Pro terbuka selamanya setelah halaman dimuat."
+  },
+  "vm_popupSettings": {
+    "message": "Pengaturan: pilih apa yang ditampilkan TokenLens"
+  },
+  "vm_visitUnlock": {
+    "message": "Atau kunjungi vamimi.com dan buka TokenLens Pro gratis"
+  },
+  "vm_you": {
+    "message": "Anda"
+  },
+  "vm_chatPrompt": {
+    "message": "Ubah percakapan ini menjadi diagram yang jelas. Pilih jenis yang paling cocok (diagram alir, linimasa, peta pikiran, tabel, perbandingan, dan lainnya)."
+  },
+  "ix_vmUnlockBtn": {
+    "message": "Buka Pro gratis dengan VamimiAI"
+  },
+  "ix_vmUnlockFine": {
+    "message": "Membuka VamimiAI, situs yang mengubah teks menjadi diagram, buatan pembuat TokenLens. Pro terbuka selamanya begitu halaman dimuat."
+  },
+  "ix_freeWord": {
+    "message": "Gratis"
+  },
+  "ix_freeNote": {
+    "message": "selamanya. Tanpa akun, tanpa bayar."
+  },
+  "ix_unlockFreeBtn": {
+    "message": "Buka Pro gratis"
+  },
+  "ix_endedToastFree": {
+    "message": "Masa coba Pro Anda sudah berakhir.{saved} Tetap pakai Pro gratis selamanya dengan sekali kunjungan ke VamimiAI."
+  },
+  "ix_freeNowToast": {
+    "message": "Kabar baik: TokenLens Pro sekarang gratis. Buka selamanya dengan sekali kunjungan ke VamimiAI."
+  },
+  "ix_introToastFree": {
+    "message": "TokenLens Pro aktif selama {t} hari: cari di semua chat, simpan semuanya, dan lihat riwayat pemakaian lengkap. Setelah itu tetap gratis dengan sekali kunjungan ke VamimiAI."
+  },
+  "ix_vmUnlockedTitle": {
+    "message": "TokenLens Pro sudah terbuka"
+  },
+  "ix_vmUnlockedBody": {
+    "message": "Terima kasih sudah mampir ke VamimiAI. Semua fitur TokenLens kini milik Anda, selamanya."
+  },
+  "ix_stVamimi": {
+    "message": "TokenLens Pro aktif, dibuka dengan VamimiAI."
+  },
+  "ix_stKeepFree": {
+    "message": "Tetap pakai Pro gratis"
+  },
+  "ix_mDiagram": {
+    "message": "Ubah chat ini menjadi diagram"
+  },
+  "ix_mDiagramD": {
+    "message": "Dengan VamimiAI, buatan pembuat TokenLens"
   }
 }

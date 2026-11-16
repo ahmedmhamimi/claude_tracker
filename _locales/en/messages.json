@@ -284,17 +284,6 @@
   "win7d": {
     "message": "7-day limit"
   },
-  "alertText": {
-    "message": "$P1$ is at $P2$%. Pace yourself or plan a break.",
-    "placeholders": {
-      "P1": {
-        "content": "$1"
-      },
-      "P2": {
-        "content": "$2"
-      }
-    }
-  },
   "dMin": {
     "message": "$P1$ min",
     "placeholders": {
@@ -605,9 +594,6 @@
   "featHistory": {
     "message": "Usage history"
   },
-  "featAlerts": {
-    "message": "Limit alerts"
-  },
   "featExport": {
     "message": "Export"
   },
@@ -622,5 +608,164 @@
   },
   "featSnippets": {
     "message": "Snippets"
+  },
+  "vm_label": {
+    "message": "Diagram"
+  },
+  "vm_title": {
+    "message": "Turn this reply into a diagram (opens VamimiAI in a new tab)"
+  },
+  "vm_opened": {
+    "message": "Opened in VamimiAI"
+  },
+  "vm_failed": {
+    "message": "Couldn’t open VamimiAI. Try again"
+  },
+  "vm_prompt": {
+    "message": "Turn this into a clear diagram. Pick the best type (flowchart, timeline, mind map, table, comparison and so on) for the content."
+  },
+  "vm_question": {
+    "message": "The question:"
+  },
+  "vm_answer": {
+    "message": "The answer:"
+  },
+  "vm_trimmed": {
+    "message": "[The rest of this reply was cut to fit.]"
+  },
+  "vm_coach": {
+    "message": "New: turn this reply into a diagram"
+  },
+  "vm_dismiss": {
+    "message": "Dismiss"
+  },
+  "vm_hint": {
+    "message": "Ask Claude something. The {label} button will appear under its reply."
+  },
+  "vm_close": {
+    "message": "Close"
+  },
+  "vm_cta": {
+    "message": "Show me the button"
+  },
+  "vm_visit": {
+    "message": "Or visit vamimi.com"
+  },
+  "vm_badge": {
+    "message": "New from the maker of TokenLens"
+  },
+  "vm_annTitle": {
+    "message": "Meet VamimiAI"
+  },
+  "vm_annSub": {
+    "message": "A website that turns text into diagrams."
+  },
+  "vm_annBody": {
+    "message": "Flowcharts, timelines, mind maps and tables, made from any Claude reply in one click."
+  },
+  "vm_step1": {
+    "message": "Ask Claude anything"
+  },
+  "vm_step2": {
+    "message": "Click {label} under the reply"
+  },
+  "vm_step3": {
+    "message": "VamimiAI opens with the reply ready. Press Send to get your diagram."
+  },
+  "vm_privacy": {
+    "message": "Nothing is sent until you press Send on VamimiAI."
+  },
+  "vm_demo1": {
+    "message": "Reply"
+  },
+  "vm_demo2": {
+    "message": "Step"
+  },
+  "vm_demo3": {
+    "message": "Diagram"
+  },
+  "vm_linkTip": {
+    "message": "Open VamimiAI, which turns text into diagrams (new tab)"
+  },
+  "vm_linkSub": {
+    "message": "Text to diagrams"
+  },
+  "vm_popupSub": {
+    "message": "Turn any Claude reply into a diagram"
+  },
+  "featVamimi": {
+    "message": "Diagram button (VamimiAI)"
+  },
+  "vm_unavailShort": {
+    "message": "Claude isn’t sharing usage numbers for this account"
+  },
+  "vm_unavailTip": {
+    "message": "Claude is not sending usage numbers for this account right now, so TokenLens cannot show your limits. Everything else still works, and the numbers come back on their own if Claude starts sending them again."
+  },
+  "vm_unavailToast": {
+    "message": "Claude isn’t sending usage numbers for this account right now, so TokenLens can’t show your 5-hour and 7-day limits (that’s why they show a dash, not 0%). Everything else works, and the numbers come back on their own."
+  },
+  "vm_unavailPopup": {
+    "message": "TokenLens shows them again as soon as Claude does."
+  },
+  "vm_unlockFree": {
+    "message": "Unlock Pro free"
+  },
+  "vm_unlockFreeTip": {
+    "message": "Opens VamimiAI. Pro unlocks for good once it loads."
+  },
+  "vm_popupSettings": {
+    "message": "Settings: choose what TokenLens shows"
+  },
+  "vm_visitUnlock": {
+    "message": "Or visit vamimi.com and unlock TokenLens Pro free"
+  },
+  "vm_you": {
+    "message": "You"
+  },
+  "vm_chatPrompt": {
+    "message": "Turn this conversation into a clear diagram. Pick the best type (flowchart, timeline, mind map, table, comparison and so on) for what it covers."
+  },
+  "ix_vmUnlockBtn": {
+    "message": "Unlock Pro free with VamimiAI"
+  },
+  "ix_vmUnlockFine": {
+    "message": "Opens VamimiAI, a site that turns text into diagrams, made by the maker of TokenLens. Pro unlocks for good as soon as it loads."
+  },
+  "ix_freeWord": {
+    "message": "Free"
+  },
+  "ix_freeNote": {
+    "message": "forever. No account, no payment."
+  },
+  "ix_unlockFreeBtn": {
+    "message": "Unlock Pro free"
+  },
+  "ix_endedToastFree": {
+    "message": "Your Pro trial has ended.{saved} Keep Pro free, for good, with one visit to VamimiAI."
+  },
+  "ix_freeNowToast": {
+    "message": "Good news: TokenLens Pro is free now. Unlock it for good with one visit to VamimiAI."
+  },
+  "ix_introToastFree": {
+    "message": "TokenLens Pro is on for {t} days: search all your chats, save them all and see your full usage history. After that it stays free with one visit to VamimiAI."
+  },
+  "ix_vmUnlockedTitle": {
+    "message": "TokenLens Pro is unlocked"
+  },
+  "ix_vmUnlockedBody": {
+    "message": "Thanks for checking out VamimiAI. Everything in TokenLens is yours now, for good."
+  },
+  "ix_stVamimi": {
+    "message": "TokenLens Pro is active, unlocked with VamimiAI."
+  },
+  "ix_stKeepFree": {
+    "message": "Keep Pro free"
+  },
+  "ix_mDiagram": {
+    "message": "Turn this chat into a diagram"
+  },
+  "ix_mDiagramD": {
+    "message": "With VamimiAI, by the maker of TokenLens"
   }
 }

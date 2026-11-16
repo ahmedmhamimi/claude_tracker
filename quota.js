@@ -10,6 +10,8 @@
   'use strict';
 
   let _lastSnapKey = '';
+  // "Now" on Anthropic's clock (see network.js noteServerClock).
+  const nowSec = () => Math.floor((Date.now() + (window.CTS.clockSkewMs || 0)) / 1000);
 
   // ─── Stale indicator ─────────────────────────────────────────────────────
   // When the numbers on screen are last-known (offline, flaky link, or a cached
@@ -23,6 +25,12 @@
     [data-ct-stale="1"] .ct-tq-fill,
     [data-ct-stale="1"] .ct-progress-fill,
     [data-ct-stale="1"] [id^="ct-p-"][id$="-fill"] { opacity: .6; }
+    html[data-ct-unavail] [data-ct-stale="1"] .ct-tq-pct::after,
+    html[data-ct-unavail] [data-ct-stale="1"] .ct-bar-pct::after,
+    html[data-ct-unavail] [data-ct-stale="1"] [id^="ct-p-"][id$="-pct"]::after { content: none; }
+    html[data-ct-unavail] #ct-quota .ct-quota-footer { display: none; }
+    .ct-unavail-note { font-family: var(--ct-mono); font-size: 10px; font-weight: 700; line-height: 1.4; color: var(--ct-muted);
+                       white-space: normal; padding: 6px 8px; border: 1px dashed var(--ct-border); border-radius: 8px; cursor: help; }
   `;
 
   function ensureStaleCSS() {
@@ -59,7 +67,71 @@
     applyStaleAttrs();
   }
 
+  // ─── "Claude isn't sharing usage" display ─────────────────────────────────
+  // When network.js has concluded this account gets no usage numbers
+  // (CTS.quotaMode === 'none'), every bar shows a dash instead of a fake 0%,
+  // the sidebar box says why in one short line, and hovering explains more.
+  // Re-applied every tick, so re-injected widgets pick it up too.
+  let _msgs = null;
+  const tr = (k, fb) => {
+    if (!_msgs) { try { _msgs = JSON.parse(document.documentElement.dataset.ctsi18n || '{}'); } catch (_) { _msgs = {}; } }
+    const v = _msgs[k];
+    return v && v !== k ? v : fb;
+  };
+  const UNAVAIL_PCT = ['ct-bar-pct-5h', 'ct-bar-pct-7d', 'ct-tq-pct-5h', 'ct-tq-pct-7d', 'ct-p-5h-pct', 'ct-p-7d-pct'];
+  const UNAVAIL_FILL = ['ct-fill-5h', 'ct-fill-7d', 'ct-tq-fill-5h', 'ct-tq-fill-7d', 'ct-p-5h-fill', 'ct-p-7d-fill'];
+
+  function applyUnavailable() {
+    const on = window.CTS.quotaMode === 'none';
+    const root = document.documentElement;
+    if (on !== root.hasAttribute('data-ct-unavail')) {
+      if (on) root.setAttribute('data-ct-unavail', ''); else root.removeAttribute('data-ct-unavail');
+      if (!on) {
+        // Back to live numbers: repaint from state right away.
+        ['5h', '7d'].forEach(w => window.ClaudeTrackerUI && window.ClaudeTrackerUI.updateQuotaBars(w, w === '5h' ? window.CTS.current5hUtil : window.CTS.current7dUtil, window.CTS.targetTimestamps[w]));
+      }
+    }
+    const box = document.getElementById('ct-quota');
+    let note = box && box.querySelector('.ct-unavail-note');
+    if (!on) { if (note) note.remove(); return; }
+    const tip = tr('vm_unavailTip', 'Claude is not sending usage numbers for this account right now, so TokenLens cannot show your limits. Everything else still works, and the numbers come back on their own if Claude starts sending them again.');
+    UNAVAIL_PCT.forEach(id => { const el = document.getElementById(id); if (el && el.textContent !== '\u2014') el.textContent = '\u2014'; });
+    UNAVAIL_FILL.forEach(id => { const el = document.getElementById(id); if (el && el.style.width !== '0%') el.style.width = '0%'; });
+    ['ct-tr5h', 'ct-tr7d', 'ct-tq-tr-5h', 'ct-tq-tr-7d', 'ct-p-5h-t', 'ct-p-7d-t'].forEach(id => { const el = document.getElementById(id); if (el && el.textContent) el.textContent = ''; });
+    if (box && !note) {
+      note = document.createElement('div');
+      note.className = 'ct-unavail-note';
+      note.textContent = tr('vm_unavailShort', 'Claude isn\u2019t sharing usage numbers for this account');
+      note.setAttribute('data-ct-tip', tip.replace(/\n/g, ' '));
+      box.appendChild(note);
+    }
+    document.querySelectorAll('#ct-toolbar-quota .ct-tq-block, #ct-row .ct-rq').forEach(b => { if (b.getAttribute('data-ct-tip') !== tip) b.setAttribute('data-ct-tip', tip); });
+  }
+
   // ─── Quota Sync ───────────────────────────────────────────────────────────
+
+  // Turn a raw utilization value into a 0..1 fraction.
+  //
+  // scale 'pct'  - /api/organizations/<id>/usage. It ALWAYS reports a
+  //                percentage (0-100): 1.0 means 1%, not 100%.
+  // scale 'frac' - already a 0..1 fraction.
+  // scale 'auto' - the SSE message_limit event, whose scale is not
+  //                documented: >1 is a percentage, <1 a fraction, and
+  //                exactly 1 is ambiguous (1% or 100%) -> null, so the caller
+  //                waits for the /usage reading instead of guessing.
+  //
+  // Guessing the scale from the value used to be done for every source,
+  // and that was the "new session shows 100%" bug: the first message of a
+  // fresh 5h window reads 1.0 (= 1%) on /usage, which was read as 100% and
+  // also tripped isLimitHit, so the bar sat at 100% until usage reached 2-3%.
+  function toFraction(v, scale) {
+    v = Number(v);
+    if (!isFinite(v) || v < 0) return null;
+    if (scale === 'pct') return Math.min(1, v / 100);
+    if (scale === 'frac') return Math.min(1, v);
+    if (v === 1) return null;
+    return Math.min(1, v > 1 ? v / 100 : v);
+  }
 
   function syncQuotaUI(limits) {
     if (!limits) return;
@@ -71,9 +143,12 @@
       const d = limits[win];
       if (!d || d.utilization == null) return;
 
-      let raw = d.utilization;
-      if (raw > 1 && raw <= 100) raw /= 100;
-      raw = Math.max(0, Math.min(1, raw));
+      let raw = toFraction(d.utilization, d.scale || 'auto');
+      if (raw == null) return;
+      // /usage is the authoritative source: a reading below 100% there means
+      // the limit is not hit, whatever an earlier stream event suggested.
+      if (win === '5h' && d.scale === 'pct' && raw < 1) window.CTS.isLimitHit = false;
+      if (win === '5h' && d.scale === 'pct' && raw >= 1) window.CTS.isLimitHit = true;
       // isLimitHit is meant to hold the 5h bar at 100% only up until the real
       // reset time passes — not indefinitely. Cross-checking against the
       // known reset timestamp here means a stuck flag (tab backgrounded
@@ -82,14 +157,16 @@
       // fetch forever: once real time has passed the reset, we trust the
       // freshly-fetched utilization instead of the flag.
       const knownReset5h = window.CTS.targetTimestamps['5h'];
-      if (knownReset5h && knownReset5h <= Math.floor(Date.now() / 1000)) {
+      if (knownReset5h && knownReset5h <= nowSec()) {
         window.CTS.isLimitHit = false;
       }
       if (window.CTS.isLimitHit && win === '5h') raw = 1;
 
       const pct = Math.round(raw * 100);
       let ts = d.resetsAt;
-      if (typeof ts === 'string') ts = Math.floor(Date.parse(ts) / 1000);
+      if (typeof ts === 'string') ts = /^\d+(\.\d+)?$/.test(ts) ? Number(ts) : Math.floor(Date.parse(ts) / 1000);
+      if (typeof ts === 'number' && ts > 1e12) ts = Math.floor(ts / 1000);   // epoch milliseconds
+      if (typeof ts === 'number' && ts > 0 && ts < 1e9) ts = null;           // not a plausible epoch
       if (ts && !isNaN(ts)) window.CTS.targetTimestamps[win] = ts;
 
       if (win === '5h') {
@@ -177,6 +254,7 @@
       _tickStreamingAttr();
       _tickUIHealthCheck();
       applyStaleAttrs();
+      applyUnavailable();
       if (window.CTS_Content) window.CTS_Content.updateInlineStats();
     }, 1000);
   }
@@ -269,14 +347,14 @@
       const toolbarEl = document.getElementById('ct-tq-tr-' + win);
       if (!target) return;
 
-      const diff = target - Math.floor(Date.now() / 1000);
+      const diff = target - nowSec();
 
       if (diff <= 0) {
         // Has a live reading been confirmed since this window rolled over? If
         // so and the API still offers no new reset time, the new window simply
         // hasn't started yet (it starts with the next message) — show a dash
         // rather than claiming to be "refreshing…" forever.
-        const settled = (window.CTS._lastUsageOkAt || 0) > target * 1000;
+        const settled = (window.CTS._lastUsageOkAt || 0) + (window.CTS.clockSkewMs || 0) > target * 1000;
         if (displayEl) displayEl.textContent = settled ? '\u2014' : 'refreshing…';
         if (toolbarEl) toolbarEl.textContent  = '';
 
@@ -367,9 +445,11 @@
 
   window.CTS_Quota = {
     syncQuotaUI,
+    applyUnavailable,
     startCountdownTick,
     setStale,
     resetSnapshot,
+    nowSec,
   };
 
 })();

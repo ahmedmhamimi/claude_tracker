@@ -1,18 +1,18 @@
 /**
  * Group A runtime (ISOLATED): records usage snapshots and per-message cost
- * records, shows threshold alerts, and serves the pace estimate.
+ * records, and serves the pace estimate. TokenLens is a monitor: it shows
+ * where usage stands and never interrupts with warnings (the 80% / 95%
+ * alert toasts were removed in 6.4).
  *
  * - CTS_Recorder.getPace() -> Promise<null|{...}>: current pace projection (null = stay silent). Callers decide whether the plan may show it (feature 'pace').
- * - alertConfig() -> object: alert thresholds for the current plan. Pro (trial or license): 80% and 95% on the 5-hour and 7-day windows. Free: one alert, 95% of the 5-hour window.
- * - store.get(keys) -> Promise<object>: chrome.storage.local read that resolves with the stored values (it used to resolve {} immediately, so fired alerts were forgotten on every page load).
+ * - store.get(keys) -> Promise<object>: chrome.storage.local read that resolves with the stored values.
  * - CTS_Recorder.latest() -> {usage}: most recent reading seen by this tab
  * - CTS_Recorder.fmtMinutes(n) -> string: localized "40 min" / "1 h 20 min"
  *
  * Writes nothing when nothing changed (page-level check here, authoritative
- * check again in the store). Alerts fire once per window per threshold, one
- * at a time, only in a calm moment, as an in-page toast (no notifications permission).
+ * check again in the store).
  *
- * @requires safe.js, features.js, history.js, client.js, ui-kit.js, bridge2.js, license.js
+ * @requires safe.js, features.js, history.js, client.js, ui-kit.js, bridge2.js
  */
 
 (function () {
@@ -20,9 +20,8 @@
 
   const Safe = window.CTS_Safe, F = window.CTS_Features, H = window.CTS_History, UI = window.CTS_UI, Client = window.CTS_Client;
   let usage = null;
-  let firedCache = null;
-  let alertTimer = 0;
   const recordedCosts = new Set();
+  const MAX_COST_KEYS = 500;      // bounded memory on a tab that stays open for days
   let paceCache = { at: 0, snaps: null };
 
   const store = {
@@ -41,34 +40,33 @@
     if (navigator.locks && navigator.locks.request) await navigator.locks.request('cts-recorder', run); else await run();
   }
 
-  // ─── alerts ───────────────────────────────────────────────────────────────
-  async function loadFired() { if (!firedCache) firedCache = (await store.get(['cts_alerts_fired'])).cts_alerts_fired || {}; return firedCache; }
+  // Leftover from the removed alert toasts: forget which ones had fired.
+  Safe.chromeCall('history', () => chrome.storage.local.remove('cts_alerts_fired'));
 
-  // Free plan keeps ONE alert (95% of the 5-hour window); Pro adds 80% and the 7-day window. Thresholds stay user-configurable via settings.
-  function alertConfig() {
-    const cfg = F.getSetting('alerts');
-    if (!window.CTS_License || window.CTS_License.allows('alerts.full')) return cfg;
-    return { w5h: Object.assign({}, cfg && cfg.w5h, { t80: false }), w7d: Object.assign({}, cfg && cfg.w7d, { t80: false, t95: false }) };
+  // ─── "Claude isn't sharing usage" note ──────────────────────────────────────
+  // network.js (MAIN) writes cts_quota_none when a reply finished and neither
+  // the stream nor /usage carried a number. The bars already show dashes;
+  // this says why, once, in a calm moment, at most once a week per account.
+  const TOLD_KEY = 'cts_quota_none_told', WEEK = 7 * 864e5;
+  let unavailPending = false;
+  async function maybeTellUnavailable() {
+    const s = await store.get(['cts_quota_none', TOLD_KEY]);
+    const qn = s.cts_quota_none;
+    if (!qn || !qn.org) { unavailPending = false; return; }
+    const told = s[TOLD_KEY] || {};
+    if (told[qn.org] && Date.now() - told[qn.org] < WEEK) { unavailPending = false; return; }
+    if (document.visibilityState !== 'visible' || !UI.isCalm() || UI.toastVisible()) { unavailPending = true; return; }
+    const shown = UI.toast({
+      text: UI.T('vm_unavailToast') !== 'vm_unavailToast' ? UI.T('vm_unavailToast') : 'Claude isn\u2019t sending usage numbers for this account right now, so TokenLens can\u2019t show your 5-hour and 7-day limits (that\u2019s why they show a dash, not 0%). Everything else works, and the numbers come back on their own.',
+      timeoutMs: 20000,
+    });
+    if (shown) { told[qn.org] = Date.now(); store.set({ [TOLD_KEY]: told }); unavailPending = false; } else unavailPending = true;
   }
-
-  async function evaluateAlerts() {
-    if (!F.isEnabled('alerts') || !usage) return;
-    if (window.CTS_License) await window.CTS_License.ready;       // never judge a Pro buyer by the free rules just because storage was still loading
-    const fired = await loadFired();
-    const { alert, newFired } = H.nextAlert(usage, alertConfig(), fired, Date.now());
-    if (!alert) return;
-    const tryShow = () => {
-      if (!F.isEnabled('alerts')) { alertTimer = 0; return; }
-      if (UI.isCalm() && !UI.toastVisible()) {
-        alertTimer = 0;
-        const win = UI.T(alert.win === '5h' ? 'win5h' : 'win7d');
-        const shown = UI.toast({ text: UI.T('alertText', [win, String(Math.round(alert.util))]), timeoutMs: 15000,
-          actions: [{ label: UI.T('openPanel'), onClick: () => document.dispatchEvent(new CustomEvent('cts2:open-panel')) }] });
-        if (shown) { firedCache = newFired; store.set({ cts_alerts_fired: newFired }); }
-      } else alertTimer = setTimeout(() => Safe.run('alerts', tryShow), 2000);
-    };
-    if (!alertTimer) tryShow();
-  }
+  Safe.chromeCall('history', () => chrome.storage.onChanged.addListener((ch, area) => {
+    if (area === 'local' && ch.cts_quota_none && ch.cts_quota_none.newValue) Safe.run('history', maybeTellUnavailable);
+  }));
+  setInterval(() => { if (unavailPending) Safe.run('history', maybeTellUnavailable); }, 5000);
+  setTimeout(() => Safe.run('history', maybeTellUnavailable), 8000);
 
   // ─── pace ─────────────────────────────────────────────────────────────────
   const fmtMinutes = n => (n < 60 ? UI.T('dMin', [String(n)]) : UI.T('dHrMin', [String(Math.floor(n / 60)), String(n % 60)]));
@@ -83,7 +81,6 @@
   window.CTS_Bus.on('usage', d => Safe.run('history', async () => {
     usage = d;
     if (F.isEnabled('history')) { const snap = H.cleanSnap(d); if (snap) await recordSnapshot(snap); }
-    await Safe.run('alerts', evaluateAlerts);
   }));
 
   // 'analysis' only fires after a reply finished streaming, so each event is one completed message.
@@ -91,9 +88,10 @@
     if (!F.isEnabled('history') || d.quotaDelta5h == null || !d.convId || d.totalTokens == null) return;
     const key = d.convId + ':' + d.msgSeq + ':' + d.assistantCount;
     if (recordedCosts.has(key)) return;
+    if (recordedCosts.size >= MAX_COST_KEYS) recordedCosts.delete(recordedCosts.values().next().value);
     recordedCosts.add(key);
     await Client.call('cost.add', { t: d.t || Date.now(), convId: d.convId, convTokensEst: d.totalTokens, quotaDelta5h: d.quotaDelta5h });
   }));
 
-  window.CTS_Recorder = { getPace, fmtMinutes, latest: () => ({ usage }), alertConfig };
+  window.CTS_Recorder = { getPace, fmtMinutes, latest: () => ({ usage }) };
 })();

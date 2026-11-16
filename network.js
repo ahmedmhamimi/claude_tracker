@@ -76,6 +76,21 @@
     } catch (_) { return {}; }
   }
 
+  // Reset countdowns compare Anthropic's reset timestamps with this computer's
+  // clock. A clock that is a few minutes fast made every window look already
+  // expired (bar zeroed, "refreshing…" forever); a slow one counted past the
+  // real reset. Measure the offset from the server's Date header (1 s
+  // resolution, so only offsets over 30 s are applied) and expose it as
+  // CTS.clockSkewMs; quota.js / content.js count down in server time.
+  function noteServerClock(res) {
+    try {
+      const d = Date.parse(res.headers.get('date') || '');
+      if (!isFinite(d)) return;
+      const skew = d - Date.now();
+      window.CTS.clockSkewMs = Math.abs(skew) > 30000 ? skew : 0;
+    } catch (_) {}
+  }
+
   /**
    * GET + parse JSON with a hard deadline covering BOTH the headers and the
    * body (the abort signal stays attached until the body is fully read).
@@ -90,6 +105,7 @@
         headers: { ...window.CTS.authHeaders },
         signal: ctrl.signal,
       });
+      noteServerClock(res);
       if (res.status !== 200) {
         let retryAfter = 0;
         try {
@@ -128,6 +144,56 @@
   // session) says nothing about the new one.
   let epoch = 0;
   let lastWakeAt = 0;
+
+  // ─── "Claude isn't sharing usage" (6.4) ──────────────────────────────────
+  // Some accounts (seen on free plans) get neither the stream's message_limit
+  // numbers nor a utilization from /usage. Showing 0% there is a lie that
+  // looks like a bug. Modes, per account:
+  //   'unknown' - no evidence yet (before the first message a null window can
+  //               simply mean "no active session", which really is 0%)
+  //   'live'    - a real number arrived from either source
+  //   'none'    - a reply finished and NEITHER source carried a number
+  // 'none' is remembered per org (cts_quota_none) so the next page load shows
+  // "not shared" straight away instead of flashing 0%. Any real number at any
+  // time flips it back to 'live'. While 'none', /usage is polled only every
+  // 5 minutes so a later change on Anthropic's side is still picked up.
+  const NONE_POLL_MS = 5 * 60 * 1000;
+  const isNum = v => typeof v === 'number' && isFinite(v);
+  const hasNumbers = w => !!(w && isNum(w.utilization));
+
+  function setQuotaMode(mode) {
+    const c = window.CTS;
+    if (c.quotaMode === mode) return;
+    const was = c.quotaMode;
+    c.quotaMode = mode;
+    if (mode === 'none') {
+      window.CTS_StorageSet({ cts_quota_none: { org: c.orgId || null, at: Date.now() } });
+    } else if (was === 'none') {
+      window.CTS_StorageSet({ cts_quota_none: null });
+    }
+    try { if (window.CTS_Quota && window.CTS_Quota.applyUnavailable) window.CTS_Quota.applyUnavailable(); } catch (_) {}
+  }
+
+  // A reply finished cleanly: give /usage a moment to settle, then judge.
+  // Judged on every reply, whatever the current mode: Anthropic can stop
+  // sending numbers to an account that used to get them, and a single
+  // reading with numbers from either source flips it straight back.
+  let _evidenceTimer = 0;
+  function judgeAfterReply(streamHadNumbers) {
+    const c = window.CTS;
+    if (streamHadNumbers) { setQuotaMode('live'); return; }
+    clearTimeout(_evidenceTimer);
+    const myEpoch = epoch;
+    _evidenceTimer = setTimeout(async () => {
+      if (myEpoch !== epoch) return;
+      c._lastUsageVerdict = null;               // only this answer counts
+      await triggerUsageFetch({ force: true });
+      if (myEpoch !== epoch) return;
+      // Only an answer that came back and said "no numbers" counts as
+      // evidence; a failed request (offline, timeout) says nothing.
+      if (c._lastUsageVerdict === 'empty') setQuotaMode('none');
+    }, 6000);
+  }
   const QUOTA_KEYS = ['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d'];
 
   // Forget every in-flight / backoff detail of the usage poller. Used when the
@@ -161,6 +227,8 @@
     c.convoCacheMap     = {};
     c.cachedUntilTs     = null;
     c.isLimitHit        = false;
+    c.quotaMode         = 'unknown';
+    c._lastUsageVerdict = null;
     c.lastMsgQuotaDelta = null;
     c.preMessage5hUtil  = null;
     c._pendingSync      = false;
@@ -301,7 +369,7 @@
 
     (async () => {
       let buf = '', first = true, streamT0 = null;
-      let sawStart = false, sawStop = false, outcome = 'done';
+      let sawStart = false, sawStop = false, outcome = 'done', streamHadNumbers = false;
       c.streamOutputChars = 0;
       c.isStreaming       = true;
 
@@ -342,26 +410,25 @@
           c._gotLimitEvent = true;
           const h5  = j.message_limit.windows['5h'];
           const h7d = j.message_limit.windows['7d'];
-          if (h5 && h5.utilization >= 1) c.isLimitHit = true;
+          if (hasNumbers(h5) || hasNumbers(h7d)) streamHadNumbers = true;
+          // Only an explicit "exceeded" status counts as hitting the limit.
+          // utilization >= 1 used to, but on the stream a value of exactly 1
+          // can mean 1% (see quota.js toFraction) - that was what pinned the
+          // 5h bar at 100% at the start of every new session.
+          const st = String(j.message_limit.type || (h5 && (h5.status || h5.type)) || '');
+          if (/exceeded/i.test(st)) c.isLimitHit = true;
 
-          // 7d guard: utilization===1 from SSE is a transient count artifact that
-          // spikes the bar to 100%. Real fractional updates (0–<1) are passed through.
-          // triggerUsageFetch confirms any genuine 100% state independently.
-          let safe7d = null;
-          if (h7d) {
-            let raw7d = h7d.utilization;
-            if (raw7d > 1 && raw7d <= 100) raw7d /= 100;
-            if (raw7d < 1) safe7d = { utilization: h7d.utilization, resetsAt: h7d.resets_at };
-            if (h7d.resets_at) {
-              const ts7 = Math.floor(Date.parse(h7d.resets_at) / 1000);
-              if (!isNaN(ts7)) c.targetTimestamps['7d'] = ts7;
-            }
-          }
-
-          window.CTS_Quota.syncQuotaUI({
-            '5h': h5 ? { utilization: c.isLimitHit ? 100 : h5.utilization, resetsAt: h5.resets_at } : null,
-            '7d': safe7d,
-          });
+          const sseWin = w => w ? {
+            utilization: c.isLimitHit && w === h5 ? 100 : w.utilization,
+            scale: c.isLimitHit && w === h5 ? 'pct' : 'auto',
+            resetsAt: w.resets_at,
+          } : null;
+          window.CTS_Quota.syncQuotaUI({ '5h': sseWin(h5), '7d': sseWin(h7d) });
+          // The stream's reading is a hint; confirm it from /usage straight away.
+          scheduleReconcile();
+          // If the stream's 5h value was ambiguous it was skipped above, so
+          // let the confirmed /usage reading settle this turn's cost too.
+          c._deltaPending = true;
 
           // Per-message quota usage from the real API-reported utilization.
           if (h5 && c.preMessage5hUtil != null) {
@@ -427,6 +494,7 @@
         // Quota first: this is the thing that must never be lost. The server
         // counts a message even if our connection dropped mid-reply.
         endRequest();
+        if (!interrupted && sawStart) judgeAfterReply(streamHadNumbers);
 
         // Optional extras run after, and are skipped when they'd only compete
         // with a struggling connection.
@@ -444,24 +512,25 @@
   // ─── Usage Poller ─────────────────────────────────────────────────────────
 
   function applyUsage(data) {
-    const pick = o => o ? { utilization: o.utilization, resetsAt: o.resets_at || o.resetsAt } : null;
-    // 7d.utilization from this endpoint can return a count-based artifact of
-    // exactly 1 (100%) that doesn't reflect real usage — the same artifact the
-    // SSE message_limit handler guards against. Apply the identical filter.
-    const d7 = data.seven_day;
-    let safe7d = null;
-    if (d7) {
-      let raw7d = d7.utilization;
-      if (raw7d > 1 && raw7d <= 100) raw7d /= 100;
-      if (raw7d != null && raw7d < 1) safe7d = { utilization: d7.utilization, resetsAt: d7.resets_at };
-      // Always take the API's resets_at when present, so the countdown target
-      // can advance past a rollover.
-      if (d7.resets_at) {
-        const ts7 = Math.floor(Date.parse(d7.resets_at) / 1000);
-        if (!isNaN(ts7)) window.CTS.targetTimestamps['7d'] = ts7;
-      }
-    }
-    window.CTS_Quota.syncQuotaUI({ '5h': pick(data.five_hour), '7d': safe7d });
+    const c = window.CTS;
+    const got = !!data && (hasNumbers(data.five_hour) || hasNumbers(data.seven_day));
+    c._lastUsageVerdict = got ? 'numbers' : 'empty';
+    if (got) setQuotaMode('live');
+    // Nothing to show and Claude has (so far) never shared a number with this
+    // account: don't paint a confident 0%.
+    if (!got && c.quotaMode === 'none') { window.CTS.dataReady = true; if (window.ClaudeTrackerUI) window.ClaudeTrackerUI.markReady(); return; }
+    // This endpoint always reports utilization as a percentage (0-100), so
+    // 1.0 is 1%. (The old "exactly 1 is an artifact" filter on 7d was the
+    // same misreading as the 5h new-session bug, and hid real 1% readings.)
+    const pick = o => o ? { utilization: o.utilization, scale: 'pct', resetsAt: o.resets_at || o.resetsAt } : null;
+    // A window with no active session yet comes back as null / no utilization:
+    // that is 0%, not "unknown".
+    const five = data.five_hour && data.five_hour.utilization != null
+      ? pick(data.five_hour)
+      : (data.five_hour === null || (data.five_hour && data.five_hour.utilization == null)
+          ? { utilization: 0, scale: 'pct', resetsAt: data.five_hour ? data.five_hour.resets_at : null }
+          : null);
+    window.CTS_Quota.syncQuotaUI({ '5h': five, '7d': pick(data.seven_day) });
   }
 
   async function triggerUsageFetch(opts) {
@@ -484,8 +553,12 @@
       if (now - US.lastTry < 1500) return false;
       // While failing, the backoff timer owns retries — don't pile on.
       if (US.failures > 0) return false;
-      // Healthy: poll gently (much gentler on slow / low-end setups).
-      if (US.lastOk && now - US.lastOk < (isLite() ? 20000 : 5000)) return false;
+      // Healthy: poll gently. Usage only moves when a message is sent (each
+      // one triggers its own forced reconcile) or from another device, so a
+      // background poll every 30 s (60 s on slow / low-end setups) is plenty.
+      // It used to be every 5 s in every open tab.
+      const every = c.quotaMode === 'none' ? NONE_POLL_MS : (isLite() ? 60000 : 30000);
+      if (US.lastOk && now - US.lastOk < every) return false;
     }
 
     if (isOffline()) {
@@ -511,6 +584,7 @@
     let ok = false;
     if (r.ok && r.data) {
       try { applyUsage(r.data); ok = true; } catch (_) { ok = false; }
+      if (ok) shareReading(r.data);
     }
 
     if (ok) {
@@ -521,7 +595,16 @@
       if (US.timer) { clearTimeout(US.timer); US.timer = null; }
       setStaleSafe(false);
       afterUsageSuccess();
+    } else if (r.status === 404 || (r.status === 403 && c.quotaMode !== 'live' && (c._lastUsageVerdict === 'empty' || c._lastUsageVerdict === 'denied'))) {
+      // The endpoint is not offered to this account (or refuses it while the
+      // rest of the API works). That is an answer, not an outage: no backoff
+      // storm, no stale marker, just the slow "not shared" poll.
+      c._lastUsageVerdict = 'empty';
+      US.failures = 0;
+      US.lastOk = Date.now();
+      if (c.quotaMode === 'unknown' && r.status === 404) setQuotaMode('none');
     } else {
+      if (r.status === 403) c._lastUsageVerdict = c._lastUsageVerdict || 'denied';
       US.failures++;
       if (r.status === 401 || r.status === 403) US.authFails++; else US.authFails = 0;
       markStale(r.status ? 'http' : 'net');
@@ -534,6 +617,29 @@
     }
     return ok;
   }
+
+  // ─── One reading for every tab ───────────────────────────────────────────
+  // Every open claude.ai tab used to poll /usage on its own. A fresh reading
+  // is now broadcast to the other tabs of the same account, which apply it
+  // and count it as their own poll, so N open tabs cost about one tab's
+  // requests. (BroadcastChannel is same-origin only: claude.ai tabs.)
+  let _bc = null;
+  try { _bc = typeof BroadcastChannel === 'function' ? new BroadcastChannel('cts-usage-v1') : null; } catch (_) { _bc = null; }
+  function shareReading(data) {
+    if (!_bc || !window.CTS.orgId) return;
+    try { _bc.postMessage({ org: window.CTS.orgId, at: Date.now(), five_hour: data.five_hour || null, seven_day: data.seven_day || null }); } catch (_) {}
+  }
+  if (_bc) _bc.onmessage = ev => {
+    try {
+      const m = ev && ev.data, c = window.CTS;
+      if (!m || !c.orgId || m.org !== c.orgId || typeof m.at !== 'number' || Date.now() - m.at > 15000) return;
+      if (c.probeInFlight) return;                       // our own answer is on its way
+      applyUsage({ five_hour: m.five_hour, seven_day: m.seven_day });
+      US.failures = 0; US.lastOk = Date.now(); c._lastUsageOkAt = US.lastOk;
+      setStaleSafe(false);
+      afterUsageSuccess();
+    } catch (_) {}
+  };
 
   // ─── Wake-up hooks: retry the instant conditions improve ─────────────────
 
@@ -656,6 +762,10 @@
       c.orgId = m[1];
       c._orgProvisional = false;
       if (wasProvisional) { US.failures = 0; US.authFails = 0; }
+      // The UI usually appears before the org id is known, and the chat-list
+      // fetch it starts then silently no-ops: sidebar dates used to wait for
+      // the 60 s timer. Fetch once now that we can.
+      setTimeout(() => { if (!window.CTS.lastConvoListFetch) fetchConversationList(); }, 1200);
     }
 
     if (!Object.keys(c.authHeaders).length) {
@@ -691,6 +801,7 @@
           c.current7dUtil = 0;
           c.targetTimestamps = { '5h': null, '7d': null };
           c.isLimitHit = false;
+          c.quotaMode = 'unknown';
           c.cacheReady = false;
           QUOTA_KEYS.forEach(k => {
             try { sessionStorage.removeItem(k); } catch (_) {}
