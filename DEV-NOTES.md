@@ -51,3 +51,28 @@ One-time $29 license sold on Gumroad. No server: the service worker talks to Gum
 
 ## Layout guard (ui.js)
 The usage widgets carry a flex-shrink/min-width guard so that opening an artifact or code panel (which narrows the claude.ai layout) cannot squeeze the bars or labels.
+
+## 6.3: usage-scale fix, VamimiAI, premium bars
+
+**The "new session shows 100%" bug (fixed).** `/api/organizations/<id>/usage` reports `utilization` as a
+percentage (0-100), but every reading was scale-guessed (`>1` = percent, `<=1` = fraction). The first
+message of a fresh 5h window reads `1.0` (= 1%), which became 100% and also set `isLimitHit`, so the bar sat
+at 100% until usage reached 2-3%. The same misreading was behind the old "7d exactly-1 artifact" filter,
+which silently dropped real 1% readings. Now (`quota.js toFraction`):
+- `/usage` readings are always percent (`scale: 'pct'`) and are authoritative: they set and clear `isLimitHit`.
+- The SSE `message_limit` event is `scale: 'auto'`; an exactly-1 value there is ambiguous and is skipped,
+  and every SSE reading schedules a `/usage` reconcile. `isLimitHit` from the stream needs an explicit
+  `exceeded*` status.
+
+**VamimiAI (`vamimi.js`, ISOLATED, before boot.js).** Diagram button in assistant action bars (feature id
+`vamimi`, on by default), one-time "Meet VamimiAI" announcement (claimed in background.js `vmClaim`:
+updates from < 6.3 at the next calm moment, fresh installs after 3 days of use, never within a day of
+another prompt), spotlight on the button for up to 3 page loads, a permanent sidebar link and a popup link.
+All links carry `utm_source=tokenlens&utm_medium=extension&utm_campaign=<surface>`. Text travels in the URL
+fragment as `#prefill=z.<base64url(deflate-raw)>` (or `t.<uri>`), the format VamimiAI's prefill.js reads.
+background.js opens only `https://www.vamimi.com` URLs.
+QA: `chrome.storage.local.set({ cts_vm_preview: true })` shows the announcement on the next page load;
+reset with `chrome.storage.local.remove(['cts_vm_ann', 'cts_vm_spot'])`.
+
+**Premium layer (`ui.js PREMIUM_CSS`).** Bars carry `data-ct-level` (ok / warn >= 75% / crit >= 90%) and
+change colour; tabular figures; hairline badges and chips; warmer light-mode text colours.

@@ -73,8 +73,8 @@ window.ClaudeTrackerUI = (function () {
   const LIGHT_THEME_CSS = `
   :root {
     --ct-border: rgba(0, 0, 0, 0.10);
-    --ct-text: #000000;
-    --ct-muted: #555555;
+    --ct-text: #1F1E1D;
+    --ct-muted: #66645C;
     --ct-accent: #d97706;
     --ct-green: #15803d;
     --ct-orange: #d97706;
@@ -86,6 +86,62 @@ window.ClaudeTrackerUI = (function () {
     --ct-mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
     --ct-ghost-bg: rgba(255, 255, 255, 0.92);
     --ct-accent-rgb: 217, 119, 6;
+  }
+  `;
+
+
+  // ─── Premium layer (6.3) ─────────────────────────────────────────────────
+  // Appended after STRUCTURAL_CSS so it refines rather than rewrites it:
+  //  - bars change colour with the level (data-ct-level, set in
+  //    updateQuotaBars / content.js paintQuotaPill): calm accent, amber from
+  //    75%, red from 90%, each a soft gradient with a light top edge;
+  //  - numbers use tabular figures so they never jitter while counting;
+  //  - 1px hairline badges and chips instead of 2px outlines;
+  //  - a quieter, deeper shadow on the floating card.
+  const PREMIUM_CSS = `
+  :root { --ct-warn: #E0A030; --ct-crit: #E5484D; }
+  #ct-quota, #ct-toolbar-quota, #ct-row, .ct-chips { font-variant-numeric: tabular-nums; }
+
+  .ct-progress-bg, .ct-tq-bar, .ct-rq-bar {
+    background: var(--ct-bg-progress);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.08);
+  }
+  .ct-progress-fill, .ct-tq-fill, .ct-rq-fill {
+    position: relative;
+    background-color: var(--ct-accent) !important;
+    background-image: linear-gradient(90deg, rgba(255,255,255,.0), rgba(255,255,255,.22)),
+                      linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 60%) !important;
+    transition: width .6s cubic-bezier(.22,.8,.24,1), background-color .4s ease !important;
+  }
+  [data-ct-level="warn"] { background-color: var(--ct-warn) !important; }
+  [data-ct-level="crit"] { background-color: var(--ct-crit) !important; }
+  .ct-progress-fill[data-ct-level="crit"], .ct-tq-fill[data-ct-level="crit"], .ct-rq-fill[data-ct-level="crit"] {
+    box-shadow: 0 0 10px rgba(229,72,77,.45);
+  }
+  .ct-progress-bg { height: 7px; border-radius: 99px; }
+  .ct-progress-fill, .ct-tq-fill, .ct-rq-fill { border-radius: 99px; }
+  .ct-bar-pct { color: var(--ct-text); }
+
+  #ct-quota .ct-quota-header { letter-spacing: .01em; }
+  #ct-quota { gap: 13px; }
+
+  #ct-peak, #ct-cache { border-width: 1px; padding: 4px 10px; letter-spacing: .06em; }
+  #ct-peak.peak    { background: rgba(229,72,77,.10); border-color: rgba(229,72,77,.45); }
+  #ct-peak.offpeak { background: rgba(74,222,128,.09); border-color: rgba(74,222,128,.40); }
+  #ct-cache.cached { background: rgba(192,132,252,.10); border-color: rgba(192,132,252,.45); }
+
+  .ct-chip { border-width: 1px; border-radius: 999px; }
+
+  #ct-toolbar-quota {
+    border-radius: 16px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 16px 40px -14px rgba(0,0,0,.30), 0 2px 6px rgba(0,0,0,.06);
+  }
+  #ct-toolbar-quota:hover {
+    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 22px 50px -16px rgba(0,0,0,.36), 0 3px 8px rgba(0,0,0,.08);
+  }
+  .ct-tq-pct { min-width: 30px; }
+  @media (prefers-reduced-motion: reduce) {
+    .ct-progress-fill, .ct-tq-fill, .ct-rq-fill { transition: none !important; }
   }
   `;
 
@@ -715,7 +771,7 @@ window.ClaudeTrackerUI = (function () {
       }
 
       const isDark = hasDarkClass || isDarkByColor;
-      styleTag.textContent = (isDark ? DARK_THEME_CSS : LIGHT_THEME_CSS) + STRUCTURAL_CSS;
+      styleTag.textContent = (isDark ? DARK_THEME_CSS : LIGHT_THEME_CSS) + STRUCTURAL_CSS + PREMIUM_CSS;
     }
 
     // ─── Public API ───────────────────────────────────────────────────────────
@@ -1626,12 +1682,13 @@ window.ClaudeTrackerUI = (function () {
         if (pct > 0) document.querySelectorAll('[data-ct-loading]').forEach(el => el.removeAttribute('data-ct-loading'));
         const fillEl = document.getElementById(`ct-fill-${win}`);
         const barPct = document.getElementById(`ct-bar-pct-${win}`);
-        if (fillEl) fillEl.style.width = pct + '%';
+        const level = pct >= 90 ? 'crit' : pct >= 75 ? 'warn' : 'ok';
+        if (fillEl) { fillEl.style.width = pct + '%'; fillEl.setAttribute('data-ct-level', level); }
         if (barPct) barPct.textContent  = pct + '%';
 
         const tFill = document.getElementById(`ct-tq-fill-${win}`);
         const tPct  = document.getElementById(`ct-tq-pct-${win}`);
-        if (tFill) tFill.style.width = pct + '%';
+        if (tFill) { tFill.style.width = pct + '%'; tFill.setAttribute('data-ct-level', level); }
         if (tPct)  tPct.textContent  = pct + '%';
       },
 

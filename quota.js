@@ -61,6 +61,29 @@
 
   // ─── Quota Sync ───────────────────────────────────────────────────────────
 
+  // Turn a raw utilization value into a 0..1 fraction.
+  //
+  // scale 'pct'  - /api/organizations/<id>/usage. It ALWAYS reports a
+  //                percentage (0-100): 1.0 means 1%, not 100%.
+  // scale 'frac' - already a 0..1 fraction.
+  // scale 'auto' - the SSE message_limit event, whose scale is not
+  //                documented: >1 is a percentage, <1 a fraction, and
+  //                exactly 1 is ambiguous (1% or 100%) -> null, so the caller
+  //                waits for the /usage reading instead of guessing.
+  //
+  // Guessing the scale from the value used to be done for every source,
+  // and that was the "new session shows 100%" bug: the first message of a
+  // fresh 5h window reads 1.0 (= 1%) on /usage, which was read as 100% and
+  // also tripped isLimitHit, so the bar sat at 100% until usage reached 2-3%.
+  function toFraction(v, scale) {
+    v = Number(v);
+    if (!isFinite(v) || v < 0) return null;
+    if (scale === 'pct') return Math.min(1, v / 100);
+    if (scale === 'frac') return Math.min(1, v);
+    if (v === 1) return null;
+    return Math.min(1, v > 1 ? v / 100 : v);
+  }
+
   function syncQuotaUI(limits) {
     if (!limits) return;
     // A real reading has arrived: stop showing the loading state, even if the
@@ -71,9 +94,12 @@
       const d = limits[win];
       if (!d || d.utilization == null) return;
 
-      let raw = d.utilization;
-      if (raw > 1 && raw <= 100) raw /= 100;
-      raw = Math.max(0, Math.min(1, raw));
+      let raw = toFraction(d.utilization, d.scale || 'auto');
+      if (raw == null) return;
+      // /usage is the authoritative source: a reading below 100% there means
+      // the limit is not hit, whatever an earlier stream event suggested.
+      if (win === '5h' && d.scale === 'pct' && raw < 1) window.CTS.isLimitHit = false;
+      if (win === '5h' && d.scale === 'pct' && raw >= 1) window.CTS.isLimitHit = true;
       // isLimitHit is meant to hold the 5h bar at 100% only up until the real
       // reset time passes — not indefinitely. Cross-checking against the
       // known reset timestamp here means a stuck flag (tab backgrounded

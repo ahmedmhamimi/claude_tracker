@@ -213,5 +213,92 @@
   },
   "fbThanksBody": {
     "message": "O formulário abriu em uma nova aba. Uma pessoa de verdade lê cada resposta."
+  },
+  "vm_label": {
+    "message": "Diagrama"
+  },
+  "vm_title": {
+    "message": "Transformar esta resposta em um diagrama (abre o VamimiAI em uma nova aba)"
+  },
+  "vm_opened": {
+    "message": "Aberto no VamimiAI"
+  },
+  "vm_failed": {
+    "message": "Não foi possível abrir o VamimiAI. Tente de novo"
+  },
+  "vm_prompt": {
+    "message": "Transforme isto em um diagrama claro. Escolha o tipo que melhor se encaixa (fluxograma, linha do tempo, mapa mental, tabela, comparação etc.)."
+  },
+  "vm_question": {
+    "message": "A pergunta:"
+  },
+  "vm_answer": {
+    "message": "A resposta:"
+  },
+  "vm_trimmed": {
+    "message": "[O restante desta resposta foi cortado para caber.]"
+  },
+  "vm_coach": {
+    "message": "Novo: transforme esta resposta em um diagrama"
+  },
+  "vm_dismiss": {
+    "message": "Fechar"
+  },
+  "vm_hint": {
+    "message": "Pergunte algo ao Claude. O botão {label} vai aparecer embaixo da resposta."
+  },
+  "vm_close": {
+    "message": "Fechar"
+  },
+  "vm_cta": {
+    "message": "Mostre o botão"
+  },
+  "vm_visit": {
+    "message": "Ou acesse vamimi.com"
+  },
+  "vm_badge": {
+    "message": "Novidade do criador do TokenLens"
+  },
+  "vm_annTitle": {
+    "message": "Conheça o VamimiAI"
+  },
+  "vm_annSub": {
+    "message": "Um site que transforma texto em diagramas."
+  },
+  "vm_annBody": {
+    "message": "Fluxogramas, linhas do tempo, mapas mentais e tabelas a partir de qualquer resposta do Claude, com um clique."
+  },
+  "vm_step1": {
+    "message": "Pergunte qualquer coisa ao Claude"
+  },
+  "vm_step2": {
+    "message": "Clique em {label} embaixo da resposta"
+  },
+  "vm_step3": {
+    "message": "O VamimiAI abre com a resposta pronta. Toque em Enviar para receber seu diagrama."
+  },
+  "vm_privacy": {
+    "message": "Nada é enviado até você tocar em Enviar no VamimiAI."
+  },
+  "vm_demo1": {
+    "message": "Resposta"
+  },
+  "vm_demo2": {
+    "message": "Etapa"
+  },
+  "vm_demo3": {
+    "message": "Diagrama"
+  },
+  "vm_linkTip": {
+    "message": "Abrir o VamimiAI, que transforma texto em diagramas (nova aba)"
+  },
+  "vm_linkSub": {
+    "message": "De texto para diagramas"
+  },
+  "vm_popupSub": {
+    "message": "Transforme qualquer resposta do Claude em um diagrama"
+  },
+  "featVamimi": {
+    "message": "Botão Diagrama (VamimiAI)"
   }
 }

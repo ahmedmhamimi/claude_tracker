@@ -342,26 +342,24 @@
           c._gotLimitEvent = true;
           const h5  = j.message_limit.windows['5h'];
           const h7d = j.message_limit.windows['7d'];
-          if (h5 && h5.utilization >= 1) c.isLimitHit = true;
+          // Only an explicit "exceeded" status counts as hitting the limit.
+          // utilization >= 1 used to, but on the stream a value of exactly 1
+          // can mean 1% (see quota.js toFraction) - that was what pinned the
+          // 5h bar at 100% at the start of every new session.
+          const st = String(j.message_limit.type || (h5 && (h5.status || h5.type)) || '');
+          if (/exceeded/i.test(st)) c.isLimitHit = true;
 
-          // 7d guard: utilization===1 from SSE is a transient count artifact that
-          // spikes the bar to 100%. Real fractional updates (0–<1) are passed through.
-          // triggerUsageFetch confirms any genuine 100% state independently.
-          let safe7d = null;
-          if (h7d) {
-            let raw7d = h7d.utilization;
-            if (raw7d > 1 && raw7d <= 100) raw7d /= 100;
-            if (raw7d < 1) safe7d = { utilization: h7d.utilization, resetsAt: h7d.resets_at };
-            if (h7d.resets_at) {
-              const ts7 = Math.floor(Date.parse(h7d.resets_at) / 1000);
-              if (!isNaN(ts7)) c.targetTimestamps['7d'] = ts7;
-            }
-          }
-
-          window.CTS_Quota.syncQuotaUI({
-            '5h': h5 ? { utilization: c.isLimitHit ? 100 : h5.utilization, resetsAt: h5.resets_at } : null,
-            '7d': safe7d,
-          });
+          const sseWin = w => w ? {
+            utilization: c.isLimitHit && w === h5 ? 100 : w.utilization,
+            scale: c.isLimitHit && w === h5 ? 'pct' : 'auto',
+            resetsAt: w.resets_at,
+          } : null;
+          window.CTS_Quota.syncQuotaUI({ '5h': sseWin(h5), '7d': sseWin(h7d) });
+          // The stream's reading is a hint; confirm it from /usage straight away.
+          scheduleReconcile();
+          // If the stream's 5h value was ambiguous it was skipped above, so
+          // let the confirmed /usage reading settle this turn's cost too.
+          c._deltaPending = true;
 
           // Per-message quota usage from the real API-reported utilization.
           if (h5 && c.preMessage5hUtil != null) {
@@ -444,24 +442,18 @@
   // ─── Usage Poller ─────────────────────────────────────────────────────────
 
   function applyUsage(data) {
-    const pick = o => o ? { utilization: o.utilization, resetsAt: o.resets_at || o.resetsAt } : null;
-    // 7d.utilization from this endpoint can return a count-based artifact of
-    // exactly 1 (100%) that doesn't reflect real usage — the same artifact the
-    // SSE message_limit handler guards against. Apply the identical filter.
-    const d7 = data.seven_day;
-    let safe7d = null;
-    if (d7) {
-      let raw7d = d7.utilization;
-      if (raw7d > 1 && raw7d <= 100) raw7d /= 100;
-      if (raw7d != null && raw7d < 1) safe7d = { utilization: d7.utilization, resetsAt: d7.resets_at };
-      // Always take the API's resets_at when present, so the countdown target
-      // can advance past a rollover.
-      if (d7.resets_at) {
-        const ts7 = Math.floor(Date.parse(d7.resets_at) / 1000);
-        if (!isNaN(ts7)) window.CTS.targetTimestamps['7d'] = ts7;
-      }
-    }
-    window.CTS_Quota.syncQuotaUI({ '5h': pick(data.five_hour), '7d': safe7d });
+    // This endpoint always reports utilization as a percentage (0-100), so
+    // 1.0 is 1%. (The old "exactly 1 is an artifact" filter on 7d was the
+    // same misreading as the 5h new-session bug, and hid real 1% readings.)
+    const pick = o => o ? { utilization: o.utilization, scale: 'pct', resetsAt: o.resets_at || o.resetsAt } : null;
+    // A window with no active session yet comes back as null / no utilization:
+    // that is 0%, not "unknown".
+    const five = data.five_hour && data.five_hour.utilization != null
+      ? pick(data.five_hour)
+      : (data.five_hour === null || (data.five_hour && data.five_hour.utilization == null)
+          ? { utilization: 0, scale: 'pct', resetsAt: data.five_hour ? data.five_hour.resets_at : null }
+          : null);
+    window.CTS_Quota.syncQuotaUI({ '5h': five, '7d': pick(data.seven_day) });
   }
 
   async function triggerUsageFetch(opts) {

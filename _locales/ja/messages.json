@@ -213,5 +213,92 @@
   },
   "fbThanksBody": {
     "message": "フォームを新しいタブで開きました。回答は一件ずつ人が読んでいます。"
+  },
+  "vm_label": {
+    "message": "図解"
+  },
+  "vm_title": {
+    "message": "この返信を図にする（新しいタブで VamimiAI を開きます）"
+  },
+  "vm_opened": {
+    "message": "VamimiAI で開きました"
+  },
+  "vm_failed": {
+    "message": "VamimiAI を開けませんでした。もう一度お試しください"
+  },
+  "vm_prompt": {
+    "message": "これをわかりやすい図にしてください。内容に最も合う形式（フローチャート、タイムライン、マインドマップ、表、比較など）を選んでください。"
+  },
+  "vm_question": {
+    "message": "質問："
+  },
+  "vm_answer": {
+    "message": "回答："
+  },
+  "vm_trimmed": {
+    "message": "[この返信の残りは長すぎるため省略しました。]"
+  },
+  "vm_coach": {
+    "message": "新機能：この返信を図にできます"
+  },
+  "vm_dismiss": {
+    "message": "閉じる"
+  },
+  "vm_hint": {
+    "message": "Claude に何か質問してください。返信の下に {label} ボタンが表示されます。"
+  },
+  "vm_close": {
+    "message": "閉じる"
+  },
+  "vm_cta": {
+    "message": "ボタンを見る"
+  },
+  "vm_visit": {
+    "message": "vamimi.com を開く"
+  },
+  "vm_badge": {
+    "message": "TokenLens の開発者による新サービス"
+  },
+  "vm_annTitle": {
+    "message": "VamimiAI のご紹介"
+  },
+  "vm_annSub": {
+    "message": "テキストを図に変えるウェブサイトです。"
+  },
+  "vm_annBody": {
+    "message": "フローチャート、タイムライン、マインドマップ、表を、Claude のどの返信からでもワンクリックで。"
+  },
+  "vm_step1": {
+    "message": "Claude に何でも質問する"
+  },
+  "vm_step2": {
+    "message": "返信の下の {label} をクリック"
+  },
+  "vm_step3": {
+    "message": "返信が入力された状態で VamimiAI が開きます。送信を押せば図が完成します。"
+  },
+  "vm_privacy": {
+    "message": "VamimiAI で送信を押すまで、何も送信されません。"
+  },
+  "vm_demo1": {
+    "message": "返信"
+  },
+  "vm_demo2": {
+    "message": "ステップ"
+  },
+  "vm_demo3": {
+    "message": "図"
+  },
+  "vm_linkTip": {
+    "message": "テキストを図に変える VamimiAI を開く（新しいタブ）"
+  },
+  "vm_linkSub": {
+    "message": "テキストを図に"
+  },
+  "vm_popupSub": {
+    "message": "Claude の返信を図に変える"
+  },
+  "featVamimi": {
+    "message": "図解ボタン（VamimiAI）"
   }
 }

@@ -67,6 +67,7 @@
     const pct = expired ? 0 : Math.max(0, Math.min(100, Math.round(util || 0)));
 
     fill.style.width = pct + '%';
+    fill.setAttribute('data-ct-level', pct >= 90 ? 'crit' : pct >= 75 ? 'warn' : 'ok');
     pctEl.textContent = pct + '%';
     reset.textContent = !expired && ts ? tr('quotaResetsIn') + ' ' + formatSpan(ts - now) : '';
     box.classList.toggle('danger', pct >= 85);

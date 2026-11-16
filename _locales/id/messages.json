@@ -213,5 +213,92 @@
   },
   "fbThanksBody": {
     "message": "Formulirnya terbuka di tab baru. Setiap jawaban dibaca oleh orang sungguhan."
+  },
+  "vm_label": {
+    "message": "Diagram"
+  },
+  "vm_title": {
+    "message": "Ubah balasan ini menjadi diagram (membuka VamimiAI di tab baru)"
+  },
+  "vm_opened": {
+    "message": "Dibuka di VamimiAI"
+  },
+  "vm_failed": {
+    "message": "Tidak bisa membuka VamimiAI. Coba lagi"
+  },
+  "vm_prompt": {
+    "message": "Ubah ini menjadi diagram yang jelas. Pilih jenis yang paling cocok (diagram alir, linimasa, peta pikiran, tabel, perbandingan, dan lainnya)."
+  },
+  "vm_question": {
+    "message": "Pertanyaannya:"
+  },
+  "vm_answer": {
+    "message": "Jawabannya:"
+  },
+  "vm_trimmed": {
+    "message": "[Sisa balasan ini dipotong agar muat.]"
+  },
+  "vm_coach": {
+    "message": "Baru: ubah balasan ini menjadi diagram"
+  },
+  "vm_dismiss": {
+    "message": "Tutup"
+  },
+  "vm_hint": {
+    "message": "Tanyakan sesuatu ke Claude. Tombol {label} akan muncul di bawah balasannya."
+  },
+  "vm_close": {
+    "message": "Tutup"
+  },
+  "vm_cta": {
+    "message": "Tunjukkan tombolnya"
+  },
+  "vm_visit": {
+    "message": "Atau kunjungi vamimi.com"
+  },
+  "vm_badge": {
+    "message": "Baru dari pembuat TokenLens"
+  },
+  "vm_annTitle": {
+    "message": "Kenalan dengan VamimiAI"
+  },
+  "vm_annSub": {
+    "message": "Situs web yang mengubah teks menjadi diagram."
+  },
+  "vm_annBody": {
+    "message": "Diagram alir, linimasa, peta pikiran, dan tabel dari balasan Claude mana pun, dengan satu klik."
+  },
+  "vm_step1": {
+    "message": "Tanyakan apa saja ke Claude"
+  },
+  "vm_step2": {
+    "message": "Klik {label} di bawah balasan"
+  },
+  "vm_step3": {
+    "message": "VamimiAI terbuka dengan balasan siap. Tekan Kirim untuk mendapatkan diagram."
+  },
+  "vm_privacy": {
+    "message": "Tidak ada yang dikirim sampai Anda menekan Kirim di VamimiAI."
+  },
+  "vm_demo1": {
+    "message": "Balasan"
+  },
+  "vm_demo2": {
+    "message": "Langkah"
+  },
+  "vm_demo3": {
+    "message": "Diagram"
+  },
+  "vm_linkTip": {
+    "message": "Buka VamimiAI, yang mengubah teks menjadi diagram (tab baru)"
+  },
+  "vm_linkSub": {
+    "message": "Teks ke diagram"
+  },
+  "vm_popupSub": {
+    "message": "Ubah balasan Claude mana pun menjadi diagram"
+  },
+  "featVamimi": {
+    "message": "Tombol Diagram (VamimiAI)"
   }
 }

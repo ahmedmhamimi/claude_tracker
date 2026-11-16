@@ -25,6 +25,7 @@
     { id: 'handoff',  labelKey: 'featHandoff',  defaultEnabled: true  },
     { id: 'library',  labelKey: 'featLibrary',  defaultEnabled: true  },
     { id: 'themes',   labelKey: 'featThemes',   defaultEnabled: true  },
+    { id: 'vamimi',   labelKey: 'featVamimi',   defaultEnabled: true  },
     { id: 'snippets', labelKey: 'featSnippets', defaultEnabled: false },
   ];
 

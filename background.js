@@ -57,6 +57,7 @@ chrome.runtime.onInstalled.addListener(details => {
   if (details.reason === 'update') {
     flagWhatsNew().catch(() => {});
     flagFeedback().catch(() => {});
+    flagVamimi(details.previousVersion).catch(() => {});
     return;
   }
   if (details.reason !== 'install') return;
@@ -91,6 +92,8 @@ async function onFreshInstall() {
     cts_show_welcome: true,
     cts_installed_at: Date.now(),
     cts_whatsnew_hide: 'done', // new users never get the "what's new" notice
+    // VamimiAI announcement: a new user's first days belong to TokenLens.
+    cts_vm_ann: { status: 'waiting', minDays: VM_NEW_USER_DAYS },
   });
 
   const tabs = await chrome.tabs.query({ url: CLAUDE_MATCH });
@@ -167,3 +170,81 @@ async function flagFeedback() {
   }
   await chrome.storage.local.set(patch);
 }
+
+
+// ─── VamimiAI (vamimi.js) ───────────────────────────────────────────────────
+// cts_vm_ann: { status: 'waiting' | 'shown', minDays, shownAt? }
+//   Claimed (and shown) once claude.ai has been used on `minDays` distinct days
+//   (cts_days, recorded by review.js). People updating from before VM_SINCE are
+//   established users and see it at their next calm moment (minDays 0); a
+//   fresh install waits VM_NEW_USER_DAYS days. Never while the welcome splash
+//   is pending, never within VM_GAP_MS of another TokenLens prompt, and only
+//   ever in one tab (claims are serialised here).
+// cts_vm_spot: { armed, pages, done } - the Diagram button's spotlight, armed
+//   by the announcement when it is claimed, never before.
+const VM_ORIGIN = 'https://www.vamimi.com';
+const VM_SINCE = '6.3';
+const VM_NEW_USER_DAYS = 3;
+const VM_GAP_MS = DAY_MS;
+
+function vmOlder(a, b) {
+  const pa = String(a || '0').split('.').map(Number), pb = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x !== y) return x < y;
+  }
+  return false;
+}
+
+async function flagVamimi(previousVersion) {
+  const s = await chrome.storage.local.get(['cts_vm_ann']);
+  if (s.cts_vm_ann) return;
+  const established = vmOlder(previousVersion, VM_SINCE);
+  await chrome.storage.local.set({ cts_vm_ann: { status: 'waiting', minDays: established ? 0 : VM_NEW_USER_DAYS } });
+}
+
+let vmQueue = Promise.resolve();
+
+async function vmClaim() {
+  const s = await chrome.storage.local.get(['cts_vm_ann', 'cts_days', 'cts_show_welcome', 'cts_prompt_last']);
+  const st = s.cts_vm_ann || { status: 'waiting', minDays: VM_NEW_USER_DAYS };
+  if (st.status === 'shown') return { claimed: false, final: true };
+  if (s.cts_show_welcome === true) return { claimed: false };
+  const days = Array.isArray(s.cts_days) ? s.cts_days.length : 0;
+  if (days < (st.minDays || 0)) return { claimed: false };
+  const pl = s.cts_prompt_last;
+  const now = Date.now();
+  if (pl && pl.kind !== 'vamimi' && now - (pl.ts || 0) < VM_GAP_MS) return { claimed: false };
+  await chrome.storage.local.set({
+    cts_vm_ann: Object.assign({}, st, { status: 'shown', shownAt: now }),
+    cts_vm_spot: { armed: true, pages: 0, done: false },
+    cts_prompt_last: { kind: 'vamimi', ts: now },
+  });
+  return { claimed: true, final: true };
+}
+
+// Opens VamimiAI in a new tab right after the claude.ai tab the button was
+// clicked in. Only VamimiAI's own origin is ever opened.
+async function vmOpen(rawUrl, sender) {
+  let url;
+  try { url = new URL(rawUrl); } catch (_) { return { ok: false }; }
+  if (url.origin !== VM_ORIGIN) return { ok: false };
+  const tab = sender && sender.tab;
+  await chrome.tabs.create({
+    url: url.toString(),
+    active: true,
+    ...(tab ? { index: tab.index + 1, openerTabId: tab.id, windowId: tab.windowId } : {}),
+  });
+  return { ok: true };
+}
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (!msg || msg.cts !== 'vamimi') return false;
+  if (!sender || sender.id !== chrome.runtime.id) { sendResponse({ ok: false }); return false; }
+  let job;
+  if (msg.op === 'claim') job = (vmQueue = vmQueue.then(vmClaim, vmClaim));
+  else if (msg.op === 'open') job = vmOpen(msg.url, sender);
+  else return false;
+  job.then(r => sendResponse(r), () => sendResponse({ ok: false, claimed: false }));
+  return true; // async response
+});
