@@ -58,6 +58,7 @@ root.CTS = {
   current5hUtil:       0,
   current7dUtil:       0,
   isLimitHit:          false,
+  quotaMode:           'unknown',   // 'unknown' | 'live' | 'none' (see network.js setQuotaMode)
   dataReady:           false, // true once a real usage reading (not a default 0) has landed
   cacheReady:          false, // true when an unexpired snapshot from a previous load is on screen (shown, marked stale, until a live reading lands)
   preMessage5hUtil:    null,  // 5h util % snapshotted at message_start, for per-turn delta
@@ -207,6 +208,14 @@ root.CTS._storageReady = new Promise(resolve => {
         // with its own limits, logged in after a different account had
         // already cached its usage here).
         root.CTS._restoredOrgId = items.cts_org_id || null;
+
+        // This account was seen not sharing usage numbers: start in that state
+        // (dashes, not a fake 0%) until a real number proves otherwise.
+        const qn = items.cts_quota_none;
+        if (qn && qn.org && qn.org === items.cts_org_id && root.CTS.quotaMode === 'unknown') {
+          root.CTS.quotaMode = 'none';
+          root.CTS.dataReady = true;
+        }
 
         // On a weak connection claude.ai's own first /api/organizations/ call
         // can take a long time (or never land), and until it does we can't

@@ -220,18 +220,37 @@
     return 'z.' + btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  async function buildUrl(question, answer) {
-    const base = appUrl('diagram_button') + '#prefill=';
+  async function buildUrl(question, answer, campaign, request) {
+    const base = appUrl(campaign || 'diagram_button') + '#prefill=';
+    const make = request || buildRequest;
     let body = answer;
     for (let attempt = 0; attempt < 8; attempt++) {
-      const url = base + (await encode(buildRequest(question, body)));
+      const url = base + (await encode(make(question, body)));
       if (url.length <= CFG.maxUrlChars) return url;
       let cut = Math.floor(body.length * (CFG.maxUrlChars / url.length) * 0.9);
       const para = body.lastIndexOf('\n\n', cut);
       if (para > cut * 0.8) cut = para;
       body = body.slice(0, cut).trimEnd() + '\n\n' + L('trimmed', '[The rest of this reply was cut to fit.]');
     }
-    return base + (await encode(buildRequest(question.slice(0, 200), body.slice(0, 200000))));
+    return base + (await encode(make(question.slice(0, 200), body.slice(0, 200000))));
+  }
+
+  // The whole chat on screen, as "You: ... / Claude: ..." turns.
+  function chatText() {
+    const you = L('you', 'You'), claude = 'Claude';
+    return Array.from(document.querySelectorAll(ROWS)).map(row => {
+      const isReply = !!row.querySelector(BAR_ITEM);
+      const t = toText(row, isReply ? barOf(row) : null);
+      return t ? '**' + (isReply ? claude : you) + ':**\n' + t : '';
+    }).filter(Boolean).join('\n\n');
+  }
+
+  // "Turn this chat into a diagram" (menu / save row): the whole conversation.
+  async function diagramChat(campaign) {
+    const text = chatText();
+    if (!text) return openUrl(appUrl(campaign || 'menu'));
+    const req = (_q, body) => L('chatPrompt', 'Turn this conversation into a clear diagram. Pick the best type (flowchart, timeline, mind map, table, comparison and so on) for what it covers.') + '\n\n' + body;
+    return openUrl(await buildUrl('', text, campaign || 'chat_diagram', req));
   }
 
   async function openUrl(url) {
@@ -330,7 +349,12 @@
       if (!bar) return;
       let rec = row.__ctsVm;
       if (rec && rec.host.isConnected && row.contains(rec.host)) { place(rec, bar); return; }
-      if (!hasSomethingToDraw(row, bar)) return;
+      // Only re-read a row whose text changed since we last judged it
+      // (streaming replies and short ones were walked on every scan).
+      const sig = (row.textContent || '').length;
+      if (!rec && row.__ctsVmSig === sig) return;
+      row.__ctsVmSig = sig;
+      if (!rec && !hasSomethingToDraw(row, bar)) return;
       rec = rec || makeButton(row, bar);
       row.__ctsVm = rec;
       buttons.add(rec);
@@ -560,7 +584,10 @@
 
     const close = h('button', { class: 'close', type: 'button', 'aria-label': L('close', 'Close'), text: '×' });
     const cta = h('button', { class: 'cta', type: 'button', text: L('cta', 'Show me the button') });
-    const visit = h('button', { class: 'visit', type: 'button', text: L('visit', 'Or visit vamimi.com') });
+    // Not Pro yet? The same visit unlocks TokenLens Pro for good.
+    const Lic = window.CTS_License;
+    const canUnlock = !!(Lic && Lic.unlockWithVamimi && !Lic.state().pro);
+    const visit = h('button', { class: 'visit', type: 'button', text: canUnlock ? L('visitUnlock', 'Or visit vamimi.com and unlock TokenLens Pro free') : L('visit', 'Or visit vamimi.com') });
 
     const card = h('section', { class: 'vm-card', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'vm-t', 'aria-describedby': 'vm-s' },
       close,
@@ -601,7 +628,10 @@
     close.addEventListener('click', done);
     scrim.addEventListener('click', done);
     cta.addEventListener('click', Safe.wrap('vamimi', () => { done(); spotlightNow(); }));
-    visit.addEventListener('click', Safe.wrap('vamimi', () => { openUrl(appUrl('announcement')); done(); }));
+    visit.addEventListener('click', Safe.wrap('vamimi', () => {
+      if (canUnlock) Lic.unlockWithVamimi('announcement'); else openUrl(appUrl('announcement'));
+      done();
+    }));
     setTimeout(() => cta.focus(), 60);
 
     // The spotlight is armed by the announcement (background.js stamped it).
@@ -703,7 +733,7 @@
     addEventListener('scroll', () => { if (spot.thisPage && !spot.shownThisPage) scanSoon(); }, { passive: true, capture: true });
   }
 
-  window.CTS_Vamimi = { appUrl, spotlightNow, preview: showAnnouncement, _toText: toText, _buildUrl: buildUrl };
+  window.CTS_Vamimi = { appUrl, spotlightNow, preview: showAnnouncement, diagramChat, open: c => openUrl(appUrl(c)), icon, _toText: toText, _buildUrl: buildUrl };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
   else start();
 })();

@@ -183,7 +183,7 @@ async function flagFeedback() {
 // cts_vm_spot: { armed, pages, done } - the Diagram button's spotlight, armed
 //   by the announcement when it is claimed, never before.
 const VM_ORIGIN = 'https://www.vamimi.com';
-const VM_SINCE = '6.3';
+const VM_SINCE = '6.3';  // announcement: installs older than this are 'established'
 const VM_NEW_USER_DAYS = 3;
 const VM_GAP_MS = DAY_MS;
 
@@ -223,19 +223,64 @@ async function vmClaim() {
   return { claimed: true, final: true };
 }
 
-// Opens VamimiAI in a new tab right after the claude.ai tab the button was
-// clicked in. Only VamimiAI's own origin is ever opened.
-async function vmOpen(rawUrl, sender) {
+// Opens VamimiAI in a new tab right after the claude.ai tab the request came
+// from. Only VamimiAI's own origin is ever opened. -> the created tab | null
+async function vmOpenTab(rawUrl, sender) {
   let url;
-  try { url = new URL(rawUrl); } catch (_) { return { ok: false }; }
-  if (url.origin !== VM_ORIGIN) return { ok: false };
+  try { url = new URL(rawUrl); } catch (_) { return null; }
+  if (url.origin !== VM_ORIGIN) return null;
   const tab = sender && sender.tab;
-  await chrome.tabs.create({
+  return chrome.tabs.create({
     url: url.toString(),
     active: true,
     ...(tab ? { index: tab.index + 1, openerTabId: tab.id, windowId: tab.windowId } : {}),
   });
-  return { ok: true };
+}
+
+async function vmOpen(rawUrl, sender) {
+  return { ok: !!(await vmOpenTab(rawUrl, sender)) };
+}
+
+const vmUrl = campaign => {
+  const u = new URL(VM_ORIGIN + '/');
+  u.searchParams.set('utm_source', 'tokenlens');
+  u.searchParams.set('utm_medium', 'extension');
+  u.searchParams.set('utm_campaign', String(campaign || 'unlock_pro').replace(/[^\w-]/g, '').slice(0, 40) || 'unlock_pro');
+  return u.toString();
+};
+
+// "Unlock Pro free": opens VamimiAI and unlocks TokenLens Pro for good once
+// that page has loaded (or has stayed open for VM_UNLOCK_MS), so the unlock
+// follows a real visit rather than a click that was closed straight away.
+// Written to local AND sync so a reinstall or a second computer keeps it.
+const VM_UNLOCK_MS = 6000;
+
+async function vmUnlock(campaign, sender) {
+  const already = (await chrome.storage.local.get(['cts_vm_unlock'])).cts_vm_unlock;
+  const tab = await vmOpenTab(vmUrl(campaign), sender);
+  if (already && already.at) return { ok: true, already: true };
+  if (!tab) return { ok: false };
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = async ok => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      chrome.tabs.onUpdated.removeListener(onUpdated);
+      chrome.tabs.onRemoved.removeListener(onRemoved);
+      if (ok) {
+        const rec = { at: Date.now(), campaign: String(campaign || 'unlock_pro').slice(0, 40) };
+        await chrome.storage.local.set({ cts_vm_unlock: rec });
+        try { await chrome.storage.sync.set({ cts_vm_unlock: rec }); } catch (_) { /* sync full or off */ }
+      }
+      resolve({ ok });
+    };
+    const onUpdated = (id, info) => { if (id === tab.id && info.status === 'complete') finish(true); };
+    const onRemoved = id => { if (id === tab.id) finish(false); };
+    chrome.tabs.onUpdated.addListener(onUpdated);
+    chrome.tabs.onRemoved.addListener(onRemoved);
+    const timer = setTimeout(() => finish(true), VM_UNLOCK_MS);
+  });
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -244,6 +289,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   let job;
   if (msg.op === 'claim') job = (vmQueue = vmQueue.then(vmClaim, vmClaim));
   else if (msg.op === 'open') job = vmOpen(msg.url, sender);
+  else if (msg.op === 'unlock') job = vmUnlock(msg.campaign, sender);
   else return false;
   job.then(r => sendResponse(r), () => sendResponse({ ok: false, claimed: false }));
   return true; // async response

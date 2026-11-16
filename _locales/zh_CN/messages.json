@@ -300,5 +300,77 @@
   },
   "featVamimi": {
     "message": "图表按钮（VamimiAI）"
+  },
+  "vm_unavailShort": {
+    "message": "Claude 未提供此账号的用量数据"
+  },
+  "vm_unavailTip": {
+    "message": "Claude 目前没有发送此账号的用量数据，所以 TokenLens 无法显示你的限额。其他功能照常可用；一旦 Claude 重新发送，数据会自动恢复显示。"
+  },
+  "vm_unavailToast": {
+    "message": "Claude 目前没有发送此账号的用量数据，所以 TokenLens 无法显示 5 小时和 7 天限额（因此显示的是短横线而不是 0%）。其他功能照常可用，数据会自动恢复。"
+  },
+  "vm_unavailPopup": {
+    "message": "一旦 Claude 提供，TokenLens 会立即重新显示。"
+  },
+  "vm_unlockFree": {
+    "message": "免费解锁 Pro"
+  },
+  "vm_unlockFreeTip": {
+    "message": "打开 VamimiAI，页面加载后即可永久解锁 Pro。"
+  },
+  "vm_popupSettings": {
+    "message": "设置：选择 TokenLens 显示的内容"
+  },
+  "vm_visitUnlock": {
+    "message": "或访问 vamimi.com，免费解锁 TokenLens Pro"
+  },
+  "vm_you": {
+    "message": "你"
+  },
+  "vm_chatPrompt": {
+    "message": "把这段对话变成清晰的图表。请选择最合适的类型（流程图、时间线、思维导图、表格、对比图等）。"
+  },
+  "ix_vmUnlockBtn": {
+    "message": "通过 VamimiAI 免费解锁 Pro"
+  },
+  "ix_vmUnlockFine": {
+    "message": "打开 VamimiAI——TokenLens 作者做的一个把文字变成图表的网站。页面加载后即永久解锁 Pro。"
+  },
+  "ix_freeWord": {
+    "message": "免费"
+  },
+  "ix_freeNote": {
+    "message": "永久。无需账号，无需付款。"
+  },
+  "ix_unlockFreeBtn": {
+    "message": "免费解锁 Pro"
+  },
+  "ix_endedToastFree": {
+    "message": "你的 Pro 试用已结束。{saved}访问一次 VamimiAI，即可永久免费保留 Pro。"
+  },
+  "ix_freeNowToast": {
+    "message": "好消息：TokenLens Pro 现在免费了。访问一次 VamimiAI 即可永久解锁。"
+  },
+  "ix_introToastFree": {
+    "message": "TokenLens Pro 已开启 {t} 天：搜索所有聊天、全部保存，并查看完整的用量历史。之后访问一次 VamimiAI 即可继续免费使用。"
+  },
+  "ix_vmUnlockedTitle": {
+    "message": "TokenLens Pro 已解锁"
+  },
+  "ix_vmUnlockedBody": {
+    "message": "感谢你看看 VamimiAI。现在 TokenLens 的全部功能都永久属于你。"
+  },
+  "ix_stVamimi": {
+    "message": "TokenLens Pro 已启用（通过 VamimiAI 解锁）。"
+  },
+  "ix_stKeepFree": {
+    "message": "免费保留 Pro"
+  },
+  "ix_mDiagram": {
+    "message": "把这个聊天变成图表"
+  },
+  "ix_mDiagramD": {
+    "message": "使用 TokenLens 作者的 VamimiAI"
   }
 }

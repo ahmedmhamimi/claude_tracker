@@ -143,6 +143,20 @@ window.ClaudeTrackerUI = (function () {
   @media (prefers-reduced-motion: reduce) {
     .ct-progress-fill, .ct-tq-fill, .ct-rq-fill { transition: none !important; }
   }
+
+  /* User switches (applyPrefs). */
+  html[data-ct-off~="sidebar"] #ct-quota,
+  html[data-ct-off~="floating"] #ct-toolbar-quota,
+  html[data-ct-off~="floating"] #ct-launcher,
+  html[data-ct-off~="floating"] #ct-hint,
+  html[data-ct-off~="floating"] #ct-whatsnew,
+  html[data-ct-off~="composer"] #ct-row,
+  html[data-ct-off~="badges"] #ct-tq-badges > *,
+  html[data-ct-off~="chips"] .ct-chips,
+  html[data-ct-off~="dates"] .ct-chat-date,
+  html[data-ct-off~="tools"] #cts-sidebar-tools,
+  html[data-ct-off~="vmLink"] #cts-vm-link { display: none !important; }
+  html[data-ct-nolevel] [data-ct-level] { background-color: var(--ct-accent) !important; box-shadow: none !important; }
   `;
 
   const STRUCTURAL_CSS = `
@@ -771,8 +785,70 @@ window.ClaudeTrackerUI = (function () {
       }
 
       const isDark = hasDarkClass || isDarkByColor;
-      styleTag.textContent = (isDark ? DARK_THEME_CSS : LIGHT_THEME_CSS) + STRUCTURAL_CSS + PREMIUM_CSS;
+      // This runs every second (and on every class change). Rewriting ~600
+      // lines of CSS each time forced a full style recalc of claude.ai every
+      // second, so only write when the mode actually flips.
+      const key = isDark ? 'dark' : 'light';
+      if (styleTag.getAttribute('data-ct-mode') !== key || !styleTag.textContent) {
+        styleTag.textContent = (isDark ? DARK_THEME_CSS : LIGHT_THEME_CSS) + STRUCTURAL_CSS + PREMIUM_CSS;
+        styleTag.setAttribute('data-ct-mode', key);
+      }
+      _isDark = isDark;
+      applyPrefs();
     }
+
+    // ─── User preferences (6.4) ───────────────────────────────────────────────
+    // Every surface can be switched off and the accent colour changed from the
+    // TokenLens menu > Settings. Settings arrive in this world through
+    // CTS_Features (bridge dataset stamp + rpc-main pushes). Applied as
+    //   <html data-ct-off="sidebar floating ...">   -> CSS hides those surfaces
+    //   <html data-ct-nolevel>                      -> bars keep the accent colour
+    //   <style id="ct-accent-style">                -> accent override
+    // Hiding is done with CSS rather than by removing nodes, so the self-healing
+    // re-injection logic (content.js / quota.js) never fights the setting.
+    let _isDark = false;
+    const ACCENTS = {
+      ocean:  { light: '#2B6595', dark: '#7DB1DE' },
+      forest: { light: '#3B7248', dark: '#86C595' },
+      violet: { light: '#6D4BD8', dark: '#A78BFA' },
+      rose:   { light: '#C2416E', dark: '#F27BA4' },
+      mono:   { light: '#3A3A38', dark: '#D8D6CF' },
+    };
+    const SURFACES = ['sidebar', 'floating', 'composer', 'badges', 'chips', 'dates', 'tools', 'vmLink'];
+    let _prefsKey = '';
+
+    function accentFor(dark) {
+      const F = window.CTS_Features;
+      if (!F) return null;
+      const pal = F.getSetting('theme.palette', 'auto');
+      if (pal === 'custom') {
+        const hex = String(F.getSetting('theme.accent', '') || '');
+        return /^#[0-9a-f]{6}$/i.test(hex) ? hex : null;
+      }
+      if (!F.isEnabled('themes')) return null;
+      return ACCENTS[pal] ? ACCENTS[pal][dark ? 'dark' : 'light'] : null;
+    }
+
+    function applyPrefs() {
+      const F = window.CTS_Features;
+      if (!F || !F.ui) return;
+      const off = SURFACES.filter(k => !F.ui(k)).join(' ');
+      const noLevel = !F.ui('levelColors');
+      const accent = accentFor(_isDark);
+      const key = off + '|' + noLevel + '|' + accent;
+      if (key === _prefsKey) return;
+      _prefsKey = key;
+      const root = document.documentElement;
+      if (off) root.setAttribute('data-ct-off', off); else root.removeAttribute('data-ct-off');
+      if (noLevel) root.setAttribute('data-ct-nolevel', ''); else root.removeAttribute('data-ct-nolevel');
+      let st = document.getElementById('ct-accent-style');
+      if (accent) {
+        if (!st) { st = document.createElement('style'); st.id = 'ct-accent-style'; (document.head || root).appendChild(st); }
+        const n = parseInt(accent.slice(1), 16);
+        st.textContent = `html:root { --ct-accent: ${accent}; --ct-orange: ${accent}; --ct-blue: ${accent}; --ct-accent-rgb: ${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}; }`;
+      } else if (st) st.remove();
+    }
+    if (window.CTS_Features && window.CTS_Features.onChange) window.CTS_Features.onChange(() => { _prefsKey = ''; applyPrefs(); });
 
     // ─── Public API ───────────────────────────────────────────────────────────
 
@@ -1677,6 +1753,9 @@ window.ClaudeTrackerUI = (function () {
       },
 
       updateQuotaBars(win, pct, ts) {
+        // Claude isn't sharing numbers with this account: quota.js owns the
+        // dashes; never paint a 0% over them.
+        if (window.CTS.quotaMode === 'none') { if (window.CTS_Quota && window.CTS_Quota.applyUnavailable) window.CTS_Quota.applyUnavailable(); return; }
         // While the first real reading is pending, a 0 is just a default, not data.
         if (pct === 0 && document.querySelector('[data-ct-loading]')) return;
         if (pct > 0) document.querySelectorAll('[data-ct-loading]').forEach(el => el.removeAttribute('data-ct-loading'));

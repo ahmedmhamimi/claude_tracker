@@ -54,6 +54,8 @@
     ocean:  { light: { btn: '#2B6595', onBtn: '#FFFFFF', accent: '#2B6595' }, dark: { btn: '#7DB1DE', onBtn: '#10202D', accent: '#7DB1DE' } },
     forest: { light: { btn: '#3B7248', onBtn: '#FFFFFF', accent: '#3B7248' }, dark: { btn: '#86C595', onBtn: '#12251A', accent: '#86C595' } },
     mono:   { light: { btn: '#3A3A38', onBtn: '#FFFFFF', accent: '#3A3A38' }, dark: { btn: '#D8D6CF', onBtn: '#1F1E1D', accent: '#D8D6CF' } },
+    violet: { light: { btn: '#6D4BD8', onBtn: '#FFFFFF', accent: '#6D4BD8' }, dark: { btn: '#A78BFA', onBtn: '#17112B', accent: '#A78BFA' } },
+    rose:   { light: { btn: '#C2416E', onBtn: '#FFFFFF', accent: '#C2416E' }, dark: { btn: '#F27BA4', onBtn: '#2A0E18', accent: '#F27BA4' } },
   };
 
   function lum(hex) {
@@ -93,13 +95,25 @@
     ${paletteCss}
   `;
 
+  // Colours and density are free for everyone since 6.4 (no Pro gate).
+  // 'custom' takes the person's own accent (theme.accent, '#rrggbb') and picks
+  // a readable text colour for buttons from its contrast.
+  const HEX = /^#[0-9a-f]{6}$/i;
   function applyLook(host) {
     const f = window.CTS_Features;
     const p = f.getSetting('theme.palette', 'auto'), d = f.getSetting('theme.density', 'regular');
-    const lic = window.CTS_License;
-    const on = f.isEnabled('themes') && (!lic || lic.allows('themes'));
+    const on = f.isEnabled('themes');
+    const hex = String(f.getSetting('theme.accent', '') || '');
+    const custom = p === 'custom' && HEX.test(hex);
     host.setAttribute('data-palette', on && PALETTES[p] ? p : 'warm');
     host.setAttribute('data-density', on && d === 'compact' ? 'compact' : 'regular');
+    ['--btn', '--btn-hover', '--accent', '--on-btn'].forEach(v => host.style.removeProperty(v));
+    if (custom) {
+      host.style.setProperty('--btn', hex);
+      host.style.setProperty('--btn-hover', hex);
+      host.style.setProperty('--accent', hex);
+      host.style.setProperty('--on-btn', contrast(hex, '#FFFFFF') >= contrast(hex, '#1F1E1D') ? '#FFFFFF' : '#1F1E1D');
+    }
   }
 
   function mount(id, extraCss) {

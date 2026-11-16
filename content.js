@@ -62,7 +62,8 @@
     const pctEl = document.getElementById('ct-p-' + win + '-pct');
     const reset = document.getElementById('ct-p-' + win + '-t');
     if (!box || !fill || !pctEl || !reset) return;
-    const now = Math.floor(Date.now() / 1000);
+    if (window.CTS.quotaMode === 'none') return;   // quota.js shows dashes and explains
+    const now = Math.floor((Date.now() + (window.CTS.clockSkewMs || 0)) / 1000);
     const expired = ts != null && ts <= now;
     const pct = expired ? 0 : Math.max(0, Math.min(100, Math.round(util || 0)));
 
@@ -261,7 +262,26 @@
     titleEl.style.flexShrink = '1';
   }
 
+  // Switched off in Settings: take every badge out and give each title back
+  // the inline styles it had before we clamped it.
+  let _datesCleared = false;
+  function clearSidebarDates() {
+    if (_datesCleared) return;
+    _datesCleared = true;
+    document.querySelectorAll('.ct-chat-date').forEach(b => b.remove());
+    document.querySelectorAll('[data-ct-title]').forEach(t => {
+      ['display', 'overflow', 'textOverflow', 'whiteSpace', 'boxSizing', 'minWidth', 'flexShrink', 'maxWidth'].forEach(k => { t.style[k] = ''; });
+      delete t.dataset.ctTitle;
+    });
+  }
+
+  const datesOn = () => !window.CTS_Features || !window.CTS_Features.ui || window.CTS_Features.ui('dates');
+  // A settings change applies at once: dates on -> stamp now, off -> clean up now.
+  if (window.CTS_Features && window.CTS_Features.onChange) window.CTS_Features.onChange(() => { try { injectSidebarDates(); } catch (_) {} });
+
   function injectSidebarDates() {
+    if (!datesOn()) { clearSidebarDates(); return; }
+    _datesCleared = false;
     const map = window.CTS.convoDateMap;
     if (!map || !Object.keys(map).length) return;
 
@@ -307,13 +327,21 @@
     });
   }
 
+  // Coalesced and rate-limited: at most one pass every DATES_MIN_GAP_MS.
+  // It used to run on every animation frame that had any DOM mutation,
+  // anywhere on the page, which while a reply streamed meant re-reading
+  // getComputedStyle + getBoundingClientRect for every chat row ~60x a second.
+  const DATES_MIN_GAP_MS = 700;
   let _sidebarDatesQueued = false;
+  let _datesLastRun = 0;
   let _datesResizeObs = null;
   function scheduleSidebarDates() {
     if (_sidebarDatesQueued) return;
     _sidebarDatesQueued = true;
-    requestAnimationFrame(() => {
+    const wait = Math.max(0, DATES_MIN_GAP_MS - (Date.now() - _datesLastRun));
+    setTimeout(() => requestAnimationFrame(() => {
       _sidebarDatesQueued = false;
+      _datesLastRun = Date.now();
       injectSidebarDates();
       // Re-clamp titles whenever the sidebar itself changes width.
       if (!_datesResizeObs && window.ResizeObserver) {
@@ -323,7 +351,7 @@
           _datesResizeObs.observe(root);
         }
       }
-    });
+    }), wait);
   }
 
   // ─── Composer stats row (guarded insertion) ───────────────────────────────
@@ -618,7 +646,18 @@
 
   // ─── MutationObserver ─────────────────────────────────────────────────────
 
-  const mutationObserver = new MutationObserver(() => {
+  // Did this batch touch the sidebar? Streaming replies produce a constant
+  // flood of mutations in the transcript; only sidebar changes need dates.
+  function touchesSidebar(records, sidebar) {
+    if (!sidebar) return false;
+    for (let i = 0; i < records.length; i++) {
+      const t = records[i].target;
+      if (t === sidebar || (t && t.nodeType === 1 && sidebar.contains(t)) || (t && t.nodeType === 1 && t.contains(sidebar))) return true;
+    }
+    return false;
+  }
+
+  const mutationObserver = new MutationObserver(records => {
     // ct-quota only belongs inside a sidebar <nav>. Its absence is either
     // (a) permanent and expected — no sidebar exists at all (Incognito) — or
     // (b) temporary and needs a retry — a sidebar exists but we haven't built
@@ -628,7 +667,8 @@
     // Only treat (b) as unhealthy: check for ct-quota's absence ONLY when a
     // real sidebar is actually present right now, so this can never loop
     // forever on a layout that structurally can't have one.
-    const sidebarPresent = !!getSidebarRoot();
+    const sidebarRoot = getSidebarRoot();
+    const sidebarPresent = !!sidebarRoot;
     const sidebarMissingQuota = sidebarPresent && !document.getElementById('ct-quota');
 
     if (!document.getElementById('ct-toolbar-quota') || window.CTS_RowMissing() || sidebarMissingQuota) {
@@ -640,7 +680,7 @@
     // quota panel (scrolling, renaming, new chats), so it needs its own
     // lightweight re-stamp pass on every mutation batch rather than only
     // whenever the rest of the UI happens to reinject.
-    if (sidebarPresent) scheduleSidebarDates();
+    if (sidebarPresent && datesOn() && touchesSidebar(records, sidebarRoot)) scheduleSidebarDates();
   });
 
     mutationObserver.observe(document.documentElement, { childList: true, subtree: true });

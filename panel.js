@@ -8,7 +8,8 @@
  *   usage    -> 5h / 7d bars, long-chat helper, "show last days" chart
  *   find     -> one-time "read my chats" step, then a search box
  *   save     -> this chat as Markdown / PDF / Text, or all chats
- *   settings -> plan status + license, color theme (Pro), 3 switches + delete my data
+ *   settings -> plan status, what TokenLens shows (a switch per surface), colors
+ *               (presets or any color, free), helpers, reset, delete my data
  *
  * TokenLens Pro: every gated action asks CTS_License first. During the 7-day trial and
  * with a license everything works; on the free plan single-chat save is Markdown only,
@@ -18,7 +19,7 @@
  *
  * Openers (see placement.js): the top-bar Save button (next to Share), the sidebar
  * tools strip (Search / Save all / History / Settings), the 'cts2:open-panel'
- * event (detail.screen optional), and alert toasts.
+ * event (detail.screen optional), and the toolbar popup's Settings link.
  *
  * - CTS_Panel.open(screen?, anchorEl?) / toggle(screen, anchorEl) / close() / isOpen()
  * - allows(featureId) -> boolean / gate(featureId, ctx?) -> boolean: thin fail-open wrappers over CTS_License (everything unlocked if the license module is missing).
@@ -69,6 +70,17 @@
     mark { background: color-mix(in srgb, var(--btn) 28%, transparent); color: inherit; border-radius: 2px; }
     input[type=search] { width: 100%; }
     .warn { color: var(--btn); font-weight: 600; }
+    .sec { margin: 14px 0 4px; }
+    .sec-t { margin: 0 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .sec .sw:last-child { border-block-end: 0; }
+    .swatches { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+    .swatch { position: relative; width: 28px; height: 28px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; background: var(--c);
+              box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); transition: transform .12s ease; }
+    .swatch:hover { transform: scale(1.08); }
+    .swatch[aria-checked="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--c); }
+    .swatch.custom { background: conic-gradient(#E5484D, #E0A030, #3F9D5C, #3B82C4, #8B5CF6, #E05A8A, #E5484D); overflow: hidden; }
+    .swatch.custom[aria-checked="true"] { background: var(--c); }
+    .swatch.custom input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
   `;
 
   const isOpen = () => !!ui;
@@ -108,6 +120,9 @@
         b.disabled = false;
       } } }));
     });
+    // Same row, one more way to keep it: as a diagram, on VamimiAI.
+    const Vm = W('CTS_Vamimi');
+    if (Vm) row.appendChild(h('button', { class: 'btn ghost grow', type: 'button', title: L('vmSaveTip', 'Opens VamimiAI in a new tab with this chat ready'), text: L('vmSaveBtn', 'Diagram') + ' \u2197', on: { click: () => Vm.diagramChat('save_row') } }));
     return row;
   }
 
@@ -119,6 +134,9 @@
     c.append(
       choice('📊', L('mUsage', 'My usage'), L('mUsageD', 'How much of my limit is left'), () => go('usage')),
       choice('🔎', L('mFind', 'Find an old chat'), L('mFindD', 'Search everything I wrote or Claude said'), () => go('find')),
+      W('CTS_Vamimi') ? choice('🧭', W('CTS_Exporter').currentChatId() ? L('mDiagram', 'Turn this chat into a diagram') : L('mDiagramSite', 'Turn text into diagrams'),
+        L('mDiagramD', 'With VamimiAI, by the maker of TokenLens'),
+        () => (W('CTS_Exporter').currentChatId() ? W('CTS_Vamimi').diagramChat('menu') : W('CTS_Vamimi').open('menu'))) : null,
       h('div', { class: 'card' }, h('b', { text: '💾 ' + L('saveThis', 'Save this chat as:') }), h('div', { class: 'step' }, saveRow(msg)), msg),
       h('div', { class: 'row' },
         h('button', { class: 'btn ghost small grow', type: 'button', text: L('saveAll', 'Save all my chats'), on: { click: () => go('bulk') } }),
@@ -291,27 +309,59 @@
 
   screens.settings = { title: () => L('mSettings', 'Settings'), render(c, go) {
     const Bus = W('CTS_Bus');
-    const set = (path, value) => Bus.saveSettings(s => { const p = path.split('.'); let o = s; p.slice(0, -1).forEach(k => { o = o[k] = o[k] && typeof o[k] === 'object' ? o[k] : {}; }); o[p[p.length - 1]] = value; });
-    const sw = (feat, title, desc) => h('label', { class: 'sw' }, h('input', { type: 'checkbox', checked: F.isEnabled(feat), on: { change: e => set('features.' + feat, e.target.checked) } }),
-      h('span', {}, h('b', { text: title }), h('span', { class: 'd', text: desc })));
+    const set = (path, value) => Bus.saveSettings(st => { const p = path.split('.'); let o = st; p.slice(0, -1).forEach(k => { o = o[k] = o[k] && typeof o[k] === 'object' ? o[k] : {}; }); o[p[p.length - 1]] = value; });
+    const toggle = (checked, onChange, title, desc) => h('label', { class: 'sw' },
+      h('input', { type: 'checkbox', checked, on: { change: e => onChange(e.target.checked) } }),
+      h('span', {}, h('b', { text: title }), desc ? h('span', { class: 'd', text: desc }) : null));
+    const sw = (feat, title, desc) => toggle(F.isEnabled(feat), v => set('features.' + feat, v), title, desc);
+    const swUi = (key, title, desc) => toggle(F.ui(key), v => set('ui.' + key, v), title, desc);
+    const section = (title, ...kids) => h('div', { class: 'sec' }, h('p', { class: 'sec-t', text: title }), ...kids);
+
+    // Plan
     const Pw = W('CTS_Paywall'), Lic = W('CTS_License');
     if (Pw) c.appendChild(h('div', { class: 'card' }, Pw.status(),
-      Lic ? h('button', { class: 'btn ghost small', type: 'button', style: 'margin-top: 8px', text: L('licenseBtn', 'License and purchase'), on: { click: () => Lic.openUnlock() } }) : null));
-    // Color theme and density: a Pro setting. Locked options stay visible and open the unlock dialog.
-    const PALETTE_NAMES = { warm: L('palWarm', 'Warm'), ocean: L('palOcean', 'Ocean'), forest: L('palForest', 'Forest'), mono: L('palMono', 'Mono') };
-    const curPal = (p => (PALETTE_NAMES[p] ? p : 'warm'))(F.getSetting('theme.palette', 'auto')), curDen = F.getSetting('theme.density', 'regular');
-    const pick = (path, value, isCurrent, label) => {
-      const locked = !allows('themes') && !isCurrent;
-      return h('button', { class: 'btn small' + (isCurrent ? '' : ' ghost'), type: 'button', 'aria-pressed': String(isCurrent), text: label + (locked ? ' 🔒' : ''),
-        on: { click: () => { if (!gate('themes')) return; set(path, value).then(() => go('settings')); } } });
-    };
-    c.appendChild(h('div', { class: 'step' }, h('b', { text: L('sTheme', 'Color theme') }),
-      h('div', { class: 'row', style: 'margin-top: 6px' }, Object.keys(PALETTE_NAMES).map(k => pick('theme.palette', k, k === curPal, PALETTE_NAMES[k]))),
-      h('div', { class: 'row', style: 'margin-top: 6px' }, [['regular', L('denRegular', 'Regular')], ['compact', L('denCompact', 'Compact')]].map(([k, name]) => pick('theme.density', k, k === curDen, name)))));
-    c.append(
-      sw('alerts', L('sAlerts', 'Warn me near my limit'), L('sAlertsD', 'A small message at 80% and 95%')),
+      Lic && Lic.state().tier !== 'vamimi' ? h('button', { class: 'btn ghost small', type: 'button', style: 'margin-top: 8px', text: L('licenseBtn2', 'License key'), on: { click: () => Lic.openUnlock() } }) : null));
+
+    // What TokenLens shows: every surface on its own switch.
+    c.appendChild(section(L('secShow', 'What TokenLens shows'),
+      swUi('sidebar', L('uiSidebar', 'Usage box in the sidebar'), L('uiSidebarD', '5-hour and 7-day bars at the top of the sidebar')),
+      swUi('floating', L('uiFloating', 'Floating usage card'), L('uiFloatingD', 'The card you can drag anywhere, with its reopen icon')),
+      swUi('composer', L('uiComposer', 'Usage bar above the message box'), L('uiComposerD', 'A thin 5h / 7d line on chat pages')),
+      swUi('badges', L('uiBadges', 'Peak and cache badges'), L('uiBadgesD', 'In the floating card')),
+      swUi('chips', L('uiChips', 'Stats under each reply'), L('uiChipsD', 'Speed, tokens and how much of your limit it used')),
+      swUi('dates', L('uiDates', 'Dates next to chat titles'), L('uiDatesD', 'When each chat in the sidebar was started')),
+      swUi('tools', L('uiTools', 'Sidebar shortcuts'), L('uiToolsD', 'Search, Save all, History, Settings. Settings also open from the toolbar icon.')),
+      sw('vamimi', L('uiDiagram', 'Diagram button on replies'), L('uiDiagramD', 'Turns a reply into a diagram with VamimiAI')),
+      swUi('vmLink', L('uiVmLink', 'VamimiAI shortcut in the sidebar'), L('uiVmLinkD', 'Text to diagrams, by the maker of TokenLens'))));
+
+    // Colours: free for everyone. Presets, or any colour you like.
+    const SW = [
+      ['auto', L('palClaude', 'Claude'), '#D97757'], ['ocean', L('palOcean', 'Ocean'), '#2B6595'], ['forest', L('palForest', 'Forest'), '#3B7248'],
+      ['violet', L('palViolet', 'Violet'), '#6D4BD8'], ['rose', L('palRose', 'Rose'), '#C2416E'], ['mono', L('palMono', 'Mono'), '#6B6A66'],
+    ];
+    let curPal = F.getSetting('theme.palette', 'auto');
+    if (curPal === 'warm') curPal = 'auto';
+    const curAccent = /^#[0-9a-f]{6}$/i.test(F.getSetting('theme.accent', '') || '') ? F.getSetting('theme.accent') : '#D97757';
+    const swatches = h('div', { class: 'swatches', role: 'radiogroup', 'aria-label': L('sTheme', 'Color theme') });
+    SW.forEach(([k, name, col]) => swatches.appendChild(h('button', {
+      class: 'swatch', type: 'button', role: 'radio', 'aria-checked': String(curPal === k), title: name, 'aria-label': name, style: '--c:' + col,
+      on: { click: () => set('theme.palette', k).then(() => go('settings')) } })));
+    const picker = h('input', { type: 'color', value: curAccent, 'aria-label': L('palCustom', 'Your own color'), title: L('palCustom', 'Your own color') });
+    picker.addEventListener('change', Safe.wrap('panel', () => Bus.saveSettings(st => { st.theme = Object.assign({}, st.theme, { palette: 'custom', accent: picker.value }); }).then(() => go('settings'))));
+    const custom = h('label', { class: 'swatch custom', role: 'radio', 'aria-checked': String(curPal === 'custom'), title: L('palCustom', 'Your own color'), style: '--c:' + curAccent }, picker);
+    swatches.appendChild(custom);
+    const curDen = F.getSetting('theme.density', 'regular');
+    c.appendChild(section(L('secColors', 'Colors'),
+      swatches,
+      swUi('levelColors', L('uiLevel', 'Color bars by level'), L('uiLevelD', 'Amber from 75%, red from 90%. Off keeps your color.')),
+      h('div', { class: 'row', style: 'margin-top: 8px' }, [['regular', L('denRegular', 'Regular')], ['compact', L('denCompact', 'Compact')]].map(([k, name]) =>
+        h('button', { class: 'btn small' + (k === curDen ? '' : ' ghost'), type: 'button', 'aria-pressed': String(k === curDen), text: name, on: { click: () => set('theme.density', k).then(() => go('settings')) } })))));
+
+    // Helpers
+    c.appendChild(section(L('secHelpers', 'Helpers'),
       sw('handoff', L('sLong', 'Tell me when a chat is too long'), L('sLongD', 'Suggests continuing in a new chat')),
-      sw('history', L('sHist', 'Remember my usage'), L('sHistD', 'Lets you see the last days')));
+      sw('history', L('sHist', 'Remember my usage'), L('sHistD', 'Lets you see the last days'))));
+
     const box = h('div', { class: 'step' });
     const ask = () => {
       box.textContent = '';
@@ -320,12 +370,17 @@
           await W('CTS_Client').call('data.deleteAll');
           const keys = ['cts_settings', 'cts_alerts_fired', 'cts_errlog', 'cts_snap_last', 'cts_handoff', 'cts_handoff_pending', 'cts_hint_shown', 'cts_print', 'cts_ack_index', 'cts_ack_export'];
           await new Promise(res => Safe.chromeCall('panel', () => chrome.storage.local.remove(keys, res)) || res());
-          Bus.saveSettings(s => { Object.keys(s).forEach(k => delete s[k]); });
+          Bus.saveSettings(st => { Object.keys(st).forEach(k => delete st[k]); });
           box.textContent = ''; box.appendChild(h('p', { class: 'muted', text: T('setDeleted') }));
         } } }),
         h('button', { class: 'btn ghost big', type: 'button', text: T('cancel'), on: { click: reset } }));
     };
-    const reset = () => { box.textContent = ''; box.appendChild(h('button', { class: 'btn ghost big', type: 'button', text: L('delAll', 'Delete my saved data'), on: { click: ask } })); };
+    const reset = () => {
+      box.textContent = '';
+      box.append(
+        h('button', { class: 'btn ghost big', type: 'button', text: L('resetLook', 'Reset what TokenLens shows'), on: { click: () => Bus.saveSettings(st => { delete st.ui; delete st.theme; if (st.features) delete st.features.vamimi; }).then(() => go('settings')) } }),
+        h('button', { class: 'btn ghost big', type: 'button', text: L('delAll', 'Delete my saved data'), on: { click: ask } }));
+    };
     reset(); c.appendChild(box);
   } };
 
@@ -399,7 +454,7 @@
     toggle(LAUNCHERS[id], document.getElementById(id));
   }), true);
   Safe.chromeCall('panel', () => chrome.runtime.onMessage.addListener((msg, sender) => {
-    if (sender && sender.id === chrome.runtime.id && msg && msg.cts === 'open-panel') Safe.run('panel', () => open('menu'));
+    if (sender && sender.id === chrome.runtime.id && msg && msg.cts === 'open-panel') Safe.run('panel', () => open(typeof msg.screen === 'string' ? msg.screen : 'menu'));
   }));
 
   // The plan changed (trial ended, license activated): redraw screens that show locks. Never redraw Save all / search mid-job.

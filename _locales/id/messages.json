@@ -300,5 +300,77 @@
   },
   "featVamimi": {
     "message": "Tombol Diagram (VamimiAI)"
+  },
+  "vm_unavailShort": {
+    "message": "Claude tidak membagikan angka pemakaian untuk akun ini"
+  },
+  "vm_unavailTip": {
+    "message": "Claude sedang tidak mengirim angka pemakaian untuk akun ini, jadi TokenLens tidak bisa menampilkan batas Anda. Fitur lain tetap berjalan, dan angkanya kembali sendiri jika Claude mengirimnya lagi."
+  },
+  "vm_unavailToast": {
+    "message": "Claude sedang tidak mengirim angka pemakaian untuk akun ini, jadi TokenLens tidak bisa menampilkan batas 5 jam dan 7 hari Anda (karena itu tampil tanda strip, bukan 0%). Fitur lain tetap berjalan, dan angkanya kembali sendiri."
+  },
+  "vm_unavailPopup": {
+    "message": "TokenLens akan menampilkannya lagi begitu Claude mengirimnya."
+  },
+  "vm_unlockFree": {
+    "message": "Buka Pro gratis"
+  },
+  "vm_unlockFreeTip": {
+    "message": "Membuka VamimiAI. Pro terbuka selamanya setelah halaman dimuat."
+  },
+  "vm_popupSettings": {
+    "message": "Pengaturan: pilih apa yang ditampilkan TokenLens"
+  },
+  "vm_visitUnlock": {
+    "message": "Atau kunjungi vamimi.com dan buka TokenLens Pro gratis"
+  },
+  "vm_you": {
+    "message": "Anda"
+  },
+  "vm_chatPrompt": {
+    "message": "Ubah percakapan ini menjadi diagram yang jelas. Pilih jenis yang paling cocok (diagram alir, linimasa, peta pikiran, tabel, perbandingan, dan lainnya)."
+  },
+  "ix_vmUnlockBtn": {
+    "message": "Buka Pro gratis dengan VamimiAI"
+  },
+  "ix_vmUnlockFine": {
+    "message": "Membuka VamimiAI, situs yang mengubah teks menjadi diagram, buatan pembuat TokenLens. Pro terbuka selamanya begitu halaman dimuat."
+  },
+  "ix_freeWord": {
+    "message": "Gratis"
+  },
+  "ix_freeNote": {
+    "message": "selamanya. Tanpa akun, tanpa bayar."
+  },
+  "ix_unlockFreeBtn": {
+    "message": "Buka Pro gratis"
+  },
+  "ix_endedToastFree": {
+    "message": "Masa coba Pro Anda sudah berakhir.{saved} Tetap pakai Pro gratis selamanya dengan sekali kunjungan ke VamimiAI."
+  },
+  "ix_freeNowToast": {
+    "message": "Kabar baik: TokenLens Pro sekarang gratis. Buka selamanya dengan sekali kunjungan ke VamimiAI."
+  },
+  "ix_introToastFree": {
+    "message": "TokenLens Pro aktif selama {t} hari: cari di semua chat, simpan semuanya, dan lihat riwayat pemakaian lengkap. Setelah itu tetap gratis dengan sekali kunjungan ke VamimiAI."
+  },
+  "ix_vmUnlockedTitle": {
+    "message": "TokenLens Pro sudah terbuka"
+  },
+  "ix_vmUnlockedBody": {
+    "message": "Terima kasih sudah mampir ke VamimiAI. Semua fitur TokenLens kini milik Anda, selamanya."
+  },
+  "ix_stVamimi": {
+    "message": "TokenLens Pro aktif, dibuka dengan VamimiAI."
+  },
+  "ix_stKeepFree": {
+    "message": "Tetap pakai Pro gratis"
+  },
+  "ix_mDiagram": {
+    "message": "Ubah chat ini menjadi diagram"
+  },
+  "ix_mDiagramD": {
+    "message": "Dengan VamimiAI, buatan pembuat TokenLens"
   }
 }

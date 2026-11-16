@@ -3,10 +3,10 @@
  * context (content script, service worker, popup, unlock page). No DOM, no
  * chrome.* access: callers pass storage records in and get plain objects out.
  *
- * Money model: one-time $29 license sold on Gumroad. Every install gets a free
- * trial of ALL features for 7 active days (capped at 14 calendar days). After
- * the trial, only the free tier (see FREE) stays available until a license key
- * is activated.
+ * Plan model (6.4): Pro is free. Every install gets a trial of ALL features for
+ * 7 active days (capped at 14 calendar days); after that, one visit to
+ * VamimiAI (a site by the maker of TokenLens) unlocks Pro for good. Gumroad
+ * licenses sold before 6.4 keep working exactly as before.
  *
  * - CTS_LicenseCore.CONFIG: object: product id, checkout URL, price, trial/recheck/uses limits.
  * - CTS_LicenseCore.FREE: object: what the free tier keeps (formats, search results, history days).
@@ -15,7 +15,9 @@
  * - CTS_LicenseCore.trialStatus(trial, now) -> {started, active, expired, day, daysLeft, needsToday}: where the trial stands.
  * - CTS_LicenseCore.advanceTrial(trial, now) -> trial: records today as an active day (or creates the record); never extends an expired trial.
  * - CTS_LicenseCore.licenseValid(lic, now) -> boolean: active license verified within the recheck + grace window.
- * - CTS_LicenseCore.summarize(lic, trial, now) -> {licensed, pro, tier, trial, revoked}: the single answer to "is this person Pro?".
+ * - CTS_LicenseCore.summarize(lic, trial, now, vm?) -> {licensed, pro, tier, trial, revoked, vamimi}: the single answer to "is this person Pro?".
+ *     vm is the cts_vm_unlock record ({at}) written when Pro was unlocked for free by visiting VamimiAI (6.4+).
+ * - CTS_LicenseCore.vmUnlocked(vm) -> boolean
  * - CTS_LicenseCore.keyLooksValid(key) -> boolean: cheap format check before calling Gumroad.
  * - CTS_LicenseCore.maskKey(key) -> string: "ABCD…WXYZ" for display.
  */
@@ -88,17 +90,22 @@
     return now - lic.lastOk < CONFIG.RECHECK_MS + CONFIG.GRACE_MS;
   }
 
-  function summarize(lic, trial, now) {
+  // Pro unlocked for free by a visit to VamimiAI (by the maker of TokenLens). Permanent.
+  const vmUnlocked = vm => !!(vm && typeof vm.at === 'number' && isFinite(vm.at) && vm.at > 0);
+
+  function summarize(lic, trial, now, vm) {
     const licensed = licenseValid(lic, now);
+    const vamimi = vmUnlocked(vm);
     const t = trialStatus(trial, now);
-    const pro = licensed || t.active;
-    return { licensed, pro, tier: licensed ? 'licensed' : t.active ? 'trial' : 'free', trial: t, revoked: !!(lic && lic.status === 'revoked') };
+    const pro = licensed || vamimi || t.active;
+    const tier = licensed ? 'licensed' : vamimi ? 'vamimi' : t.active ? 'trial' : 'free';
+    return { licensed, vamimi, pro, tier, trial: t, revoked: !!(lic && lic.status === 'revoked') };
   }
 
   const keyLooksValid = key => typeof key === 'string' && /^[A-Za-z0-9-]{8,100}$/.test(key.trim());
   const maskKey = key => (typeof key === 'string' && key.length > 10 ? key.slice(0, 4) + '…' + key.slice(-4) : '••••');
 
-  const api = { CONFIG, FREE, localDay, mergeTrial, trialStatus, advanceTrial, licenseValid, summarize, keyLooksValid, maskKey };
+  const api = { CONFIG, FREE, localDay, mergeTrial, trialStatus, advanceTrial, licenseValid, vmUnlocked, summarize, keyLooksValid, maskKey };
   root.CTS_LicenseCore = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

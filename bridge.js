@@ -38,6 +38,7 @@
     'cacheTip', 'uncachedText', 'chipCachedTip', 'chipLatTip',
     'chipMaxedTip', 'chipOutTip', 'chipSpdTip', 'msgQuotaTip',
     'whatsNewBadge', 'whatsNewTitle', 'whatsNewBody',
+    'vm_unavailShort', 'vm_unavailTip',
   ];
 
   const msgs = {};
@@ -69,7 +70,7 @@
 
   chrome.storage.local.get(
     ['cts_5h_util', 'cts_7d_util', 'cts_ts_5h', 'cts_ts_7d', 'cts_org_id',
-     'cts_hint_seen', 'cts_show_welcome', 'cts_widget_hidden', 'cts_whatsnew_hide', 'cts_settings'],
+     'cts_hint_seen', 'cts_show_welcome', 'cts_widget_hidden', 'cts_whatsnew_hide', 'cts_settings', 'cts_quota_none'],
     items => {
       document.documentElement.dataset.ctsstorage = JSON.stringify(items || {});
     }

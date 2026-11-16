@@ -7,12 +7,13 @@
  *
  * Feature ids: 'export.md' is always free. Everything else ('export.pdf',
  * 'export.txt', 'export.json', 'bulk', 'search.full', 'history.range',
- * 'alerts.full', 'pace', 'handoff', 'themes') needs a license or an active trial.
+ * 'pace', 'handoff') needs Pro: a license, an active trial, or the free VamimiAI unlock.
  *
  * - CTS_License.ready -> Promise<void>: resolves once license + trial are loaded; await it before async gating decisions.
  * - CTS_License.allows(featureId) -> boolean: true for free features, and for everything while licensed or in trial.
  * - CTS_License.gate(featureId, ctx?) -> boolean: allows() plus, when locked, shows the paywall (CTS_Paywall.show) for that feature.
- * - CTS_License.state() -> {licensed, pro, tier, trial, revoked, price}: current summary (tier 'licensed'|'trial'|'free').
+ * - CTS_License.state() -> {licensed, vamimi, pro, tier, trial, revoked, price}: current summary (tier 'licensed'|'vamimi'|'trial'|'free').
+ * - CTS_License.unlockWithVamimi(campaign?) -> Promise<{ok}>: opens VamimiAI; Pro unlocks once the page has loaded.
  * - CTS_License.openUnlock() -> Promise: opens the unlock page (buy / paste key) through the service worker.
  * - CTS_License.openCheckout() -> void: opens the Gumroad checkout in a new tab.
  * - CTS_License.onChange(cb) -> void: cb() after the tier or trial day changes.
@@ -26,7 +27,7 @@
 
   const Safe = window.CTS_Safe, Core = window.CTS_LicenseCore, CFG = Core.CONFIG;
   const listeners = [];
-  let lic = null, trial = null, summary = Core.summarize(null, null, Date.now()), loaded = false, lastSig = '';
+  let lic = null, trial = null, vm = null, summary = Core.summarize(null, null, Date.now()), loaded = false, lastSig = '';
 
   // chrome.storage callbacks return undefined, so the "did it run?" signal must be explicit.
   const area = (name, op, arg) => new Promise(res => {
@@ -45,14 +46,15 @@
   });
 
   function recompute() {
-    summary = Core.summarize(lic, trial, Date.now());
+    summary = Core.summarize(lic, trial, Date.now(), vm);
     const sig = [summary.tier, summary.trial.day, summary.revoked].join('|');
     if (sig !== lastSig) { lastSig = sig; listeners.slice().forEach(cb => Safe.run('license', cb)); }
   }
 
   async function load() {
-    const [local, sync] = await Promise.all([area('local', 'get', ['cts_license', 'cts_trial']), area('sync', 'get', ['cts_trial'])]);
+    const [local, sync] = await Promise.all([area('local', 'get', ['cts_license', 'cts_trial', 'cts_vm_unlock']), area('sync', 'get', ['cts_trial', 'cts_vm_unlock'])]);
     lic = local.cts_license || null;
+    vm = Core.vmUnlocked(local.cts_vm_unlock) ? local.cts_vm_unlock : Core.vmUnlocked(sync.cts_vm_unlock) ? sync.cts_vm_unlock : null;
     trial = Core.mergeTrial(local.cts_trial, sync.cts_trial);
     loaded = true;
     recompute();
@@ -81,7 +83,7 @@
   })().catch(() => { loaded = true; });
 
   Safe.chromeCall('license', () => chrome.storage.onChanged.addListener((ch, areaName) => {
-    if (areaName === 'local' && (ch.cts_license || ch.cts_trial)) Safe.run('license', () => load());
+    if ((areaName === 'local' || areaName === 'sync') && (ch.cts_license || ch.cts_trial || ch.cts_vm_unlock)) Safe.run('license', () => load());
   }));
   document.addEventListener('visibilitychange', () => Safe.run('license', touchToday));
   setInterval(() => Safe.run('license', touchToday), 5 * 60 * 1000);
@@ -102,6 +104,8 @@
     state: () => Object.assign({ price: CFG.PRICE_LABEL }, summary),
     openUnlock: () => send({ op: 'open-unlock' }),
     openCheckout: () => { window.open(CFG.CHECKOUT_URL, '_blank', 'noopener'); },
+    // Opens VamimiAI in a new tab; the service worker unlocks Pro once that page loads.
+    unlockWithVamimi: (campaign) => send({ cts: 'vamimi', op: 'unlock', campaign: campaign || 'unlock_pro' }),
     onChange: cb => listeners.push(cb),
     free: Core.FREE,
   };

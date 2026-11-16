@@ -300,5 +300,77 @@
   },
   "featVamimi": {
     "message": "Botón Diagrama (VamimiAI)"
+  },
+  "vm_unavailShort": {
+    "message": "Claude no comparte datos de uso para esta cuenta"
+  },
+  "vm_unavailTip": {
+    "message": "Claude no está enviando datos de uso para esta cuenta, así que TokenLens no puede mostrar tus límites. Todo lo demás funciona, y los datos vuelven solos si Claude los envía de nuevo."
+  },
+  "vm_unavailToast": {
+    "message": "Claude no está enviando datos de uso para esta cuenta, así que TokenLens no puede mostrar tus límites de 5 horas y 7 días (por eso ves un guion y no 0 %). Todo lo demás funciona, y los datos vuelven solos."
+  },
+  "vm_unavailPopup": {
+    "message": "TokenLens los mostrará de nuevo en cuanto Claude lo haga."
+  },
+  "vm_unlockFree": {
+    "message": "Desbloquear Pro gratis"
+  },
+  "vm_unlockFreeTip": {
+    "message": "Abre VamimiAI. Pro se desbloquea para siempre al cargar."
+  },
+  "vm_popupSettings": {
+    "message": "Ajustes: elige qué muestra TokenLens"
+  },
+  "vm_visitUnlock": {
+    "message": "O visita vamimi.com y desbloquea TokenLens Pro gratis"
+  },
+  "vm_you": {
+    "message": "Tú"
+  },
+  "vm_chatPrompt": {
+    "message": "Convierte esta conversación en un diagrama claro. Elige el tipo que mejor encaje (diagrama de flujo, línea de tiempo, mapa mental, tabla, comparación, etc.)."
+  },
+  "ix_vmUnlockBtn": {
+    "message": "Desbloquear Pro gratis con VamimiAI"
+  },
+  "ix_vmUnlockFine": {
+    "message": "Abre VamimiAI, un sitio que convierte texto en diagramas, del creador de TokenLens. Pro se desbloquea para siempre en cuanto carga."
+  },
+  "ix_freeWord": {
+    "message": "Gratis"
+  },
+  "ix_freeNote": {
+    "message": "para siempre. Sin cuenta, sin pago."
+  },
+  "ix_unlockFreeBtn": {
+    "message": "Desbloquear Pro gratis"
+  },
+  "ix_endedToastFree": {
+    "message": "Tu prueba de Pro terminó.{saved} Mantén Pro gratis, para siempre, con una visita a VamimiAI."
+  },
+  "ix_freeNowToast": {
+    "message": "Buenas noticias: TokenLens Pro ahora es gratis. Desbloquéalo para siempre con una visita a VamimiAI."
+  },
+  "ix_introToastFree": {
+    "message": "TokenLens Pro está activo {t} días: busca en todos tus chats, guárdalos todos y mira tu historial de uso completo. Después sigue gratis con una visita a VamimiAI."
+  },
+  "ix_vmUnlockedTitle": {
+    "message": "TokenLens Pro está desbloqueado"
+  },
+  "ix_vmUnlockedBody": {
+    "message": "Gracias por visitar VamimiAI. Todo TokenLens es tuyo ahora, para siempre."
+  },
+  "ix_stVamimi": {
+    "message": "TokenLens Pro está activo, desbloqueado con VamimiAI."
+  },
+  "ix_stKeepFree": {
+    "message": "Mantener Pro gratis"
+  },
+  "ix_mDiagram": {
+    "message": "Convertir este chat en un diagrama"
+  },
+  "ix_mDiagramD": {
+    "message": "Con VamimiAI, del creador de TokenLens"
   }
 }

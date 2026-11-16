@@ -32,21 +32,22 @@
 
   async function readState() {
     const [local, sync] = await Promise.all([
-      chrome.storage.local.get(['cts_license', 'cts_trial']),
-      chrome.storage.sync.get(['cts_trial', 'cts_license_key']).catch(() => ({})),
+      chrome.storage.local.get(['cts_license', 'cts_trial', 'cts_vm_unlock']),
+      chrome.storage.sync.get(['cts_trial', 'cts_license_key', 'cts_vm_unlock']).catch(() => ({})),
     ]);
-    return { lic: local.cts_license || null, trial: Core.mergeTrial(local.cts_trial, sync.cts_trial), syncKey: sync.cts_license_key || '' };
+    const vm = Core.vmUnlocked(local.cts_vm_unlock) ? local.cts_vm_unlock : sync.cts_vm_unlock;
+    return { lic: local.cts_license || null, trial: Core.mergeTrial(local.cts_trial, sync.cts_trial), syncKey: sync.cts_license_key || '', vm };
   }
 
   async function render() {
-    const { lic, trial, syncKey } = await readState();
-    const s = Core.summarize(lic, trial, Date.now());
-    $('price').textContent = CFG.PRICE_LABEL;
+    const { lic, trial, syncKey, vm } = await readState();
+    const s = Core.summarize(lic, trial, Date.now(), vm);
     $('plan').textContent = s.licensed ? 'Pro license active'
+      : s.vamimi ? 'Pro is active, unlocked with VamimiAI. Enjoy!'
       : s.tier === 'trial' ? 'Free trial: day ' + s.trial.day + ' of ' + CFG.TRIAL_DAYS + '. Everything is unlocked.'
       : s.revoked ? 'Your previous license is no longer active.' : 'Free plan. Your trial has ended.';
     $('active').hidden = !s.licensed;
-    $('buy').hidden = s.licensed;
+    $('buy').hidden = s.licensed || s.vamimi;
     $('key-card').hidden = s.licensed;
     if (s.licensed) $('masked').textContent = Core.maskKey(lic.key);
     $('restore-box').hidden = s.licensed || !Core.keyLooksValid(syncKey);
@@ -61,7 +62,10 @@
     say(MESSAGES[(r && r.reason) || 'network'] || MESSAGES.network, 'bad');
   }
 
-  $('buy-btn').addEventListener('click', () => { window.open(CFG.CHECKOUT_URL, '_blank', 'noopener'); say('After you pay, Gumroad emails you a license key. Paste it above.', ''); });
+  $('buy-btn').addEventListener('click', () => {
+    chrome.runtime.sendMessage({ cts: 'vamimi', op: 'unlock', campaign: 'unlock_page' }, () => { void chrome.runtime.lastError; });
+  });
+  chrome.storage.onChanged.addListener(ch => { if (ch.cts_vm_unlock || ch.cts_license) render(); });
 
   $('activate').addEventListener('click', async e => {
     const btn = e.currentTarget, key = $('key').value.trim();

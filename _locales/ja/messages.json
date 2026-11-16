@@ -300,5 +300,77 @@
   },
   "featVamimi": {
     "message": "図解ボタン（VamimiAI）"
+  },
+  "vm_unavailShort": {
+    "message": "このアカウントでは Claude が使用量を公開していません"
+  },
+  "vm_unavailTip": {
+    "message": "現在 Claude はこのアカウントの使用量を送信していないため、TokenLens は上限を表示できません。他の機能はそのまま使えます。Claude が再び送信を始めれば、自動的に表示が戻ります。"
+  },
+  "vm_unavailToast": {
+    "message": "現在 Claude はこのアカウントの使用量を送信していないため、TokenLens は 5 時間と 7 日間の上限を表示できません（そのため 0% ではなくダッシュを表示しています）。他の機能はそのまま使え、数値は自動的に戻ります。"
+  },
+  "vm_unavailPopup": {
+    "message": "Claude が送信を再開すれば、TokenLens もすぐに表示します。"
+  },
+  "vm_unlockFree": {
+    "message": "Pro を無料で解放"
+  },
+  "vm_unlockFreeTip": {
+    "message": "VamimiAI を開きます。読み込まれると Pro がずっと使えるようになります。"
+  },
+  "vm_popupSettings": {
+    "message": "設定：TokenLens の表示内容を選ぶ"
+  },
+  "vm_visitUnlock": {
+    "message": "または vamimi.com を開いて TokenLens Pro を無料で解放"
+  },
+  "vm_you": {
+    "message": "あなた"
+  },
+  "vm_chatPrompt": {
+    "message": "この会話をわかりやすい図にしてください。内容に最も合う形式（フローチャート、タイムライン、マインドマップ、表、比較など）を選んでください。"
+  },
+  "ix_vmUnlockBtn": {
+    "message": "VamimiAI で Pro を無料解放"
+  },
+  "ix_vmUnlockFine": {
+    "message": "TokenLens の開発者が作った、テキストを図にするサイト VamimiAI を開きます。読み込まれると Pro がずっと使えるようになります。"
+  },
+  "ix_freeWord": {
+    "message": "無料"
+  },
+  "ix_freeNote": {
+    "message": "ずっと。アカウント登録も支払いも不要です。"
+  },
+  "ix_unlockFreeBtn": {
+    "message": "Pro を無料で解放"
+  },
+  "ix_endedToastFree": {
+    "message": "Pro のお試し期間が終了しました。{saved} VamimiAI を一度開くだけで、Pro をずっと無料で使えます。"
+  },
+  "ix_freeNowToast": {
+    "message": "お知らせ：TokenLens Pro は無料になりました。VamimiAI を一度開くだけでずっと使えます。"
+  },
+  "ix_introToastFree": {
+    "message": "TokenLens Pro を {t} 日間お試しいただけます：すべてのチャットを検索・保存し、使用量の履歴をすべて確認できます。その後も VamimiAI を一度開けば無料のままです。"
+  },
+  "ix_vmUnlockedTitle": {
+    "message": "TokenLens Pro が解放されました"
+  },
+  "ix_vmUnlockedBody": {
+    "message": "VamimiAI をご覧いただきありがとうございます。TokenLens のすべての機能がずっと使えます。"
+  },
+  "ix_stVamimi": {
+    "message": "TokenLens Pro は有効です（VamimiAI で解放）。"
+  },
+  "ix_stKeepFree": {
+    "message": "Pro を無料で続ける"
+  },
+  "ix_mDiagram": {
+    "message": "このチャットを図にする"
+  },
+  "ix_mDiagramD": {
+    "message": "TokenLens の開発者による VamimiAI で"
   }
 }

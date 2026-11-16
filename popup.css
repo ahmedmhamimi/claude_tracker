@@ -84,3 +84,7 @@ footer { margin-top: 18px; padding-top: 13px; border-top: 1px solid var(--line);
 .vm-txt small { font-size: 11.5px; color: var(--muted); }
 .vm-go { flex: none; width: 15px; height: 15px; color: var(--muted); transition: transform .15s; }
 .vamimi:hover .vm-go { transform: translate(1px, -1px); color: var(--text); }
+
+.settings-btn { display: block; width: 100%; margin-top: 10px; appearance: none; cursor: pointer; border: 0; background: none;
+                color: var(--muted); font: 500 12.5px/1.3 var(--sans); text-align: center; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line); }
+.settings-btn:hover { color: var(--text); text-decoration-color: currentColor; }
