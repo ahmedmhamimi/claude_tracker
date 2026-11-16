@@ -372,5 +372,56 @@
   },
   "ix_mDiagramD": {
     "message": "С VamimiAI, от создателя TokenLens"
+  },
+  "ix_icOptions": {
+    "message": "Параметры"
+  },
+  "ix_icHide": {
+    "message": "Скрыть"
+  },
+  "ix_icShow": {
+    "message": "Показать"
+  },
+  "ix_icBarColor": {
+    "message": "Цвет полос"
+  },
+  "ix_icAll": {
+    "message": "Все настройки"
+  },
+  "ix_icHidden": {
+    "message": "скрыто. Включить снова можно в любой момент в настройках TokenLens."
+  },
+  "ix_icUndo": {
+    "message": "Отменить"
+  },
+  "ix_uiSidebar": {
+    "message": "Блок использования в боковой панели"
+  },
+  "ix_uiFloating": {
+    "message": "Плавающая карточка"
+  },
+  "ix_uiComposer": {
+    "message": "Полоса над полем сообщения"
+  },
+  "ix_uiBadges": {
+    "message": "Значки пика и кэша"
+  },
+  "ix_uiChips": {
+    "message": "Статистика под ответами"
+  },
+  "ix_uiDates": {
+    "message": "Даты у названий чатов"
+  },
+  "ix_uiTools": {
+    "message": "Ярлыки боковой панели"
+  },
+  "ix_uiVmLink": {
+    "message": "Ссылка на VamimiAI в боковой панели"
+  },
+  "ix_uiDiagram": {
+    "message": "Кнопка «Диаграмма» у ответов"
+  },
+  "ix_uiLevel": {
+    "message": "Цвет полос по уровню"
   }
 }

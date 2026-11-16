@@ -372,5 +372,56 @@
   },
   "ix_mDiagramD": {
     "message": "Dengan VamimiAI, buatan pembuat TokenLens"
+  },
+  "ix_icOptions": {
+    "message": "Opsi"
+  },
+  "ix_icHide": {
+    "message": "Sembunyikan"
+  },
+  "ix_icShow": {
+    "message": "Tampilkan"
+  },
+  "ix_icBarColor": {
+    "message": "Warna bar"
+  },
+  "ix_icAll": {
+    "message": "Semua pengaturan"
+  },
+  "ix_icHidden": {
+    "message": "disembunyikan. Anda bisa menyalakannya lagi kapan saja di Pengaturan TokenLens."
+  },
+  "ix_icUndo": {
+    "message": "Urungkan"
+  },
+  "ix_uiSidebar": {
+    "message": "Kotak pemakaian di sidebar"
+  },
+  "ix_uiFloating": {
+    "message": "Kartu pemakaian mengambang"
+  },
+  "ix_uiComposer": {
+    "message": "Bar pemakaian di atas kotak pesan"
+  },
+  "ix_uiBadges": {
+    "message": "Lencana jam sibuk dan cache"
+  },
+  "ix_uiChips": {
+    "message": "Statistik di bawah tiap balasan"
+  },
+  "ix_uiDates": {
+    "message": "Tanggal di samping judul chat"
+  },
+  "ix_uiTools": {
+    "message": "Pintasan sidebar"
+  },
+  "ix_uiVmLink": {
+    "message": "Pintasan VamimiAI di sidebar"
+  },
+  "ix_uiDiagram": {
+    "message": "Tombol Diagram di balasan"
+  },
+  "ix_uiLevel": {
+    "message": "Warnai bar sesuai level"
   }
 }

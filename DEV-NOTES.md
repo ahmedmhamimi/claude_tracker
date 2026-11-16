@@ -121,3 +121,10 @@ New VamimiAI entries: "Turn this chat into a diagram" in the menu and a Diagram 
 QA: `chrome.storage.local.set({ cts_quota_none: { org: '<org id>', at: Date.now() } })` + reload shows the
 "not shared" state; `chrome.storage.local.remove('cts_vm_unlock'); chrome.storage.sync.remove('cts_vm_unlock')`
 resets the free unlock.
+
+## Inline controls (inline-controls.js)
+Every surface has its own hover "⋯" button with that surface's options (hide it; for the three bar surfaces also
+color-by-level and bar color; the floating card also toggles its badges). Hiding shows an Undo toast; hidden
+surfaces come back from Settings, which still lists every switch. One fixed button + one popover for the page,
+both in closed shadow roots, located with `composedPath()` on `pointerover`, so nothing is injected into
+claude.ai's DOM or into the surfaces. Chat dates get `pointer-events: auto` so they can be hovered.

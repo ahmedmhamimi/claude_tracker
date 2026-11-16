@@ -372,5 +372,56 @@
   },
   "ix_mDiagramD": {
     "message": "TokenLens の開発者による VamimiAI で"
+  },
+  "ix_icOptions": {
+    "message": "オプション"
+  },
+  "ix_icHide": {
+    "message": "非表示にする"
+  },
+  "ix_icShow": {
+    "message": "表示"
+  },
+  "ix_icBarColor": {
+    "message": "バーの色"
+  },
+  "ix_icAll": {
+    "message": "すべての設定"
+  },
+  "ix_icHidden": {
+    "message": "を非表示にしました。TokenLens の設定からいつでも元に戻せます。"
+  },
+  "ix_icUndo": {
+    "message": "元に戻す"
+  },
+  "ix_uiSidebar": {
+    "message": "サイドバーの使用量ボックス"
+  },
+  "ix_uiFloating": {
+    "message": "フローティング使用量カード"
+  },
+  "ix_uiComposer": {
+    "message": "メッセージ欄の上の使用量バー"
+  },
+  "ix_uiBadges": {
+    "message": "ピーク・キャッシュ表示"
+  },
+  "ix_uiChips": {
+    "message": "各返信の下の統計"
+  },
+  "ix_uiDates": {
+    "message": "チャット名の横の日付"
+  },
+  "ix_uiTools": {
+    "message": "サイドバーのショートカット"
+  },
+  "ix_uiVmLink": {
+    "message": "サイドバーの VamimiAI リンク"
+  },
+  "ix_uiDiagram": {
+    "message": "返信の図解ボタン"
+  },
+  "ix_uiLevel": {
+    "message": "使用率でバーの色を変える"
   }
 }

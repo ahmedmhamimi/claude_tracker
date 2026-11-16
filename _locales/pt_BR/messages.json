@@ -372,5 +372,56 @@
   },
   "ix_mDiagramD": {
     "message": "Com o VamimiAI, do criador do TokenLens"
+  },
+  "ix_icOptions": {
+    "message": "Opções"
+  },
+  "ix_icHide": {
+    "message": "Ocultar"
+  },
+  "ix_icShow": {
+    "message": "Mostrar"
+  },
+  "ix_icBarColor": {
+    "message": "Cor das barras"
+  },
+  "ix_icAll": {
+    "message": "Todas as configurações"
+  },
+  "ix_icHidden": {
+    "message": "oculto. Você pode ativar de novo quando quiser nas configurações do TokenLens."
+  },
+  "ix_icUndo": {
+    "message": "Desfazer"
+  },
+  "ix_uiSidebar": {
+    "message": "Caixa de uso na barra lateral"
+  },
+  "ix_uiFloating": {
+    "message": "Cartão de uso flutuante"
+  },
+  "ix_uiComposer": {
+    "message": "Barra de uso acima da mensagem"
+  },
+  "ix_uiBadges": {
+    "message": "Selos de pico e cache"
+  },
+  "ix_uiChips": {
+    "message": "Dados abaixo de cada resposta"
+  },
+  "ix_uiDates": {
+    "message": "Datas ao lado dos títulos"
+  },
+  "ix_uiTools": {
+    "message": "Atalhos da barra lateral"
+  },
+  "ix_uiVmLink": {
+    "message": "Atalho do VamimiAI na barra lateral"
+  },
+  "ix_uiDiagram": {
+    "message": "Botão Diagrama nas respostas"
+  },
+  "ix_uiLevel": {
+    "message": "Colorir barras pelo nível"
   }
 }
