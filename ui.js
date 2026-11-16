@@ -102,24 +102,11 @@ window.ClaudeTrackerUI = (function () {
   :root { --ct-warn: #E0A030; --ct-crit: #E5484D; }
   #ct-quota, #ct-toolbar-quota, #ct-row, .ct-chips { font-variant-numeric: tabular-nums; }
 
-  .ct-progress-bg, .ct-tq-bar, .ct-rq-bar {
-    background: var(--ct-bg-progress);
-    box-shadow: inset 0 1px 1px rgba(0,0,0,.08);
-  }
-  .ct-progress-fill, .ct-tq-fill, .ct-rq-fill {
-    position: relative;
-    background-color: var(--ct-accent) !important;
-    background-image: linear-gradient(90deg, rgba(255,255,255,.0), rgba(255,255,255,.22)),
-                      linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 60%) !important;
-    transition: width .6s cubic-bezier(.22,.8,.24,1), background-color .4s ease !important;
-  }
+  /* Bars keep their original look: solid accent fill on a flat track (see
+   * STRUCTURAL_CSS). Amber / red by level is opt-in (Settings > Colors). */
+  .ct-progress-fill, .ct-tq-fill, .ct-rq-fill { transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color .4s ease !important; }
   [data-ct-level="warn"] { background-color: var(--ct-warn) !important; }
   [data-ct-level="crit"] { background-color: var(--ct-crit) !important; }
-  .ct-progress-fill[data-ct-level="crit"], .ct-tq-fill[data-ct-level="crit"], .ct-rq-fill[data-ct-level="crit"] {
-    box-shadow: 0 0 10px rgba(229,72,77,.45);
-  }
-  .ct-progress-bg { height: 7px; border-radius: 99px; }
-  .ct-progress-fill, .ct-tq-fill, .ct-rq-fill { border-radius: 99px; }
   .ct-bar-pct { color: var(--ct-text); }
 
   #ct-quota .ct-quota-header { letter-spacing: .01em; }
