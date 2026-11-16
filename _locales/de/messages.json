@@ -453,5 +453,11 @@
   },
   "ix_ghDiagram": {
     "message": "Diagramm"
+  },
+  "ix_uiTips": {
+    "message": "Erklärungen beim Verweilen"
+  },
+  "ix_uiTipsD": {
+    "message": "Kurze Erklärungen, wenn der Mauszeiger kurz auf etwas ruht"
   }
 }

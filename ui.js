@@ -381,7 +381,10 @@ window.ClaudeTrackerUI = (function () {
   #ct-toolbar-quota:hover {
   box-shadow: 0 14px 38px rgba(0,0,0,0.18), 0 3px 10px rgba(0,0,0,0.08);
   }
-  #ct-toolbar-quota, #ct-toolbar-quota * { cursor: grab; }
+  /* Normal arrow cursor: the card is still draggable from anywhere, but a
+   * hand over every pixel read as "click me". Only an actual drag shows it. */
+  #ct-toolbar-quota, #ct-toolbar-quota * { cursor: default; }
+  #ct-toolbar-quota button, #ct-toolbar-quota .ct-hide-btn { cursor: pointer; }
   #ct-toolbar-quota.ct-dragging,
   #ct-toolbar-quota.ct-dragging * {
   cursor: grabbing !important;
@@ -994,30 +997,53 @@ window.ClaudeTrackerUI = (function () {
           tip.id = 'ct-tooltip';
           document.body.appendChild(tip);
         }
-        let hideTimer = null;
+        // Calm tooltips: they explain, they never get in the way.
+        //  - appear only after the pointer has RESTED on an element for
+        //    TIP_DELAY_MS (passing over things shows nothing);
+        //  - vanish at once on leave, any click, key press, scroll or drag;
+        //  - stay put (they no longer chase the pointer);
+        //  - can be switched off entirely (settings ui.tips).
+        const TIP_DELAY_MS = 900;
+        let tipTimer = 0, tipEl = null, restX = 0, restY = 0;
+        const tipsOn = () => !window.CTS_Features || !window.CTS_Features.ui || window.CTS_Features.ui('tips');
+        const hideTip = () => { clearTimeout(tipTimer); tipTimer = 0; tipEl = null; tip.classList.remove('vis'); };
+        const armTip = (el, x, y) => {
+          clearTimeout(tipTimer);
+          tipEl = el; restX = x; restY = y;
+          tipTimer = setTimeout(() => {
+            if (tipEl !== el || !el.isConnected || !tipsOn()) return;
+            if (document.querySelector('#ct-toolbar-quota.ct-dragging, #ct-toolbar-quota.ct-resizing')) return;
+            tip.textContent = el.getAttribute('data-ct-tip');
+            positionTip(el);
+            tip.classList.add('vis');
+          }, TIP_DELAY_MS);
+        };
 
         document.addEventListener('mouseover', e => {
           const el = e.target.closest('[data-ct-tip]');
-          if (!el) return;
-          clearTimeout(hideTimer);
-          tip.textContent = el.getAttribute('data-ct-tip');
-          tip.classList.add('vis');
-          positionTip(el);
+          if (!el) { if (tipEl) hideTip(); return; }
+          if (el === tipEl) return;
+          hideTip();
+          armTip(el, e.clientX, e.clientY);
         }, true);
 
+        // Moving restarts the wait (only a still pointer means "tell me more").
         document.addEventListener('mousemove', e => {
-          const el = e.target.closest('[data-ct-tip]');
-          if (el) positionTip(el);
-        }, true);
+          if (!tipEl || tip.classList.contains('vis')) return;
+          if (Math.abs(e.clientX - restX) + Math.abs(e.clientY - restY) > 6) armTip(tipEl, e.clientX, e.clientY);
+        }, { capture: true, passive: true });
 
-          document.addEventListener('mouseout', e => {
-            const el = e.target.closest('[data-ct-tip]');
-            if (el) hideTimer = setTimeout(() => tip.classList.remove('vis'), 80);
-          }, true);
+        document.addEventListener('mouseout', e => {
+          const el = e.target.closest('[data-ct-tip]');
+          if (el && el === tipEl && !el.contains(e.relatedTarget)) hideTip();
+        }, true);
+        ['mousedown', 'keydown', 'wheel', 'dragstart'].forEach(ev => document.addEventListener(ev, hideTip, { capture: true, passive: true }));
+        window.addEventListener('scroll', hideTip, { capture: true, passive: true });
+        window.addEventListener('blur', hideTip);
 
             function positionTip(el) {
               const r  = el.getBoundingClientRect();
-              const tw = Math.min(300, window.innerWidth - 24);
+              const tw = Math.min(260, window.innerWidth - 24);
               tip.style.left = '0'; tip.style.top = '-9999px'; tip.style.maxWidth = tw + 'px';
               const th  = tip.offsetHeight || 80;
               let top   = r.top - th - 10;

@@ -110,8 +110,21 @@
     btn.style.top = Math.max(4, Math.min(innerHeight - size - 4, Math.round(y))) + 'px';
   }
 
+  // The ⋯ only appears once the pointer has stayed on a surface for a moment,
+  // so moving across the page never flashes buttons at you.
+  const SHOW_DELAY_MS = 550;
+  let showTimer = 0, pending = null;
+  function showSoon(key, el) {
+    if (current && current.el === el && btn && btn.classList.contains('vis')) { clearTimeout(hideTimer); return; }
+    if (pending && pending.el === el) return;
+    clearTimeout(showTimer);
+    pending = { key, el };
+    showTimer = setTimeout(() => { const p = pending; pending = null; if (p && p.el.isConnected) show(p.key, p.el); }, SHOW_DELAY_MS);
+  }
+  function cancelSoon() { clearTimeout(showTimer); pending = null; }
+
   function show(key, el) {
-    if (document.documentElement.classList.contains('ct-dragging') || document.querySelector('#ct-toolbar-quota.ct-dragging')) return;
+    if (document.documentElement.classList.contains('ct-dragging') || document.querySelector('#ct-toolbar-quota.ct-dragging, #ct-toolbar-quota.ct-resizing')) return;
     ensureButton();
     clearTimeout(hideTimer);
     current = { key, el };
@@ -145,10 +158,17 @@
     if (e.pointerType === 'touch') return;
     const hit = surfaceFor(e.composedPath ? e.composedPath() : []);
     if (hit === 'self') { clearTimeout(hideTimer); return; }
-    if (hit) { if (!menu) show(hit.key, hit.el); else clearTimeout(hideTimer); return; }
-    if (current) scheduleHide();
+    if (hit) { if (!menu) showSoon(hit.key, hit.el); else clearTimeout(hideTimer); return; }
+    cancelSoon();
+    if (current) scheduleHide(150);
   }), true);
-  addEventListener('scroll', () => { if (!menu && btn) { btn.classList.remove('vis'); current = null; } }, { capture: true, passive: true });
+  addEventListener('scroll', () => { cancelSoon(); if (!menu && btn) { btn.classList.remove('vis'); current = null; } }, { capture: true, passive: true });
+  document.addEventListener('mousedown', e => {
+    const path = e.composedPath ? e.composedPath() : [];
+    if (btnHost && path.includes(btnHost)) return;
+    cancelSoon();
+    if (!menu && btn) { btn.classList.remove('vis'); current = null; }
+  }, true);
 
   // Chat dates are drawn with pointer-events: none (purely decorative); let
   // them take hover so their own control can appear next to them.
@@ -227,6 +247,7 @@
     if (s.bars) {
       box.append(h('div', { class: 'sep' }));
       box.append(toggle(L('uiLevel', 'Color bars by level'), () => F.ui('levelColors'), v => setSetting('ui.levelColors', v)));
+      box.append(toggle(L('uiTips', 'Hover explanations'), () => F.ui('tips'), v => setSetting('ui.tips', v)));
       let pal = F.getSetting('theme.palette', 'auto'); if (pal === 'warm') pal = 'auto';
       const acc = /^#[0-9a-f]{6}$/i.test(F.getSetting('theme.accent', '') || '') ? F.getSetting('theme.accent') : '#D97757';
       const sw = h('div', { class: 'sw', role: 'radiogroup', 'aria-label': L('sTheme', 'Bar color') });

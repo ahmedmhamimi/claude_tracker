@@ -453,5 +453,11 @@
   },
   "ix_ghDiagram": {
     "message": "Diagram"
+  },
+  "ix_uiTips": {
+    "message": "Penjelasan saat diarahkan"
+  },
+  "ix_uiTipsD": {
+    "message": "Penjelasan singkat saat penunjuk berhenti di atas sesuatu"
   }
 }

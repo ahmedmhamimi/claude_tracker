@@ -453,5 +453,11 @@
   },
   "ix_ghDiagram": {
     "message": "图表"
+  },
+  "ix_uiTips": {
+    "message": "悬停说明"
+  },
+  "ix_uiTipsD": {
+    "message": "指针停留在某处时显示简短说明"
   }
 }

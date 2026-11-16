@@ -353,6 +353,7 @@
     const curDen = F.getSetting('theme.density', 'regular');
     c.appendChild(section(L('secColors', 'Colors'),
       swatches,
+      swUi('tips', L('uiTips', 'Hover explanations'), L('uiTipsD', 'Short explanations when you rest the pointer on something')),
       swUi('levelColors', L('uiLevel', 'Color bars by level'), L('uiLevelD', 'Amber from 75%, red from 90%. Off keeps every bar your color.')),
       h('div', { class: 'row', style: 'margin-top: 8px' }, [['regular', L('denRegular', 'Regular')], ['compact', L('denCompact', 'Compact')]].map(([k, name]) =>
         h('button', { class: 'btn small' + (k === curDen ? '' : ' ghost'), type: 'button', 'aria-pressed': String(k === curDen), text: name, on: { click: () => set('theme.density', k).then(() => go('settings')) } })))));

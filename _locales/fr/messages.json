@@ -453,5 +453,11 @@
   },
   "ix_ghDiagram": {
     "message": "Diagramme"
+  },
+  "ix_uiTips": {
+    "message": "Explications au survol"
+  },
+  "ix_uiTipsD": {
+    "message": "De courtes explications quand le pointeur reste sur un élément"
   }
 }

@@ -848,5 +848,11 @@
   },
   "ix_ghDiagram": {
     "message": "Diagram"
+  },
+  "ix_uiTips": {
+    "message": "Hover explanations"
+  },
+  "ix_uiTipsD": {
+    "message": "Short explanations when you rest the pointer on something"
   }
 }
