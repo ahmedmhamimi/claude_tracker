@@ -179,8 +179,12 @@
   const ROWS = '[data-testid="transcript-row"]';
   const BAR_ITEM = '[data-testid^="action-bar-"]';
 
+  // The reply's own action bar is the LAST action-bar item in the row; while a
+  // reply is still being written, claude.ai can already draw parts of it
+  // (the "Thinking…" header), which is where the button used to land.
   function barOf(row) {
-    const item = row.querySelector(BAR_ITEM);
+    const all = row.querySelectorAll(BAR_ITEM);
+    const item = all[all.length - 1];
     if (!item) return null;
     return item.tagName === 'DIV' && item.querySelector('button') ? item : item.closest('div');
   }
@@ -337,6 +341,26 @@
     }
   }
 
+  // ─── Only finished replies get a button ──────────────────────────────────
+  // A reply counts as finished when ALL of these hold:
+  //  - claude.ai no longer marks it as streaming (data-is-streaming),
+  //  - it is not the newest reply while TokenLens sees a stream running
+  //    (html[data-cts-stream="1"], written by hooks.js),
+  //  - it has its Copy button, whenever claude.ai's markup has Copy buttons
+  //    at all (the finished reply's bar; the "Thinking…" header has none),
+  //  - its text has not changed for SETTLE_MS.
+  const SETTLE_MS = 1500;
+  const COPY = '[data-testid="action-bar-copy"]';
+  function isSettled(row, lastReply) {
+    if (row.getAttribute('data-is-streaming') === 'true' || row.querySelector('[data-is-streaming="true"]')) return false;
+    if (row === lastReply && ROOT.dataset.ctsStream === '1') return false;
+    if (!row.querySelector(COPY) && document.querySelector(ROWS + ' ' + COPY)) return false;
+    const sig = (row.textContent || '').length;
+    const seen = row.__ctsVmSeen;
+    if (!seen || seen.sig !== sig) { row.__ctsVmSeen = { sig, since: Date.now() }; return false; }
+    return Date.now() - seen.since >= SETTLE_MS;
+  }
+
   function scanReplies() {
     // The Diagram buttons can be switched off in Settings (feature 'vamimi').
     // Switched off: the buttons stay in place but hidden, so the inline
@@ -347,11 +371,22 @@
     if (off) hideCoach();
     buttons.forEach(r => { const want = off ? 'none' : ''; if (r.host.style.display !== want) r.host.style.display = want; });
     const rows = document.querySelectorAll(ROWS);
+    let lastReply = null;
+    rows.forEach(row => { if (row.querySelector(BAR_ITEM)) lastReply = row; });
     rows.forEach(row => {
       const bar = barOf(row);
       if (!bar) return;
       let rec = row.__ctsVm;
-      if (rec && rec.host.isConnected && row.contains(rec.host)) { place(rec, bar); return; }
+      const settled = isSettled(row, lastReply);
+      // A reply that starts streaming again (Retry / regenerate) hides its
+      // button until the new version has finished.
+      if (rec && rec.host.isConnected && row.contains(rec.host)) {
+        const want = off || !settled ? 'none' : '';
+        if (rec.host.style.display !== want) rec.host.style.display = want;
+        if (settled) place(rec, bar);
+        return;
+      }
+      if (!settled) return;
       // Only re-read a row whose text changed since we last judged it
       // (streaming replies and short ones were walked on every scan).
       const sig = (row.textContent || '').length;
@@ -371,7 +406,7 @@
   function newestButton() {
     let best = null;
     buttons.forEach(r => {
-      if (!r.host.isConnected) return;
+      if (!r.host.isConnected || r.host.style.display === 'none') return;
       if (!best || (best.host.compareDocumentPosition(r.host) & Node.DOCUMENT_POSITION_FOLLOWING)) best = r;
     });
     return best;
