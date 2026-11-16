@@ -423,5 +423,35 @@
   },
   "ix_uiLevel": {
     "message": "Colorear barras según el nivel"
+  },
+  "ix_icHidden2": {
+    "message": "oculto. Haz clic en “Mostrar” en su lugar para recuperarlo."
+  },
+  "ix_ghSidebar": {
+    "message": "Mostrar uso"
+  },
+  "ix_ghFloating": {
+    "message": "Mostrar tarjeta de uso"
+  },
+  "ix_ghComposer": {
+    "message": "Mostrar barra de uso"
+  },
+  "ix_ghBadges": {
+    "message": "Mostrar insignias"
+  },
+  "ix_ghChips": {
+    "message": "Datos"
+  },
+  "ix_ghDates": {
+    "message": "Mostrar fechas"
+  },
+  "ix_ghTools": {
+    "message": "Mostrar accesos"
+  },
+  "ix_ghVmLink": {
+    "message": "Mostrar VamimiAI"
+  },
+  "ix_ghDiagram": {
+    "message": "Diagrama"
   }
 }

@@ -284,12 +284,110 @@
     if (btn) { btn.classList.remove('vis'); current = null; }
     setOn(key, false).then(() => {
       UI.toast({
-        text: SURFACES[key].label() + ': ' + L('icHidden', 'hidden. You can turn it back on any time in TokenLens Settings.'),
+        text: SURFACES[key].label() + ': ' + L('icHidden2', 'hidden. Click \u201cShow\u201d in its place to bring it back.'),
         timeoutMs: 9000,
         actions: [{ label: L('icUndo', 'Undo'), onClick: () => setOn(key, true) }],
       });
     });
   }
 
-  window.CTS_InlineControls = { SURFACES };
+  // ─── Collapsed in place ───────────────────────────────────────────────────
+  // A hidden surface is not gone: it collapses to a small "Show …" chip in
+  // the exact spot it occupied, one click brings it back. The surface stays
+  // in the DOM (CSS hides it, see ui.js applyPrefs), so the chip is simply
+  // inserted right before it and follows it wherever claude.ai moves it.
+  // Chat dates are many small badges, so they collapse to one chip above the
+  // chat list. The floating card's chip floats where the card was.
+  const GHOST = {
+    sidebar:  { text: () => L('ghSidebar', 'Show usage'),          when: el => !el.classList.contains('sidebar-hidden') },
+    floating: { text: () => L('ghFloating', 'Show usage card'),    fixed: true },
+    composer: { text: () => L('ghComposer', 'Show usage bar'),     when: el => el.classList.contains('ct-has-data') },
+    badges:   { text: () => L('ghBadges', 'Show badges'),          inside: true },
+    chips:    { text: () => L('ghChips', 'Stats') },
+    dates:    { text: () => L('ghDates', 'Show dates'),            single: true },
+    tools:    { text: () => L('ghTools', 'Show shortcuts') },
+    vmLink:   { text: () => L('ghVmLink', 'Show VamimiAI') },
+    diagram:  { text: () => L('ghDiagram', 'Diagram'),             icon: true },
+  };
+  const EYE = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12c1-2.5 5-7 10-7s9 4.5 10 7c-1 2.5-5 7-10 7S3 14.5 2 12z"/><circle cx="12" cy="12" r="2.6"/></svg>';
+  const GHOST_CSS = `
+    :host { all: initial; display: inline-flex; vertical-align: middle; }
+    :host([data-block]) { display: flex; margin: 6px 12px; }
+    :host([data-fixed]) { position: fixed; z-index: 9997; }
+    button { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px; border-radius: 999px; cursor: pointer;
+             font: 600 11.5px/1 var(--sans); color: var(--muted); background: transparent; border: 1px dashed var(--line);
+             opacity: .75; transition: opacity .15s ease, color .15s ease, border-color .15s ease, background .15s ease; white-space: nowrap; }
+    :host([data-fixed]) button { background: var(--card); border-style: solid; box-shadow: 0 4px 14px rgba(0,0,0,.12); opacity: .9; }
+    button:hover, button:focus-visible { opacity: 1; color: var(--text); border-color: var(--btn); border-style: solid; background: var(--card); outline: none; }
+    svg { width: 14px; height: 14px; flex: none; }
+    @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+  `;
+  const ghosts = new Map();   // element -> {host, key}
+
+  function makeGhost(key) {
+    const g = GHOST[key];
+    const m = UI.mount('', GHOST_CSS);
+    m.host.removeAttribute('id');
+    m.host.className = 'cts-ghost';
+    m.host.setAttribute('data-key', key);
+    const label = g.text();
+    const b = h('button', { type: 'button', title: SURFACES[key].label(), 'aria-label': L('icShow', 'Show') + ': ' + SURFACES[key].label() });
+    b.appendChild(UI.svg(EYE));
+    b.appendChild(h('span', { text: label }));
+    b.addEventListener('click', Safe.wrap('inline', e => { e.preventDefault(); e.stopPropagation(); setOn(key, true).then(syncGhosts); }));
+    m.root.appendChild(b);
+    return m.host;
+  }
+
+  function anchorsFor(key) {
+    const g = GHOST[key];
+    let els = Array.from(document.querySelectorAll(SURFACES[key].sel));
+    if (key === 'dates') {
+      // one chip, just above the first chat in the sidebar list
+      const first = document.querySelector('[data-testid="sidebar"] a[href^="/chat/"], aside a[href^="/chat/"], nav a[href^="/chat/"]');
+      return first ? [first] : [];
+    }
+    if (g.when) els = els.filter(g.when);
+    return els;
+  }
+
+  function placeFixed(host, card) {
+    const cs = getComputedStyle(card);
+    host.style.top = cs.top !== 'auto' ? cs.top : '68px';
+    if (card.style.left) { host.style.left = cs.left; host.style.right = 'auto'; }
+    else { host.style.right = cs.right !== 'auto' ? cs.right : '20px'; host.style.left = 'auto'; }
+  }
+
+  function syncGhosts() {
+    const want = new Set();
+    ORDER.forEach(key => {
+      if (isOn(key)) return;
+      const g = GHOST[key];
+      anchorsFor(key).forEach(el => {
+        want.add(el);
+        let rec = ghosts.get(el);
+        if (!rec || rec.key !== key) { if (rec) rec.host.remove(); rec = { host: makeGhost(key), key }; ghosts.set(el, rec); }
+        const host = rec.host;
+        if (g.fixed) {
+          host.setAttribute('data-fixed', '');
+          placeFixed(host, el);
+          if (host.parentNode !== document.documentElement) document.documentElement.appendChild(host);
+        } else if (g.inside) {
+          if (host.parentNode !== el) el.appendChild(host);
+        } else {
+          if (key === 'sidebar' || key === 'composer' || key === 'tools' || key === 'vmLink' || key === 'dates') host.setAttribute('data-block', '');
+          if (host.nextSibling !== el && el.parentNode) el.parentNode.insertBefore(host, el);
+        }
+      });
+    });
+    ghosts.forEach((rec, el) => {
+      if (!want.has(el) || !el.isConnected) { rec.host.remove(); ghosts.delete(el); }
+    });
+  }
+
+  if (F.onChange) F.onChange(() => Safe.run('inline', syncGhosts));
+  setInterval(() => Safe.run('inline', syncGhosts), 1200);
+  setTimeout(() => Safe.run('inline', syncGhosts), 300);
+
+  window.CTS_InlineControls = { SURFACES, syncGhosts };
 })();
