@@ -423,5 +423,35 @@
   },
   "ix_uiLevel": {
     "message": "Balken nach Stand einfärben"
+  },
+  "ix_icHidden2": {
+    "message": "ausgeblendet. Klick an seiner Stelle auf „Anzeigen“, um es zurückzuholen."
+  },
+  "ix_ghSidebar": {
+    "message": "Nutzung anzeigen"
+  },
+  "ix_ghFloating": {
+    "message": "Nutzungskarte anzeigen"
+  },
+  "ix_ghComposer": {
+    "message": "Nutzungsleiste anzeigen"
+  },
+  "ix_ghBadges": {
+    "message": "Hinweise anzeigen"
+  },
+  "ix_ghChips": {
+    "message": "Werte"
+  },
+  "ix_ghDates": {
+    "message": "Datum anzeigen"
+  },
+  "ix_ghTools": {
+    "message": "Kurzbefehle anzeigen"
+  },
+  "ix_ghVmLink": {
+    "message": "VamimiAI anzeigen"
+  },
+  "ix_ghDiagram": {
+    "message": "Diagramm"
   }
 }

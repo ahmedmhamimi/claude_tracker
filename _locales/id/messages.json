@@ -423,5 +423,35 @@
   },
   "ix_uiLevel": {
     "message": "Warnai bar sesuai level"
+  },
+  "ix_icHidden2": {
+    "message": "disembunyikan. Klik “Tampilkan” di tempatnya untuk memunculkannya lagi."
+  },
+  "ix_ghSidebar": {
+    "message": "Tampilkan pemakaian"
+  },
+  "ix_ghFloating": {
+    "message": "Tampilkan kartu"
+  },
+  "ix_ghComposer": {
+    "message": "Tampilkan bar pemakaian"
+  },
+  "ix_ghBadges": {
+    "message": "Tampilkan lencana"
+  },
+  "ix_ghChips": {
+    "message": "Statistik"
+  },
+  "ix_ghDates": {
+    "message": "Tampilkan tanggal"
+  },
+  "ix_ghTools": {
+    "message": "Tampilkan pintasan"
+  },
+  "ix_ghVmLink": {
+    "message": "Tampilkan VamimiAI"
+  },
+  "ix_ghDiagram": {
+    "message": "Diagram"
   }
 }

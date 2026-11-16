@@ -128,3 +128,7 @@ color-by-level and bar color; the floating card also toggles its badges). Hiding
 surfaces come back from Settings, which still lists every switch. One fixed button + one popover for the page,
 both in closed shadow roots, located with `composedPath()` on `pointerover`, so nothing is injected into
 claude.ai's DOM or into the surfaces. Chat dates get `pointer-events: auto` so they can be hovered.
+Hidden surfaces collapse in place (`syncGhosts`): a dashed "Show …" chip (`.cts-ghost`) is inserted right before
+the hidden element (it stays in the DOM, hidden by CSS), inside the badges container, floating where the card
+was, or once above the chat list for dates. One click turns the surface back on. Diagram buttons are now hidden
+instead of removed when switched off, so each can collapse to its chip.

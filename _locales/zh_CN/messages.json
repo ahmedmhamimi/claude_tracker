@@ -423,5 +423,35 @@
   },
   "ix_uiLevel": {
     "message": "按用量给进度条着色"
+  },
+  "ix_icHidden2": {
+    "message": "已隐藏。点击原位置的“显示”即可恢复。"
+  },
+  "ix_ghSidebar": {
+    "message": "显示用量"
+  },
+  "ix_ghFloating": {
+    "message": "显示用量卡片"
+  },
+  "ix_ghComposer": {
+    "message": "显示用量条"
+  },
+  "ix_ghBadges": {
+    "message": "显示标记"
+  },
+  "ix_ghChips": {
+    "message": "统计"
+  },
+  "ix_ghDates": {
+    "message": "显示日期"
+  },
+  "ix_ghTools": {
+    "message": "显示快捷按钮"
+  },
+  "ix_ghVmLink": {
+    "message": "显示 VamimiAI"
+  },
+  "ix_ghDiagram": {
+    "message": "图表"
   }
 }

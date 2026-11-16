@@ -339,10 +339,13 @@
 
   function scanReplies() {
     // The Diagram buttons can be switched off in Settings (feature 'vamimi').
+    // Switched off: the buttons stay in place but hidden, so the inline
+    // controls can collapse each one to a small "Diagram" chip (one click
+    // brings them back, see inline-controls.js).
     const F = window.CTS_Features;
-    if (F && F.isEnabled && !F.isEnabled('vamimi')) {
-      buttons.forEach(r => { r.host.remove(); r.row.__ctsVm = null; }); buttons.clear(); hideCoach(); return;
-    }
+    const off = !!(F && F.isEnabled && !F.isEnabled('vamimi'));
+    if (off) hideCoach();
+    buttons.forEach(r => { const want = off ? 'none' : ''; if (r.host.style.display !== want) r.host.style.display = want; });
     const rows = document.querySelectorAll(ROWS);
     rows.forEach(row => {
       const bar = barOf(row);
@@ -356,12 +359,13 @@
       row.__ctsVmSig = sig;
       if (!rec && !hasSomethingToDraw(row, bar)) return;
       rec = rec || makeButton(row, bar);
+      if (off) rec.host.style.display = 'none';
       row.__ctsVm = rec;
       buttons.add(rec);
       place(rec, bar);
     });
     buttons.forEach(r => { if (!r.row.isConnected) buttons.delete(r); });
-    if (spot.wantNow || spot.thisPage) maybeSpotlight();
+    if (!off && (spot.wantNow || spot.thisPage)) maybeSpotlight();
   }
 
   function newestButton() {

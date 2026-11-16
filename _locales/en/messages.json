@@ -818,5 +818,35 @@
   },
   "ix_uiLevel": {
     "message": "Color bars by level"
+  },
+  "ix_icHidden2": {
+    "message": "hidden. Click “Show” in its place to bring it back."
+  },
+  "ix_ghSidebar": {
+    "message": "Show usage"
+  },
+  "ix_ghFloating": {
+    "message": "Show usage card"
+  },
+  "ix_ghComposer": {
+    "message": "Show usage bar"
+  },
+  "ix_ghBadges": {
+    "message": "Show badges"
+  },
+  "ix_ghChips": {
+    "message": "Stats"
+  },
+  "ix_ghDates": {
+    "message": "Show dates"
+  },
+  "ix_ghTools": {
+    "message": "Show shortcuts"
+  },
+  "ix_ghVmLink": {
+    "message": "Show VamimiAI"
+  },
+  "ix_ghDiagram": {
+    "message": "Diagram"
   }
 }

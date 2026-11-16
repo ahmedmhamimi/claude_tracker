@@ -423,5 +423,35 @@
   },
   "ix_uiLevel": {
     "message": "Цвет полос по уровню"
+  },
+  "ix_icHidden2": {
+    "message": "скрыто. Нажмите «Показать» на его месте, чтобы вернуть."
+  },
+  "ix_ghSidebar": {
+    "message": "Показать использование"
+  },
+  "ix_ghFloating": {
+    "message": "Показать карточку"
+  },
+  "ix_ghComposer": {
+    "message": "Показать полосу"
+  },
+  "ix_ghBadges": {
+    "message": "Показать значки"
+  },
+  "ix_ghChips": {
+    "message": "Статистика"
+  },
+  "ix_ghDates": {
+    "message": "Показать даты"
+  },
+  "ix_ghTools": {
+    "message": "Показать ярлыки"
+  },
+  "ix_ghVmLink": {
+    "message": "Показать VamimiAI"
+  },
+  "ix_ghDiagram": {
+    "message": "Диаграмма"
   }
 }

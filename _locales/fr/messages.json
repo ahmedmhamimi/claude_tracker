@@ -423,5 +423,35 @@
   },
   "ix_uiLevel": {
     "message": "Colorer les barres selon le niveau"
+  },
+  "ix_icHidden2": {
+    "message": "masqué. Cliquez sur « Afficher » à sa place pour le retrouver."
+  },
+  "ix_ghSidebar": {
+    "message": "Afficher l’utilisation"
+  },
+  "ix_ghFloating": {
+    "message": "Afficher la carte"
+  },
+  "ix_ghComposer": {
+    "message": "Afficher la barre"
+  },
+  "ix_ghBadges": {
+    "message": "Afficher les badges"
+  },
+  "ix_ghChips": {
+    "message": "Stats"
+  },
+  "ix_ghDates": {
+    "message": "Afficher les dates"
+  },
+  "ix_ghTools": {
+    "message": "Afficher les raccourcis"
+  },
+  "ix_ghVmLink": {
+    "message": "Afficher VamimiAI"
+  },
+  "ix_ghDiagram": {
+    "message": "Diagramme"
   }
 }

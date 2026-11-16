@@ -423,5 +423,35 @@
   },
   "ix_uiLevel": {
     "message": "使用率でバーの色を変える"
+  },
+  "ix_icHidden2": {
+    "message": "を非表示にしました。元の場所の「表示」をクリックすると戻せます。"
+  },
+  "ix_ghSidebar": {
+    "message": "使用量を表示"
+  },
+  "ix_ghFloating": {
+    "message": "使用量カードを表示"
+  },
+  "ix_ghComposer": {
+    "message": "使用量バーを表示"
+  },
+  "ix_ghBadges": {
+    "message": "表示を戻す"
+  },
+  "ix_ghChips": {
+    "message": "統計"
+  },
+  "ix_ghDates": {
+    "message": "日付を表示"
+  },
+  "ix_ghTools": {
+    "message": "ショートカットを表示"
+  },
+  "ix_ghVmLink": {
+    "message": "VamimiAI を表示"
+  },
+  "ix_ghDiagram": {
+    "message": "図解"
   }
 }
