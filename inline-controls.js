@@ -36,8 +36,13 @@
   // where: corner of the surface the button sits on, plus an offset (px).
   // bars: offers the bar options (level colors, bar color).
   const SURFACES = {
-    badges:   { sel: '#ct-tq-badges',      label: () => L('uiBadges', 'Peak and cache badges'),       where: ['tl', -10, -10] },
-    floating: { sel: '#ct-toolbar-quota',  label: () => L('uiFloating', 'Floating usage card'),       where: ['bl', -10, -12], bars: true, extra: ['badges'] },
+    // The peak & cache badges have no hover control of their own: their switch
+    // lives in the floating card's menu (one place, not two). hover: false
+    // keeps the key for settings, the collapsed chip and the card's toggle.
+    badges:   { sel: '#ct-tq-badges',      label: () => L('uiBadges', 'Peak and cache badges'),       where: ['tl', -10, -10], hover: false },
+    // The card already has its own close (x) button, so its menu has no
+    // "Hide this"; the button sits at the card's top-right corner.
+    floating: { sel: '#ct-toolbar-quota',  label: () => L('uiFloating', 'Floating usage card'),       where: ['tr', -10, -10], bars: true, extra: ['badges'], noHide: true },
     sidebar:  { sel: '#ct-quota',          label: () => L('uiSidebar', 'Usage box in the sidebar'),   where: ['tr', -2, -4], bars: true },
     composer: { sel: '#ct-row',            label: () => L('uiComposer', 'Usage bar above the message box'), where: ['tl', -6, -6], bars: true },
     chips:    { sel: '.ct-chips',          label: () => L('uiChips', 'Stats under each reply'),       where: ['r', 4, 0] },
@@ -129,7 +134,7 @@
       if (!node || node.nodeType !== 1) continue;
       if (node === btnHost || (menu && node === menu.host)) return 'self';
       for (const key of ORDER) {
-        if (!isOn(key)) continue;
+        if (SURFACES[key].hover === false || !isOn(key)) continue;
         try { if (node.matches(SURFACES[key].sel)) return { key, el: node }; } catch (_) {}
       }
     }
@@ -216,7 +221,7 @@
     };
 
     box.append(h('div', { class: 't', text: s.label() }));
-    box.append(item(EYE_OFF, L('icHide', 'Hide this'), () => hideSurface(cur.key)));
+    if (!s.noHide) box.append(item(EYE_OFF, L('icHide', 'Hide this'), () => hideSurface(cur.key)));
     (s.extra || []).forEach(k => box.append(toggle(L('icShow', 'Show') + ': ' + SURFACES[k].label(), () => isOn(k), v => setOn(k, v))));
 
     if (s.bars) {
