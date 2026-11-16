@@ -453,5 +453,11 @@
   },
   "ix_ghDiagram": {
     "message": "図解"
+  },
+  "ix_uiTips": {
+    "message": "ホバー時の説明"
+  },
+  "ix_uiTipsD": {
+    "message": "ポインターをしばらく置いたときに短い説明を表示"
   }
 }

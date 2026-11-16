@@ -43,6 +43,7 @@
       dates: true,        // "created on" dates next to sidebar chat titles
       tools: true,        // Search / Save all / History / Settings strip in the sidebar
       vmLink: true,       // VamimiAI shortcut in the sidebar
+      tips: true,         // explanations when the pointer rests on something (after a pause)
       levelColors: false, // opt-in: bars turn amber at 75% and red at 90% (default: always the accent)
     },
     shortcut: { enabled: false, combo: 'Alt+Shift+L' },

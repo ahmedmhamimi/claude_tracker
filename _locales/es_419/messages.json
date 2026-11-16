@@ -453,5 +453,11 @@
   },
   "ix_ghDiagram": {
     "message": "Diagrama"
+  },
+  "ix_uiTips": {
+    "message": "Explicaciones al pasar el cursor"
+  },
+  "ix_uiTipsD": {
+    "message": "Explicaciones breves cuando dejas el puntero sobre algo"
   }
 }
