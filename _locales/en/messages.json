@@ -767,5 +767,56 @@
   },
   "ix_mDiagramD": {
     "message": "With VamimiAI, by the maker of TokenLens"
+  },
+  "ix_icOptions": {
+    "message": "Options"
+  },
+  "ix_icHide": {
+    "message": "Hide this"
+  },
+  "ix_icShow": {
+    "message": "Show"
+  },
+  "ix_icBarColor": {
+    "message": "Bar color"
+  },
+  "ix_icAll": {
+    "message": "All settings"
+  },
+  "ix_icHidden": {
+    "message": "hidden. You can turn it back on any time in TokenLens Settings."
+  },
+  "ix_icUndo": {
+    "message": "Undo"
+  },
+  "ix_uiSidebar": {
+    "message": "Usage box in the sidebar"
+  },
+  "ix_uiFloating": {
+    "message": "Floating usage card"
+  },
+  "ix_uiComposer": {
+    "message": "Usage bar above the message box"
+  },
+  "ix_uiBadges": {
+    "message": "Peak and cache badges"
+  },
+  "ix_uiChips": {
+    "message": "Stats under each reply"
+  },
+  "ix_uiDates": {
+    "message": "Dates next to chat titles"
+  },
+  "ix_uiTools": {
+    "message": "Sidebar shortcuts"
+  },
+  "ix_uiVmLink": {
+    "message": "VamimiAI shortcut in the sidebar"
+  },
+  "ix_uiDiagram": {
+    "message": "Diagram button on replies"
+  },
+  "ix_uiLevel": {
+    "message": "Color bars by level"
   }
 }

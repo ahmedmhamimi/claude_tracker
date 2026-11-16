@@ -109,6 +109,7 @@
         "review.js",
         "feedback.js",
         "vamimi.js",
+        "inline-controls.js",
         "boot.js"
       ],
       "run_at": "document_idle"

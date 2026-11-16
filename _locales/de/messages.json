@@ -372,5 +372,56 @@
   },
   "ix_mDiagramD": {
     "message": "Mit VamimiAI, vom Macher von TokenLens"
+  },
+  "ix_icOptions": {
+    "message": "Optionen"
+  },
+  "ix_icHide": {
+    "message": "Ausblenden"
+  },
+  "ix_icShow": {
+    "message": "Anzeigen"
+  },
+  "ix_icBarColor": {
+    "message": "Balkenfarbe"
+  },
+  "ix_icAll": {
+    "message": "Alle Einstellungen"
+  },
+  "ix_icHidden": {
+    "message": "ausgeblendet. In den TokenLens-Einstellungen jederzeit wieder einschaltbar."
+  },
+  "ix_icUndo": {
+    "message": "Rückgängig"
+  },
+  "ix_uiSidebar": {
+    "message": "Nutzungsbox in der Seitenleiste"
+  },
+  "ix_uiFloating": {
+    "message": "Schwebende Nutzungskarte"
+  },
+  "ix_uiComposer": {
+    "message": "Nutzungsleiste über dem Eingabefeld"
+  },
+  "ix_uiBadges": {
+    "message": "Peak- und Cache-Hinweise"
+  },
+  "ix_uiChips": {
+    "message": "Werte unter jeder Antwort"
+  },
+  "ix_uiDates": {
+    "message": "Datum neben Chat-Titeln"
+  },
+  "ix_uiTools": {
+    "message": "Seitenleisten-Kurzbefehle"
+  },
+  "ix_uiVmLink": {
+    "message": "VamimiAI-Kurzlink in der Seitenleiste"
+  },
+  "ix_uiDiagram": {
+    "message": "Diagramm-Button bei Antworten"
+  },
+  "ix_uiLevel": {
+    "message": "Balken nach Stand einfärben"
   }
 }

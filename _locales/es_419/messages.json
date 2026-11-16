@@ -372,5 +372,56 @@
   },
   "ix_mDiagramD": {
     "message": "Con VamimiAI, del creador de TokenLens"
+  },
+  "ix_icOptions": {
+    "message": "Opciones"
+  },
+  "ix_icHide": {
+    "message": "Ocultar"
+  },
+  "ix_icShow": {
+    "message": "Mostrar"
+  },
+  "ix_icBarColor": {
+    "message": "Color de las barras"
+  },
+  "ix_icAll": {
+    "message": "Todos los ajustes"
+  },
+  "ix_icHidden": {
+    "message": "oculto. Puedes volver a activarlo cuando quieras en los ajustes de TokenLens."
+  },
+  "ix_icUndo": {
+    "message": "Deshacer"
+  },
+  "ix_uiSidebar": {
+    "message": "Cuadro de uso en la barra lateral"
+  },
+  "ix_uiFloating": {
+    "message": "Tarjeta flotante de uso"
+  },
+  "ix_uiComposer": {
+    "message": "Barra de uso sobre el cuadro de mensaje"
+  },
+  "ix_uiBadges": {
+    "message": "Insignias de hora pico y caché"
+  },
+  "ix_uiChips": {
+    "message": "Datos bajo cada respuesta"
+  },
+  "ix_uiDates": {
+    "message": "Fechas junto a los títulos"
+  },
+  "ix_uiTools": {
+    "message": "Accesos directos de la barra lateral"
+  },
+  "ix_uiVmLink": {
+    "message": "Acceso a VamimiAI en la barra lateral"
+  },
+  "ix_uiDiagram": {
+    "message": "Botón Diagrama en las respuestas"
+  },
+  "ix_uiLevel": {
+    "message": "Colorear barras según el nivel"
   }
 }

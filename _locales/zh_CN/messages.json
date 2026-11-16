@@ -372,5 +372,56 @@
   },
   "ix_mDiagramD": {
     "message": "使用 TokenLens 作者的 VamimiAI"
+  },
+  "ix_icOptions": {
+    "message": "选项"
+  },
+  "ix_icHide": {
+    "message": "隐藏"
+  },
+  "ix_icShow": {
+    "message": "显示"
+  },
+  "ix_icBarColor": {
+    "message": "进度条颜色"
+  },
+  "ix_icAll": {
+    "message": "全部设置"
+  },
+  "ix_icHidden": {
+    "message": "已隐藏。可随时在 TokenLens 设置中重新开启。"
+  },
+  "ix_icUndo": {
+    "message": "撤销"
+  },
+  "ix_uiSidebar": {
+    "message": "侧边栏用量框"
+  },
+  "ix_uiFloating": {
+    "message": "浮动用量卡片"
+  },
+  "ix_uiComposer": {
+    "message": "输入框上方的用量条"
+  },
+  "ix_uiBadges": {
+    "message": "高峰与缓存标记"
+  },
+  "ix_uiChips": {
+    "message": "每条回复下的统计"
+  },
+  "ix_uiDates": {
+    "message": "聊天标题旁的日期"
+  },
+  "ix_uiTools": {
+    "message": "侧边栏快捷按钮"
+  },
+  "ix_uiVmLink": {
+    "message": "侧边栏的 VamimiAI 链接"
+  },
+  "ix_uiDiagram": {
+    "message": "回复上的图表按钮"
+  },
+  "ix_uiLevel": {
+    "message": "按用量给进度条着色"
   }
 }
